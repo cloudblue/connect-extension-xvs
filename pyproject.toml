@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "connect-extension-xvs"
+version = "0.1.0"
+description = "This extension is responsoible for publishing Cloudblue Connect data to CB Commerce"
+authors = ["Ingram Micro"]
+license = "Apache Software License 2.0"
+packages = [
+    { include = "connect_ext_ppr" }
+]
+readme = "./README.md"
+
+[tool.poetry.plugins."connect.eaas.ext"]
+"eventsapp" = "connect_ext_ppr.events:ConnectExtensionXvsEventsApplication"
+"webapp" = "connect_ext_ppr.webapp:ConnectExtensionXvsWebApplication"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<4"
+connect-eaas-core = ">=27.15,<28"
+sqlalchemy = "^1.3.12"
+psycopg2-binary = "^2.9.6"
+
+[tool.poetry.dev-dependencies]
+pytest = ">=6.1.2,<8"
+pytest-cov = ">=2.10.1,<5"
+pytest-mock = "^3.3.1"
+mock = { version = "^4.0.3", markers = "python_version < '3.8'" }
+coverage = {extras = ["toml"], version = ">=5.3,<7"}
+flake8 = ">=3.8,<6"
+flake8-bugbear = ">=20,<23"
+flake8-cognitive-complexity = "^0.1"
+flake8-commas = "~2.0"
+flake8-future-import = "~0.4"
+flake8-import-order = "~0.18"
+flake8-broken-line = ">=0.3,<0.7"
+flake8-comprehensions = "^3.3.1"
+flake8-debugger = "^4.0.0"
+flake8-eradicate = "^1.0.0"
+flake8-string-format = "^0.3.0"
+pytest-asyncio = "^0.15.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+addopts = "--cov=connect_ext_ppr --cov-report=term-missing --cov-report=html --cov-report=xml"
+
+[tool.coverage.run]
+relative_files = true
+branch = true
+
+[tool.coverage.report]
+omit = [
+]

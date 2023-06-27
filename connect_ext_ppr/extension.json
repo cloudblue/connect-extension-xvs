@@ -1,0 +1,9 @@
+{
+  "name": "Connect PPR extension",
+  "description": "This extension is responsoible for publishing Cloudblue Connect data to CB Commerce",
+  "version": "0.1.0",
+  "audience": ["distributor", "reseller"],
+  "readme_url": "https://example.com/README.md",
+  "changelog_url": "https://example.com/CHANGELOG.md",
+  "icon": "googleExtensionBaseline"
+}

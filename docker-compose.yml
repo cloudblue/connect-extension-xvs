@@ -1,0 +1,67 @@
+version: '3'
+volumes:
+  node_modules:
+
+services:
+  connect-extension-xvs_dev:
+    container_name: connect-extension-xvs_dev
+    build:
+      context: .
+    working_dir: /extension
+    command: cextrun -d --no-rich-logging
+    volumes: 
+      - .:/extension
+      - node_modules:/extension/node_modules
+    env_file:
+      - .connect-extension-xvs_dev.env
+    depends_on:
+      - db
+
+  connect-extension-xvs_bash:
+    container_name: connect-extension-xvs_bash
+    build:
+      context: .
+    working_dir: /extension
+    command: /bin/bash
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/extension
+      - node_modules:/extension/node_modules
+    env_file:
+      - .connect-extension-xvs_dev.env
+    depends_on:
+      - db
+
+  connect-extension-xvs_test:
+    container_name: connect-extension-xvs_test
+    build:
+      context: .
+    working_dir: /extension
+    command: extension-test
+    volumes:
+      - .:/extension
+      - node_modules:/extension/node_modules
+    env_file:
+      - .connect-extension-xvs_dev.env
+
+  db:
+    image: postgres:9.6-alpine
+    restart: always
+    ports:
+      - '5433:5432'
+    expose:
+      - '5432'
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: 1q2w3e
+      POSTGRES_DB: extension_xvs
+
+  db_ram:
+    image: postgres:9.6-alpine
+    tmpfs:
+      - /var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: 1q2w3e
+      POSTGRES_DB: extension_xvs

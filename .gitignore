@@ -1,0 +1,9 @@
+*.pyc
+htmlcov
+.coverage
+coverage.xml
+.connect-extension-xvs_dev.env
+node_modules
+ui/tests/coverage
+pg_data
+.vscode
