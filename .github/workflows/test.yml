@@ -15,6 +15,23 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10']
+        database-name:
+        - extension_xvs
+        database-password:
+        - 1q2w3e
+    services:
+      db:
+        image: postgres:11.5
+        env:
+          POSTGRES_PASSWORD: ${{ matrix.database-password }}
+          POSTGRES_DB: ${{ matrix.database-name }}
+        ports:
+        - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v3
         with:
@@ -34,7 +51,7 @@ jobs:
           flake8 .
       - name: Testing
         run: |
-          pytest
+          DATABASE_URL=postgresql+psycopg2://postgres:${{ matrix.database-password }}@localhost:5432/${{ matrix.database-name }} pytest
 
   frontend:
     runs-on: ubuntu-latest

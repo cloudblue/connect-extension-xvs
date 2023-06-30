@@ -44,6 +44,8 @@ services:
       - node_modules:/extension/node_modules
     env_file:
       - .connect-extension-xvs_dev.env
+    depends_on:
+      - db
 
   db:
     image: postgres:9.6-alpine
