@@ -7,10 +7,11 @@ from typing import List
 
 from connect.client import ConnectClient
 from connect.eaas.core.decorators import (
+    module_pages,
     router,
     web_app,
 )
-from connect.eaas.core.inject.synchronous import get_installation_client
+from connect.eaas.core.inject.synchronous import get_installation, get_installation_client
 from connect.eaas.core.extension import WebApplicationBase
 from fastapi import Depends
 
@@ -24,12 +25,16 @@ from connect_ext_ppr.schemas import (
 from connect_ext_ppr.utils import (
     _get_extension_client,
     _get_installation,
-    filter_products_list,
-    get_products,
+    filter_object_list_by_id,
+    get_all_info,
 )
 
 
 @web_app(router)
+@module_pages(
+    label='Deployments',
+    url='/static/index.html',
+)
 class ConnectExtensionXvsWebApplication(WebApplicationBase):
 
     @router.get(
@@ -41,28 +46,43 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         self,
         client: ConnectClient = Depends(get_installation_client),
         db: VerboseBaseSession = Depends(get_db),
+        installation: dict = Depends(get_installation),
     ):
-        deployments = db.query(Deployment).all()
-        products = get_products(client)
+
+        deployments = db.query(Deployment).filter_by(account_id=installation['owner']['id'])
+        listings = get_all_info(client)
+        products = [li['product'] for li in listings]
+        vendors = [li['vendor'] for li in listings]
+        hubs = [hub['hub'] for li in listings for hub in li['contract']['marketplace']['hubs']]
         response_list = []
         for dep in deployments:
-            prod = filter_products_list(products, dep.product_id)
+            prod = filter_object_list_by_id(products, dep.product_id)
+            vendor = filter_object_list_by_id(vendors, dep.vendor_id)
+            hub = filter_object_list_by_id(hubs, dep.hub_id)
             response_list.append(
                 DeploymentSchema(
                     id=dep.id,
                     account_id=dep.account_id,
+                    hub={
+                        'id': dep.hub_id,
+                        'name': hub['name'],
+                    },
                     product={
                         'id': dep.product_id,
                         'name': prod['name'],
-                        'version': prod['version'],
                         'icon': prod.get('icon', None),
                     },
                     owner={
                         'id': dep.vendor_id,
-                        'name': prod['owner']['name'],
-                        'icon': prod['owner']['icon'],
+                        'name': vendor['name'],
+                        'icon': vendor['icon'],
                     },
-                    events={'created': {'at': dep.created_at}},
+                    status=dep.status,
+                    last_sync_at=dep.last_sync_at,
+                    events={
+                        'created': {'at': dep.created_at},
+                        'updated': {'at': dep.updated_at},
+                    },
                 ),
             )
         return response_list
@@ -90,8 +110,8 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         client = _get_extension_client(logger)
         installation = _get_installation(client)
         if installation['owner']['id'] == installation['environment']['extension']['owner']['id']:
-            products = get_products(client)
+            listings = get_all_info(client)
             # For extension owner we do not have available the installation
             # event to handle populate Deployment table, so for this particular case
             # we make use of `on_startup` webapplication event function.
-            add_deployments(installation, products, config, logger)
+            add_deployments(installation, listings, config, logger)

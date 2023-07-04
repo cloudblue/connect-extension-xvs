@@ -4,9 +4,11 @@
 # All rights reserved.
 #
 from datetime import datetime
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 
 from pydantic import BaseModel
+
+from connect_ext_ppr.models.deployment import DeploymentStatusChoices
 
 
 class Vendor(BaseModel):
@@ -18,16 +20,23 @@ class Vendor(BaseModel):
 class Product(BaseModel):
     id: str
     name: str
-    version: int
     icon: Optional[str]
+
+
+class Hub(BaseModel):
+    id: str
+    name: str
 
 
 class DeploymentSchema(BaseModel):
     id: str
     product: Product
+    hub: Hub
     account_id: str
     owner: Vendor
-    events: dict[str, dict[str, Union[datetime, str]]]
+    last_sync_at: datetime
+    status: DeploymentStatusChoices
+    events: Dict[str, Dict[str, Union[datetime, str]]]
 
 
 class DeploymentRequestSchema(BaseModel):

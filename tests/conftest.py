@@ -5,19 +5,54 @@
 #
 import pytest
 from connect.client import AsyncConnectClient, ConnectClient
+from sqlalchemy.orm import sessionmaker
 
-from connect_ext_ppr.db import create_db as create, Model
+from connect_ext_ppr.db import create_db, get_engine, Model, VerboseBaseSession
+from connect_ext_ppr.models.deployment import Deployment
+
+
+@pytest.fixture(scope="session")
+def engine():
+    return get_engine({})
+
+
+@pytest.fixture(scope="session")
+def tables(engine):
+    engine = create_db({})
+    yield
+    Model.metadata.drop_all(engine)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_db(request):
-    engine = create({})
-    Model.metadata.bind = engine
+def conn(engine, tables):
+    connection = engine.connect()
+    yield connection
+    connection.close()
 
-    def teardown():
-        Model.metadata.drop_all()
 
-    request.addfinalizer(teardown)
+@pytest.fixture
+def dbsession(conn):
+    """Returns an sqlalchemy session, and after the test, tears down everything properly."""
+    session = sessionmaker(class_=VerboseBaseSession)(bind=conn)
+    transaction = conn.begin()
+
+    yield session
+
+    transaction.rollback()
+    session.close()
+
+
+@pytest.fixture
+def deployment(dbsession):
+    dep = Deployment(
+        product_id='PRD-XXX-XXX-XXX',
+        account_id='PA-000-000',
+        vendor_id='VA-000-000',
+        hub_id='HB-0000-0000',
+    )
+    dbsession.set_verbose(dep)
+    dbsession.commit()
+    return dep
 
 
 @pytest.fixture
@@ -49,11 +84,11 @@ def listing():
         "contract": {
             "id": "CRD-065-001-001",
             "type": "distribution",
-            "name": "Contract of Distribution Agreement for the Marketplace XX",
+            "name": "Contract of Distribution Agreement for the Marketplace M00",
             "marketplace": {
-                "id": "MP-06511",
-                "name": "Marketplace XX",
-                "icon": "/media/PA-000-000/marketplaces/MP-06511/icon.png",
+                "id": "MP-0000",
+                "name": "Marketplace M00",
+                "icon": "/media/PA-000-000/marketplaces/MP-0000/icon.png",
             },
         },
         "product": {
@@ -123,6 +158,70 @@ def installation():
             },
         },
         "status": "installed",
+    }
+
+
+@pytest.fixture
+def marketplace():
+    return {
+        "id": "MP-0000",
+        "name": "Marketplace M00",
+        "description": "This marketplace provides you access to customers of "
+        "account 00 of the imaginary Hub H01 in the North America region",
+        "owner": {
+            "id": "PA-000-000",
+            "name": "Provider account 00",
+            "icon": "/media/PA-065-102/media/icon.png",
+        },
+        "icon": "/media/PA-000-000/marketplaces/MP-0000/icon.png",
+        "hubs": [
+            {
+                "hub": {
+                    "id": "HB-0000-0000",
+                    "name": "Demo Hub",
+                },
+                "external_id": "readfilmaa",
+            },
+            {
+                "hub": {
+                    "id": "HB-8320-5285",
+                    "name": "Hub Hub",
+                },
+                "external_id": "readfilmoo",
+            },
+        ],
+        "active_contracts": 1,
+        "countries": [
+            {
+                "id": "US",
+                "name": "United States",
+            },
+        ],
+        "currency": "USD",
+        "attributes": [
+            {
+                "id": "st0p",
+                "name": "Suggested T0 Price",
+                "description": "Vendor's (manufacturer's) suggested Retail Customer"
+                " (Tier-0) price, also known as MSRP.",
+            },
+        ],
+        "stats": {
+            "hubs": 2,
+            "contracts": 1,
+        },
+        "events": {
+            "created": {
+                "at": "2023-06-27T09:18:49+00:00",
+            },
+            "updated": {
+                "at": "2023-07-03T20:02:13+00:00",
+                "by": {
+                    "id": "UR-000-000-000",
+                    "name": "Jhon Doe",
+                },
+            },
+        },
     }
 
 

@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DontWrapMixin
 
 
 _MAX_RETRIES = 1000
@@ -25,6 +25,12 @@ def _generate_verbose_id(prefix):
         f'{prefix}-{_get_numeric_string(3)}'
         f'-{_get_numeric_string(3)}-{_get_numeric_string(3)}'
     )
+
+
+class VerboseSessionError(Exception, DontWrapMixin):
+    '''
+    Exception class to handle errors through custom methods of `VerboseBaseSession`.
+    '''
 
 
 class VerboseBaseSession(Session):
@@ -43,8 +49,8 @@ class VerboseBaseSession(Session):
                 instance.id = verbose_id
                 return instance
 
-        raise IntegrityError(
-            f'Could not generate {instance_class.__name__}  verbose ID'
+        raise VerboseSessionError(
+            f'Could not generate {instance_class.__name__} verbose ID'
             f' after {_MAX_RETRIES} attempts.',
         )
 
@@ -68,8 +74,8 @@ class VerboseBaseSession(Session):
                     break
                 ids = []
             if not ids:
-                raise IntegrityError(
-                    f'Could not generate {instance_class.__name__}  verbose ID'
+                raise VerboseSessionError(
+                    f'Could not generate a group of {count} {instance_class.__name__} verbose ID'
                     f' after {_MAX_RETRIES} attempts.',
                 )
 
