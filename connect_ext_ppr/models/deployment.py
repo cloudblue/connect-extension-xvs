@@ -1,3 +1,4 @@
+import enum
 from datetime import datetime
 
 import sqlalchemy as db
@@ -5,17 +6,36 @@ import sqlalchemy as db
 from connect_ext_ppr.db import Model
 
 
+class DeploymentStatusChoices(str, enum.Enum):
+    PENDING = 'pending'
+    PROCESSING = 'processing'
+    SYNCED = 'synced'
+
+
 class Deployment(Model):
     __tablename__ = "deployments"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "product_id", "account_id", "hub_id",
+            name="prd_account_hub_key",
+        ),
+    )
 
     PREFIX = 'DPL'
 
     id = db.Column(db.String(20), primary_key=True)
-    product_id = db.Column(db.String(20), unique=True)
+    product_id = db.Column(db.String(20))
+    hub_id = db.Column(db.String(20))
     account_id = db.Column(db.String(20))
     vendor_id = db.Column(db.String(20))
-    version = db.Column(db.Integer())
+    status = db.Column(
+        db.String(30),
+        db.Enum(DeploymentStatusChoices),
+        default=DeploymentStatusChoices.PENDING,
+    )
+    last_sync_at = db.Column(db.DateTime(), default=datetime.utcnow)
     created_at = db.Column(db.DateTime(), default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime(), onupdate=datetime.utcnow, default=datetime.utcnow)
 
 
 class DeploymentRequest(Model):
