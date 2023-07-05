@@ -16,8 +16,8 @@ from connect.eaas.core.extension import WebApplicationBase
 from fastapi import Depends
 
 from connect_ext_ppr.db import create_db, get_db, VerboseBaseSession
-from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest as Request
-from connect_ext_ppr.models.utils import add_deployments
+from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
+from connect_ext_ppr.service import add_deployments
 from connect_ext_ppr.schemas import (
     DeploymentRequestSchema,
     DeploymentSchema,
@@ -95,7 +95,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     )
     def add_dep_request(self, db: VerboseBaseSession = Depends(get_db)):
         deployment = db.query(Deployment).first()
-        instance = Request(deployment=deployment.id)
+        instance = DeploymentRequest(deployment=deployment.id)
         db.set_next_verbose(instance, 'deployment')
         db.commit()
         db.refresh(instance)

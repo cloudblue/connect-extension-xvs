@@ -3,12 +3,15 @@
 # Copyright (c) 2023, Ingram Micro
 # All rights reserved.
 #
+from contextlib import contextmanager
+
 import pytest
 from connect.client import AsyncConnectClient, ConnectClient
 from sqlalchemy.orm import sessionmaker
 
 from connect_ext_ppr.db import create_db, get_engine, Model, VerboseBaseSession
 from connect_ext_ppr.models.deployment import Deployment
+from connect_ext_ppr.models.file import File
 
 
 @pytest.fixture(scope="session")
@@ -42,6 +45,19 @@ def dbsession(conn):
     session.close()
 
 
+@pytest.fixture(autouse=True)
+def mocked_get_db_ctx(dbsession, mocker):
+
+    @contextmanager
+    def mocked_context(config):
+        yield dbsession
+
+    mocker.patch(
+        'connect_ext_ppr.service.get_db_ctx_manager',
+        wraps=mocked_context,
+    )
+
+
 @pytest.fixture
 def deployment(dbsession):
     dep = Deployment(
@@ -53,6 +69,23 @@ def deployment(dbsession):
     dbsession.set_verbose(dep)
     dbsession.commit()
     return dep
+
+
+@pytest.fixture
+def file(dbsession, media_response):
+    file = File(
+        id=media_response['id'],
+        account_id=media_response['owner']['id'],
+        location=media_response['file'],
+        name=media_response['name'],
+        size=media_response['size'],
+        mime_type=media_response['mime_type'],
+        created_by=media_response['events']['created']['by']['id'],
+    )
+    dbsession.add(file)
+    dbsession.commit()
+    dbsession.refresh(file)
+    return file
 
 
 @pytest.fixture
@@ -271,3 +304,46 @@ def flat_catalog_type_objects(flat_catalog_type_object):
 @pytest.fixture
 def flat_catalog_type():
     return 'http://ingrammicro.com/pa/flat-catalog'
+
+
+@pytest.fixture
+def media_response():
+    return {
+        "id": "MFL-6390-1110-0832",
+        "file": "/files/media/public/accounts/PA-000-000/"
+        "configurations/dc08ea505ec483394494/test.json",
+        "size": 17,
+        "folder": {
+            "name": "PA-000-000/configurations",
+            "type": "accounts",
+        },
+        "owner": {
+            "id": "PA-000-000",
+            "name": "Provider account 00",
+            "icon": "/media/PA-065-101/media/icon.jpg",
+        },
+        "name": "test.json",
+        "mime_type": "application/json",
+        "events": {
+            "created": {
+                "at": "2023-07-05T18:17:55+00:00",
+                "by": {
+                    "id": "SU-295-689-628",
+                    "name": "xvs-ext-token",
+                },
+            },
+            "confirmed": {
+                "at": "2023-07-05T18:17:55+00:00",
+                "by": {
+                    "id": "SU-295-689-628",
+                    "name": "xvs-ext-token",
+                },
+            },
+        },
+        "access": {
+            "PA-065-101": {
+                "view": True,
+                "delete": True,
+            },
+        },
+    }

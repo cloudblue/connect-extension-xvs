@@ -40,6 +40,34 @@ def test_handle_listing_processing(
     assert result.status == 'success'
 
 
+def test_handle_listing_processing_deployment_exists(
+    connect_client,
+    client_mocker_factory,
+    logger,
+    listing,
+    marketplace,
+    installation,
+    dbsession,
+    deployment,
+):
+    config = {}
+    listing['status'] = 'listed'
+    listing['product']['id'] = deployment.product_id
+    marketplace['hubs'][0]['hub']['id'] = deployment.hub_id
+    client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
+
+    client_mocker.marketplaces.filter(R().id.in_([marketplace['id']])).limit(1).mock(
+        return_value=[marketplace],
+    )
+    ext = ConnectExtensionXvsEventsApplication(
+        connect_client, logger, config,
+        installation=installation,
+        installation_client=connect_client,
+    )
+    result = ext.handle_listing_processing(listing)
+    assert result.status == 'success'
+
+
 def test_handle_product_changed(
     connect_client,
     client_mocker_factory,

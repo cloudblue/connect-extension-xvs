@@ -14,8 +14,7 @@ from connect.eaas.core.responses import (
 )
 from sqlalchemy.exc import DBAPIError
 
-from connect_ext_ppr.models.deployment import Deployment
-from connect_ext_ppr.models.utils import add_deployments, model_manager
+from connect_ext_ppr.service import add_deployments
 from connect_ext_ppr.utils import get_all_info, get_marketplaces
 
 
@@ -30,7 +29,7 @@ class ConnectExtensionXvsEventsApplication(EventsApplicationBase):
     @event(
         'listing_processing',
         statuses=[
-            'unlisted', 'listed',
+            'listed',
         ],
     )
     def handle_listing_processing(self, request):
@@ -40,33 +39,12 @@ class ConnectExtensionXvsEventsApplication(EventsApplicationBase):
         '''
         self.logger.info(f"Received listing {request['id']} status={request['status']}")
         if request['status'] == 'listed':
-            mp = get_marketplaces(self.client, [request['contract']['marketplace']['id']]).first()
+            mp = get_marketplaces(
+                self.installation_client,
+                [request['contract']['marketplace']['id']],
+            ).first()
             request['contract']['marketplace'] = mp
-            with model_manager(self.config) as db:
-                for hub in request['contract']['marketplace']['hubs']:
-                    q = db.query(Deployment).filter_by(
-                        account_id=self.installation['owner']['id'],
-                        product_id=request['product']['id'],
-                        hub_id=hub['hub']['id'],
-                    )
-                    if db.query(q.exists()).scalar():
-                        dep = q.first()
-                        self.logger.info(
-                            f"Deployment {dep.id} for hub {hub['hub']['id']} already exists.",
-                        )
-                    else:
-                        instance = Deployment(
-                            product_id=request['product']['id'],
-                            hub_id=hub['hub']['id'],
-                            account_id=self.installation['owner']['id'],
-                            vendor_id=request['vendor']['id'],
-                        )
-                        db.set_verbose(instance)
-                        db.commit()
-                        db.refresh(instance)
-                        self.logger.info(
-                            f"Added new deployment {instance.id} for hub {hub['hub']['id']}.",
-                        )
+            add_deployments(self.installation, [request], self.config, self.logger)
         else:
             self.logger.info(f"Skipping event for listing {request['id']}.")
         return BackgroundResponse.done()

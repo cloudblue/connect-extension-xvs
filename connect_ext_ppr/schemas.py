@@ -8,7 +8,7 @@ from typing import Dict, Optional, Union
 
 from pydantic import BaseModel
 
-from connect_ext_ppr.models.deployment import DeploymentStatusChoices
+from connect_ext_ppr.models.enums import DeploymentStatusChoices
 
 
 class Vendor(BaseModel):
