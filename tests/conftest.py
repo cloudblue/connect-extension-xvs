@@ -232,3 +232,42 @@ def product():
         'version': 2,
         'owner': {'id': 'VA-000-000'},
     }
+
+
+@pytest.fixture
+def cbc_endpoint():
+    return 'https://example.com/api/v1'
+
+
+@pytest.fixture
+def cbc_oauth_key():
+    return 'd3d292a4-9f72-492c-8e1b-889f0ad001cd'
+
+
+@pytest.fixture
+def cbc_oauth_secret():
+    return '7b534af1-4110-4520-abf3-e78503ef78a6'
+
+
+@pytest.fixture
+def flat_catalog_type_object():
+    return {
+        'refreshStatsUUID': '83dc93d4-2722-4cb9-b581-9a26aeeb0fe0',
+        'aps': {
+            'modified': '2023-06-30T22:28:16Z',
+            'id': '3e123a60-b055-45d1-b838-b35d34405927',
+            'type': 'http://ingrammicro.com/pa/flat-catalog/1.4',
+            'status': 'aps:ready',
+            'revision': 4,
+        },
+    }
+
+
+@pytest.fixture
+def flat_catalog_type_objects(flat_catalog_type_object):
+    return [flat_catalog_type_object]
+
+
+@pytest.fixture
+def flat_catalog_type():
+    return 'http://ingrammicro.com/pa/flat-catalog'
