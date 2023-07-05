@@ -2,61 +2,71 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 256:
+/***/ 250:
 /***/ ((__unused_webpack_module, __unused_webpack___webpack_exports__, __webpack_require__) => {
 
 
-// EXTERNAL MODULE: ./node_modules/@cloudblueconnect/connect-ui-toolkit/dist/index.js
-var dist = __webpack_require__(164);
-;// CONCATENATED MODULE: ./ui/src/utils.js
+// EXTERNAL MODULE: ./node_modules/vue/dist/vue.runtime.esm.js
+var vue_runtime_esm = __webpack_require__(144);
+;// CONCATENATED MODULE: ./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[1]!./node_modules/pug-plain-loader/index.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/pages/App.vue?vue&type=template&id=2d67d6c8&lang=pug&
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c
+  return _c("div", { staticClass: "app", style: _vm.styleCustomizations }, [
+    _c("div", { staticClass: "title" }, [_vm._v("XVS Extension")]),
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
 
-/*
-Copyright (c) 2023, Ingram Micro
-All rights reserved.
-*/
-// API calls to the backend
-const utils_getSettings = () => fetch('/api/settings').then((response) => response.json());
 
-const utils_getChart = () => fetch('/api/chart').then((response) => response.json());
+;// CONCATENATED MODULE: ./ui/src/pages/App.vue?vue&type=template&id=2d67d6c8&lang=pug&
 
-const getMarketplaces = () => fetch('/api/marketplaces').then((response) => response.json());
+;// CONCATENATED MODULE: ./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/pages/App.vue?vue&type=script&lang=js&
 
-const updateSettings = (settings) => fetch('/api/settings', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(settings),
-}).then((response) => response.json());
+/* harmony default export */ const Appvue_type_script_lang_js_ = ({
+   data() {
+    return {
+    };
+  },
 
-// data processing
-const processMarketplaces = (
-  allMarketplaces,
-  selectedMarketplaces,
-) => allMarketplaces.map((marketplace) => {
-  const checked = !!selectedMarketplaces.find(
-    (selectedMarketplace) => selectedMarketplace.id === marketplace.id,
-  );
-
-  return { ...marketplace, checked };
+  methods: {
+  },
 });
 
-const processSelectedMarketplaces = (
-  allMarketplaces,
-  checkboxes,
-) => checkboxes.map((checkbox) => allMarketplaces.find(
-  (marketplace) => marketplace.id === checkbox.value,
-));
+;// CONCATENATED MODULE: ./ui/src/pages/App.vue?vue&type=script&lang=js&
+ /* harmony default export */ const pages_Appvue_type_script_lang_js_ = (Appvue_type_script_lang_js_); 
+// EXTERNAL MODULE: ./node_modules/vue-loader/lib/runtime/componentNormalizer.js
+var componentNormalizer = __webpack_require__(900);
+;// CONCATENATED MODULE: ./ui/src/pages/App.vue
 
-const processCheckboxes = (
-  checkboxes,
-) => Array.from(checkboxes).filter(checkbox => checkbox.checked);
 
+
+
+
+/* normalize component */
+;
+var component = (0,componentNormalizer/* default */.Z)(
+  pages_Appvue_type_script_lang_js_,
+  render,
+  staticRenderFns,
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* harmony default export */ const App = (component.exports);
+// EXTERNAL MODULE: ./node_modules/@cloudblueconnect/connect-ui-toolkit/dist/index.js
+var dist = __webpack_require__(164);
 ;// CONCATENATED MODULE: ./ui/src/components.js
 /*
 Copyright (c) 2023, Ingram Micro
 All rights reserved.
 */
 // prepare UI components
-const components_prepareMarketplaces = (marketplaces) => {
+const prepareMarketplaces = (marketplaces) => {
   try {
     return marketplaces.reduce((list, marketplace) => `${list}<li class="list-item">
         <div class="list-item-image">
@@ -70,7 +80,7 @@ const components_prepareMarketplaces = (marketplaces) => {
   } catch (e) { return ''; }
 };
 
-const prepareMarketplacesWithSwitch = (marketplaces) => {
+const components_prepareMarketplacesWithSwitch = (marketplaces) => {
   try {
     return marketplaces.reduce((list, marketplace) => `${list}<li class="list-item">
         <div class="list-item-image">
@@ -90,7 +100,7 @@ const prepareMarketplacesWithSwitch = (marketplaces) => {
   } catch (e) { return ''; }
 };
 
-const components_prepareChart = (chartData) => `<img src="https://quickchart.io/chart?c=${encodeURI(JSON.stringify(chartData))}">`;
+const prepareChart = (chartData) => `<img src="https://quickchart.io/chart?c=${encodeURI(JSON.stringify(chartData))}">`;
 
 // render UI components
 const components_renderMarketplaces = (marketplaces) => {
@@ -98,25 +108,25 @@ const components_renderMarketplaces = (marketplaces) => {
   element.innerHTML = marketplaces;
 };
 
-const components_renderChart = (chart) => {
+const renderChart = (chart) => {
   const element = document.getElementById('chart');
   element.innerHTML = chart;
 };
 
 // render UI components - buttons
-const enableButton = (id, text) => {
+const components_enableButton = (id, text) => {
   const element = document.getElementById(id);
   element.disabled = false;
   if (text) element.innerText = text;
 };
 
-const disableButton = (id, text) => {
+const components_disableButton = (id, text) => {
   const element = document.getElementById(id);
   element.disabled = true;
   if (text) element.innerText = text;
 };
 
-const addEventListener = (id, event, callback) => {
+const components_addEventListener = (id, event, callback) => {
   const element = document.getElementById(id);
   element.addEventListener(event, callback);
 };
@@ -158,41 +168,36 @@ const saveSettingsData = async (app) => {
   enableButton('save', 'Save');
 };
 
-const index = async () => {
-  hideComponent('app');
-  showComponent('loader');
-  const settings = await getSettings();
-  const chartData = await getChart();
-  const chart = prepareChart(chartData);
-  const marketplaces = prepareMarketplaces(settings.marketplaces);
-  hideComponent('loader');
-  showComponent('app');
-  renderChart(chart);
-  renderMarketplaces(marketplaces);
+const index = () => {
+  components_hideComponent('app');
+  components_showComponent('loader');
+
+  components_hideComponent('loader');
+  components_showComponent('app');
 };
 
 const settings = async (app) => {
   if (!app) return;
-  components_showComponent('loader');
-  components_hideComponent('app');
-  components_hideComponent('error');
+  showComponent('loader');
+  hideComponent('app');
+  hideComponent('error');
   try {
     const allMarketplaces = await getMarketplaces();
-    const { marketplaces: selectedMarketpaces } = await utils_getSettings();
+    const { marketplaces: selectedMarketpaces } = await getSettings();
     const preparedMarketplaces = processMarketplaces(allMarketplaces, selectedMarketpaces);
     const marketplaces = prepareMarketplacesWithSwitch(preparedMarketplaces);
-    components_renderMarketplaces(marketplaces);
+    renderMarketplaces(marketplaces);
     enableButton('save', 'Save');
     addEventListener('save', 'click', saveSettingsData.bind(null, app));
-    components_showComponent('app');
+    showComponent('app');
   } catch (error) {
     app.emit('snackbar:error', error);
-    components_showComponent('error');
+    showComponent('error');
   }
-  components_hideComponent('loader');
+  hideComponent('loader');
 };
 
-;// CONCATENATED MODULE: ./ui/src/pages/settings.js
+;// CONCATENATED MODULE: ./ui/src/pages/index.js
 /*
 Copyright (c) 2023, Ingram Micro
 All rights reserved.
@@ -203,8 +208,17 @@ All rights reserved.
 
 
 
-(0,dist/* default */.ZP)({ 'settings-card': dist/* Card */.Zb })
-  .then(settings);
+
+
+(0,dist/* default */.ZP)({ 'main-card': dist/* Card */.Zb })
+  .then(() => { index(); });
+
+
+const app = new vue_runtime_esm/* default */.ZP({
+  render: h => h(App),
+});
+
+app.$mount('#app');
 
 
 /***/ })
@@ -283,6 +297,18 @@ All rights reserved.
 /******/ 		};
 /******/ 	})();
 /******/ 	
+/******/ 	/* webpack/runtime/global */
+/******/ 	(() => {
+/******/ 		__webpack_require__.g = (function() {
+/******/ 			if (typeof globalThis === 'object') return globalThis;
+/******/ 			try {
+/******/ 				return this || new Function('return this')();
+/******/ 			} catch (e) {
+/******/ 				if (typeof window === 'object') return window;
+/******/ 			}
+/******/ 		})();
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
@@ -296,7 +322,7 @@ All rights reserved.
 /******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
 /******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
 /******/ 		var installedChunks = {
-/******/ 			571: 0
+/******/ 			826: 0
 /******/ 		};
 /******/ 		
 /******/ 		// no chunk on demand loading
@@ -346,7 +372,7 @@ All rights reserved.
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
-/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, [216], () => (__webpack_require__(256)))
+/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, [216], () => (__webpack_require__(250)))
 /******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
 /******/ 	
 /******/ })()
