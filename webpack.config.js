@@ -8,6 +8,7 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const ESLintPlugin = require('eslint-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const { VueLoaderPlugin } = require('vue-loader');
 
 const generateHtmlPlugin = (title) => {
   const moduleName = title.toLowerCase();
@@ -60,6 +61,8 @@ module.exports = {
   },
   plugins: [
     ...pages,
+
+    new VueLoaderPlugin(),
     new CopyWebpackPlugin({
       patterns: [
         { from: __dirname + "/ui/images", to: "images" },
@@ -73,6 +76,10 @@ module.exports = {
   ],
   module: {
     rules: [
+      {
+        test: /\.vue$/,
+        loader: 'vue-loader',
+      },
       {
         test: /\.css$/i,
         use: [MiniCssExtractPlugin.loader, "css-loader"],
@@ -88,6 +95,10 @@ module.exports = {
             },
           },
         ],
+      },
+      {
+        test: /\.pug$/,
+        loader: 'pug-plain-loader',
       },
     ],
   },

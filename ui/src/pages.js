@@ -3,7 +3,6 @@ Copyright (c) 2023, Ingram Micro
 All rights reserved.
 */
 import {
-  getChart,
   getMarketplaces,
   getSettings,
   processCheckboxes,
@@ -16,10 +15,7 @@ import {
   disableButton,
   enableButton,
   hideComponent,
-  prepareChart,
-  prepareMarketplaces,
   prepareMarketplacesWithSwitch,
-  renderChart,
   renderMarketplaces,
   showComponent,
 } from './components';
@@ -40,17 +36,12 @@ export const saveSettingsData = async (app) => {
   enableButton('save', 'Save');
 };
 
-export const index = async () => {
+export const index = () => {
   hideComponent('app');
   showComponent('loader');
-  const settings = await getSettings();
-  const chartData = await getChart();
-  const chart = prepareChart(chartData);
-  const marketplaces = prepareMarketplaces(settings.marketplaces);
+
   hideComponent('loader');
   showComponent('app');
-  renderChart(chart);
-  renderMarketplaces(marketplaces);
 };
 
 export const settings = async (app) => {
