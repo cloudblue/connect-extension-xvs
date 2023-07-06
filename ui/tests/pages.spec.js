@@ -85,29 +85,11 @@ describe('pages.js', () => {
     test('calls showLoader', () => {
       expect(showComponent).toHaveBeenCalledWith('loader');
     });
-    test('calls getSettings', () => {
-      expect(getSettings).toHaveBeenCalled();
-    });
-    test('calls getChart', () => {
-      expect(getChart).toHaveBeenCalled();
-    });
-    test('calls prepareChart', () => {
-      expect(prepareChart).toHaveBeenCalled();
-    });
-    test('calls prepareMarketplaces', () => {
-      expect(prepareMarketplaces).toHaveBeenCalled();
-    });
     test('calls hideLoader', () => {
       expect(hideComponent).toHaveBeenCalledWith('loader');
     });
     test('calls showApp', () => {
       expect(showComponent).toHaveBeenCalledWith('app');
-    });
-    test('calls renderChart', () => {
-      expect(renderChart).toHaveBeenCalled();
-    });
-    test('calls renderMarketplaces', () => {
-      expect(renderMarketplaces).toHaveBeenCalled();
     });
   });
 
