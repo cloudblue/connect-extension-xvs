@@ -5,16 +5,12 @@ from typing import Dict
 class GetMixin:
     def get(
         self,
-        identifier: str = None,
-        params: Dict[str, str] = None,
+        **kwargs,
     ):
-        path = self.path
-        if identifier:
-            path = f'{path}/{identifier}'
         return self.client.execute_request(
             method='GET',
-            path=path,
-            params=params,
+            path=self.path,
+            params=kwargs,
         )
 
 

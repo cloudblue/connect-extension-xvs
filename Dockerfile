@@ -3,7 +3,7 @@ FROM cloudblueconnect/connect-extension-runner:28.1
 COPY pyproject.toml /install_temp/.
 COPY poetry.* /install_temp/.
 WORKDIR /install_temp
-RUN apt-get update && apt-get upgrade && apt-get install libsqlite3-dev -y
+RUN apt-get update && apt-get upgrade -y && apt-get install libsqlite3-dev -y
 RUN poetry update && poetry install --no-root
 COPY package*.json /extension/.
 WORKDIR /extension

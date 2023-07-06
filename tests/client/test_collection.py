@@ -196,7 +196,7 @@ def test_collection_get_with_identifier(
         json=flat_catalog_type_object,
     )
 
-    obj = cbc_client.flat_catalog.wizard.get(object_id)
+    obj = cbc_client.flat_catalog.wizard[object_id].get()
 
     TestCase().assertDictEqual(obj, flat_catalog_type_object)
 

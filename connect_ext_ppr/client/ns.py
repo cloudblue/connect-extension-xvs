@@ -63,28 +63,28 @@ class Collection(
 
 class Service(
     NSBase,
-    GetMixin,
     ActionMixin,
 ):
-    def _get_service_path(self, path, aps_type):
+    def _get_service_path(self):
         aps_type_object = self.client.execute_request(
             method='GET',
-            path=f'{path}/aps/2/resources/?implementing({aps_type})',
+            path=f'{self.path}/aps/2/resources/?implementing({self.aps_type})',
         )
 
         if not aps_type_object:
-            raise TypeError(f'Not able to find out Service with APS Type: {aps_type}')
+            raise TypeError(f'Not able to find out Service with APS Type: {self.aps_type}')
+        elif len(aps_type_object) != 1:
+            raise TypeError(f'Multiple instances found with APS Type: {self.aps_type}')
         else:
             service_id = aps_type_object[0]['aps']['id']
-            return f'{path}/aps/2/resources/{service_id}'
+            return f'{self.path}/aps/2/resources/{service_id}'
 
     def __init__(self, client, aps_type: str, path: str):
-        self.client = client
-        path = self._get_service_path(path, aps_type)
         super().__init__(
             client=client,
             path=path,
         )
+        self.aps_type = aps_type
 
     def __getattr__(self, name):
         if '_' in name:
@@ -101,5 +101,12 @@ class Service(
 
         return Collection(
             self.client,
-            f'{self.path}/{name}',
+            f'{self._get_service_path()}/{name}',
+        )
+
+    def get(self, **kwargs):
+        return self.client.execute_request(
+            method='GET',
+            path=f'{self.path}/aps/2/resources/?implementing({self.aps_type})',
+            params=kwargs,
         )

@@ -1,3 +1,5 @@
+from unittest import TestCase
+
 import pytest
 import responses
 
@@ -13,7 +15,6 @@ def test_service_discovery(
     flat_catalog_type,
     flat_catalog_type_objects,
 ):
-    service_id = flat_catalog_type_objects[0]['aps']['id']
     responses.add(
         method='GET',
         url=f'{cbc_endpoint}/aps/2/resources/?implementing({flat_catalog_type})',
@@ -26,8 +27,8 @@ def test_service_discovery(
         oauth_secret=cbc_oauth_secret,
     )
 
-    service = cbc_client(flat_catalog_type)
-    assert service.path == f'{cbc_endpoint}/aps/2/resources/{service_id}'
+    services = cbc_client(flat_catalog_type).get()
+    TestCase().assertListEqual(services, flat_catalog_type_objects)
 
 
 @responses.activate
@@ -50,11 +51,11 @@ def test_service_discovery_client_error(
     )
 
     with pytest.raises(ClientError):
-        cbc_client(flat_catalog_type)
+        cbc_client(flat_catalog_type).get()
 
 
 @responses.activate
-def test_service_discovery_type_error(
+def test_service_discovery_no_service(
     cbc_endpoint,
     cbc_oauth_key,
     cbc_oauth_secret,
@@ -73,7 +74,30 @@ def test_service_discovery_type_error(
     )
 
     with pytest.raises(TypeError):
-        cbc_client(flat_catalog_type)
+        cbc_client(flat_catalog_type).property1
+
+
+@responses.activate
+def test_service_discovery_more_than_one_service(
+    cbc_endpoint,
+    cbc_oauth_key,
+    cbc_oauth_secret,
+    flat_catalog_type,
+):
+    responses.add(
+        method='GET',
+        url=f'{cbc_endpoint}/aps/2/resources/?implementing({flat_catalog_type})',
+        json=['service1', 'service2'],
+    )
+
+    cbc_client = CBCClient(
+        endpoint=cbc_endpoint,
+        oauth_key=cbc_oauth_key,
+        oauth_secret=cbc_oauth_secret,
+    )
+
+    with pytest.raises(TypeError):
+        cbc_client(flat_catalog_type).property1
 
 
 @responses.activate
