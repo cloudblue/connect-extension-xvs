@@ -147,7 +147,7 @@ class CBCClient:
     def get(
             self,
             resource_id: str,
-            params: Dict[str, str] = None,
+            **kwargs,
     ):
         if not isinstance(resource_id, str):
             raise TypeError('`identifier` must be a string.')
@@ -158,5 +158,5 @@ class CBCClient:
         return self.execute_request(
             method='GET',
             path=f'{self.path}/aps/2/resources/{resource_id}',
-            params=params,
+            params=kwargs,
         )
