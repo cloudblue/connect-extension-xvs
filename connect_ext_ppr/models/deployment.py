@@ -1,15 +1,9 @@
-import enum
 from datetime import datetime
 
 import sqlalchemy as db
 
 from connect_ext_ppr.db import Model
-
-
-class DeploymentStatusChoices(str, enum.Enum):
-    PENDING = 'pending'
-    PROCESSING = 'processing'
-    SYNCED = 'synced'
+from connect_ext_ppr.models.enums import DeploymentStatusChoices
 
 
 class Deployment(Model):
@@ -29,8 +23,7 @@ class Deployment(Model):
     account_id = db.Column(db.String(20))
     vendor_id = db.Column(db.String(20))
     status = db.Column(
-        db.String(30),
-        db.Enum(DeploymentStatusChoices),
+        db.Enum(DeploymentStatusChoices, validate_strings=True),
         default=DeploymentStatusChoices.PENDING,
     )
     last_sync_at = db.Column(db.DateTime(), default=datetime.utcnow)
