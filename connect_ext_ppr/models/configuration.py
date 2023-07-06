@@ -4,7 +4,7 @@ import sqlalchemy as db
 
 from connect_ext_ppr.db import Model
 from connect_ext_ppr.models.deployment import Deployment
-from connect_ext_ppr.models.enums import ConfigurationStateChices
+from connect_ext_ppr.models.enums import ConfigurationStateChoices
 from connect_ext_ppr.models.file import File
 
 
@@ -17,8 +17,8 @@ class Configuration(Model):
     file = db.Column(db.ForeignKey(File.id))
     deployment = db.Column(db.ForeignKey(Deployment.id))
     state = db.Column(
-        db.Enum(ConfigurationStateChices, validate_strings=True),
-        default=ConfigurationStateChices.INACTIVE,
+        db.Enum(ConfigurationStateChoices, validate_strings=True),
+        default=ConfigurationStateChoices.INACTIVE,
     )
     created_at = db.Column(db.DateTime(), default=datetime.utcnow)
     created_by = db.Column(db.String(20))
@@ -26,7 +26,7 @@ class Configuration(Model):
     updated_by = db.Column(db.String(20))
 
     def activate(self):
-        self.state = ConfigurationStateChices.ACTIVE
+        self.state = ConfigurationStateChoices.ACTIVE
 
     def deleted(self):
-        self.state = ConfigurationStateChices.DELETED
+        self.state = ConfigurationStateChoices.DELETED
