@@ -85,7 +85,16 @@ module.exports = {
         use: [MiniCssExtractPlugin.loader, "css-loader"],
       },
       {
-        test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
+        test: /\.styl(us)?$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          'css-loader',
+          'postcss-loader',
+          'stylus-loader',
+        ],
+      },
+      {
+        test: /\.(woff(2)?|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
         use: [
           {
             loader: 'file-loader',
@@ -100,6 +109,43 @@ module.exports = {
         test: /\.pug$/,
         loader: 'pug-plain-loader',
       },
+      {
+        test: /\.svg$/,
+        use: [
+          {
+            loader: 'svg-sprite-loader',
+            options: {
+              spriteFilename: '[hash:20].svg',
+              symbolId: '[folder]_[name]_[hash:6]',
+            },
+          },
+        ],
+      },
     ],
   },
+
+  resolve: {
+    fallback: {
+      buffer: require.resolve('buffer'),
+    },
+
+    alias: {
+      vue$: path.resolve(__dirname, 'node_modules/vue/dist/vue.esm.js'),
+      '@': path.resolve(__dirname, 'ui/src'),
+      '~components': path.resolve(__dirname, 'ui/src/components'),
+      '~tools': path.resolve(__dirname, 'ui/src/tools'),
+      '~utils': path.resolve(__dirname, 'ui/src/tools/utils'),
+      '~helpers': path.resolve(__dirname, 'ui/src/tools/helpers'),
+      '~tableHelpers': path.resolve(__dirname, 'ui/src/tools/tableHelpers'),
+      '~constants': path.resolve(__dirname, 'ui/src/tools/constants'),
+      '~mixins': path.resolve(__dirname, 'ui/src/tools/mixins'),
+      '~plugins': path.resolve(__dirname, 'ui/src/tools/plugins'),
+      '~views': path.resolve(__dirname, 'ui/src/views'),
+      '~components': path.resolve(__dirname, 'ui/src/components'),
+      '~styles': path.resolve(__dirname, 'ui/src/styles'),
+      '~api': path.resolve(__dirname, 'ui/src/api'),
+      '~directives': path.resolve(__dirname, 'ui/src/tools/directives'),
+    },
+  },
+
 }

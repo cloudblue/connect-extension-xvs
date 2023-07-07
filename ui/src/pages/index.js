@@ -6,6 +6,9 @@ import Vue from 'vue';
 import App from './App.vue';
 import createApp, {
   Card,
+  Pad,
+  Tab,
+  Tabs,
 } from '@cloudblueconnect/connect-ui-toolkit';
 import {
   index,
@@ -14,8 +17,12 @@ import '@fontsource/roboto/500.css';
 import '../../styles/index.css';
 
 
-createApp({ 'main-card': Card })
-  .then(() => { index(); });
+createApp({
+  'main-card': Card,
+  'ui-tab': Tab,
+  'ui-tabs': Tabs,
+  'ui-pad': Pad,
+}).then(() => { index(); });
 
 
 const app = new Vue({

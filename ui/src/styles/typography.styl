@@ -1,0 +1,83 @@
+@import 'common'
+
+html,
+body {
+  font: 14px/1.2 $theme-font-family;
+  color: $base-text-color;
+}
+
+*[tabindex]:focus,
+button:focus {
+  outline: none;
+}
+
+.v-text-field input,
+.v-text-field__suffix,
+.v-text-field__prefix,
+.v-textarea textarea,
+.v-input label,
+.v-select .v-select__selection--comma,
+.v-list__tile {
+  font-size: $general-font-size;
+}
+
+.v-text-field .v-label--active,
+.input-group--text-field:not(.input-group--single-line).input-group--placeholder:not(.input-group--textarea) label,
+.input-group--text-field.input-group--dirty.input-group--select label,
+.v-input.input-group--dirty:not(.input-group--textarea) label {
+  transform: translate(0, -22px) scale(.92);
+}
+
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: .625rem 0;
+  font-weight: $font-weight-normal;
+}
+
+h1,
+.h1 {
+  font-size: 32px;
+}
+
+h2,
+.h2 {
+  font-size: 24px;
+  margin: 0 0 1.5625rem;
+}
+
+h3,
+.h3 {
+  font-size: 20px;
+  margin: 0 0 .9375rem;
+}
+
+p {
+  margin: 0 0 1.25rem;
+}
+
+b,
+strong {
+  font-weight: $font-weight-bold;
+}
+
+ol {
+  padding: 10px 20px;
+}
+
+.monospace {
+  font-family: 'Roboto Mono', monospace;
+}
+
+// Auto translate
+font::first-letter {
+  text-transform: capitalize;
+}
+
+i font::first-letter {
+  text-transform: none;
+}
