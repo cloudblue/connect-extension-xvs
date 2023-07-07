@@ -1,0 +1,174 @@
+@import 'base';
+
+.app-toolbar {
+  display: flex;
+  align-items: center;
+  z-index: 2;
+  flex: 0 0 auto;
+  height: $toolbar-height px;
+  padding-left: $edge-gap;
+  padding-right: $edge-gap;
+
+  background-color: $primary;
+  box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.2);
+
+  &__logo {
+    max-width: 400px;
+    max-height: 32px;
+
+    cursor: pointer;
+  }
+  &__navigation {
+    margin-left: $module * 8;
+    height: 100%;
+  }
+  &__actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
+}
+
+.toolbar-actions {
+  &__help-button {
+    margin-right: 14px;
+
+    &_active {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+
+      &:before { background-color: currentColor; }
+    }
+  }
+
+  &__help-list {
+    .list-item {
+      height: auto;
+      padding: 6px 20px 6px 16px;
+      line-height: 20px;
+    }
+  }
+}
+
+.nav-bar {
+  &__icon {
+    margin-right: $module * 2;
+  }
+
+  &__text {
+    text-transform: capitalize;
+    font-size: $general-font-size;
+    font-weight: $font-weight-normal;
+  }
+
+  &__item {
+    position: relative;
+    border-radius: 0;
+    display: inline-flex;
+    height: 100%;
+    flex: 0 1 auto;
+    text-decoration: none;
+    transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+    vertical-align: middle;
+
+    &.is-active {
+      background: rgba(255, 255, 255, .2);
+    }
+
+    .btn:not(.btn--depressed):active .btn__content{
+      position: initial; // this is important to reset vuetify default behaviour for btn content on press
+    }
+
+    .navigation-bubble {
+      position: absolute;
+      top: 100%;
+      margin-top: 15px;
+
+      &:before {
+        content: "▲";
+        position: absolute;
+        text-shadow: 0 -2px 1px rgba(0, 0, 0, .05);
+        color: $white;
+        font-size: 16px;
+        top: -15px;
+        left: var(--navigation-bubble-arrow);
+        transform: scaleX(2.1);
+      }
+
+      &__row {
+        display: flex;
+        align-items: flex-start;
+        padding-top: 16px;
+        padding-bottom: 16px;
+      }
+
+      .nav-bar__tile {
+        cursor: pointer;
+        width: 160px;
+        box-sizing: content-box;
+
+        .nav-bar__icon,
+        .nav-bar__text {
+          color: $theme-black !important;
+        }
+
+        a {
+          display: inline-flex;
+        }
+
+        &:hover a {
+          text-decoration-color: $accent;
+
+          .nav-bar__icon,
+          .nav-bar__text {
+            color: $accent !important;
+          }
+        }
+
+        &:not(:hover) a {
+          text-decoration: none !important;
+
+          &.is-current {
+            .nav-bar__icon,
+            .nav-bar__text {
+              color: $accent !important;
+            }
+          }
+        }
+
+        .nav-bar__icon {
+          font-size: 40px;
+          width: 40px;
+          height: 40px;
+          margin: 0 auto 8px;
+        }
+
+        .nav-bar__text {
+          font-size: 14px;
+          text-align: left;
+        }
+      }
+    }
+  }
+
+  &__btn {
+    padding: 0;
+    height: 100%;
+    margin: 0;
+
+    .v-btn__content {
+      padding: 0 16px;
+    }
+  }
+}
+
+.opener-status {
+  transform: rotate(0deg);
+  transition: all .3s ease-out !important;
+  text-align: center;
+
+  &.open {
+    transform: rotate(180deg);
+  }
+}

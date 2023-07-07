@@ -1,0 +1,56 @@
+@import '~styles/variables';
+
+
+fade-to-white-gradient(angle) {
+  linear-gradient(angle, transparent, rgba(255,255,255, .66) 50%, $white 90%, $white);
+}
+
+.overflow-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.overflowing {
+  .overflow-container {
+    &:before,
+    &:after {
+      content: "";
+      position: absolute;
+      top: 0;
+      width: $module * 24;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    &:after {
+      right: 0;
+      background: fade-to-white-gradient(90deg);
+    }
+
+    &:before {
+      left: 0;
+      background: fade-to-white-gradient(270deg);
+    }
+  }
+
+  &_right,
+  &_both {
+    .overflow-container:after {
+      opacity: 1;
+    }
+  }
+
+  &_left,
+  &_both {
+    .overflow-container:before {
+      opacity: 1;
+    }
+  }
+}

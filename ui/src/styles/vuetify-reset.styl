@@ -1,0 +1,115 @@
+@import "variables"
+
+.disabled-dotted-border {
+  background-color: transparent !important;
+  background-image: linear-gradient(to right, $theme-empty-state-text-color 0, $theme-empty-state-text-color 33%, transparent 0);
+  background-position: bottom;
+  background-size: 3px 1px;
+  background-repeat: repeat-x;
+}
+
+.v-list__tile__action .v-input--selection-controls .v-input__slot {
+  margin: 0;
+}
+
+.container {
+  padding: 16px;
+}
+
+.v-select__selections {
+  font-size: $general-font-size;
+  overflow: hidden;
+
+  .selection {
+    flex: 1 1 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.v-text-field__details {
+  min-height: 22px;
+}
+
+.v-select > .v-input__control > .v-input__slot {
+  cursor: pointer;
+}
+
+.v-input--is-readonly {
+  label {
+    transform: translate(0, -22px) scale(0.92);
+  }
+  &.v-input--is-focused {
+    label {
+      color: $theme-black-3 !important;
+    }
+  }
+  input:focus {
+    caret-color: transparent !important;
+  }
+  .v-input__control .v-input__slot {
+    &:after {
+      content: none;
+    }
+    &:before {
+      border-color: transparent !important;
+      @extend .disabled-dotted-border;
+    }
+  }
+}
+
+.v-input--checkbox, .v-radio {
+  label {
+    color: $base-text-color !important;
+    user-select: auto !important;
+  }
+}
+
+.v-input--is-disabled.v-input--checkbox,
+.v-input--is-disabled .v-radio,
+.v-radio--is-disabled.v-radio {
+  label {
+    color: $mid-grey !important;
+    user-select: auto !important;
+  }
+}
+
+.theme--light.v-input--selection-controls.v-input--is-disabled.v-input--is-label-active.v-input--checkbox,
+.v-radio.v-radio--is-disabled.theme--light.accent--text {
+  .v-icon {
+    color: _rgba($accent-rgb, 0.26) !important;
+  }
+}
+
+.v-tabs__item--active {
+  color: $accent;
+}
+
+.v-btn--small{
+  min-width: auto;
+}
+
+.theme--light.v-list .v-list__tile__mask {
+  color: $accent;
+  background: _rgba($accent-rgb, 0.1);
+}
+
+.v-dialog__content {
+  min-width: $theme-content-min-width;
+}
+
+.v-list--disabled,.v-list__tile--disabled {
+  pointer-events: none !important;
+}
+
+.theme--light .v-text-field__prefix {
+  color: $theme-icon-common-color;
+}
+
+.v-input.primary--text,
+.v-input .v-label.primary--text,
+.v-input .v-input__icon .primary--text {
+  color: var(--theme_accent) !important;
+  caret-color: currentColor !important;
+}

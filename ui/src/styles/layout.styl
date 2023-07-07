@@ -1,0 +1,399 @@
+@import 'common'
+
+.layout-flex {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+
+html,
+body {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: auto;
+  margin: 0;
+}
+
+body {
+  min-width: $theme-content-min-width;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.theme--light.application {
+  background-color: $white;
+}
+
+.application,
+.application--wrap,
+.base-layout,
+.proxy-layout {
+  height: 100vh;
+}
+
+.application {
+  min-width: 1280px;
+}
+
+.base-layout,
+.proxy-layout {
+  display: flex;
+  flex-direction: column;
+}
+.base-layout,
+.application,
+.proxy-layout {
+  flex: 1 1 100%;
+}
+
+.card {
+  background-color: #fff;
+  border-color: #fff;
+  color: rgba(0,0,0,0.87);
+  display: block;
+  border-radius: 2px;
+  position: relative;
+  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+  text-decoration: none;
+
+  box-shadow:
+    0px 3px 1px -2px rgba(0, 0, 0, 20%),
+    0px 2px 2px 0px rgba(0, 0, 0, 14%),
+    0px 1px 5px 0px rgba(0, 0, 0, 12%);
+
+  &_hoverable:hover {
+    cursor: pointer;
+    box-shadow:
+      0px 5px 5px -3px rgba(0, 0, 0, 20%),
+      0px 8px 10px 1px rgba(0, 0, 0, 14%),
+      0px 3px 14px 2px rgba(0, 0, 0, 12%);
+  }
+}
+
+.base-layout-width {
+  min-width: $theme-content-min-width;
+  max-width: $theme-content-min-width;
+}
+
+.form-control {
+  margin: 18px 0;
+}
+
+.assistive-text {
+  line-height: $theme-font-size px;
+  color: $assistive-text-color;
+  font-size: $theme-font-size-small px;
+}
+
+.detail-item {
+  min-width: 0;
+  margin-top: $theme-space-2 px;
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    line-height: $theme-font-size px;
+    font-weight: $font-weight-bold;
+    font-size: $theme-font-size-smaller px;
+  }
+
+  &__subhead {
+    @extend .assistive-text;
+    font-weight: normal;
+    margin-left: $theme-space-3 px;
+  }
+
+  &__content-holder {
+    display: flex;
+    align-items: center;
+  }
+
+  &__image {
+    flex: 0 0 auto;
+
+    margin-right: $theme-space-4 px;
+
+    &_right {
+      order: 2;
+      margin-left: $theme-space-4 px;
+      margin-right: 0;
+    }
+  }
+
+  &__content {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  &__text {
+    line-height: $theme-font-size-h2 px;
+    font-size: $theme-font-size-smaller px;
+    word-wrap: break-word;
+    word-break: break-word;
+
+    // intext vuetify controls reset
+    .v-btn--icon.v-btn--small {
+      margin-top: -4px;
+      margin-bottom: -4px;
+      vertical-align: bottom;
+    }
+  }
+
+  &__assistive-text {
+    @extend .assistive-text;
+  }
+}
+
+.detail-group {
+  margin-top: $theme-space-2 px;
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  &__content {
+    display: inline-flex;
+    align-items: flex-start;
+    vertical-align: top;
+  }
+
+  &_separated {
+    margin-top: $theme-space-3 * 2px;
+  }
+
+  &_separated &__content {
+    border-top: 1px solid $theme-border-color;
+    padding-top: $theme-space-2 px;
+  }
+
+  .detail-item {
+    margin-right: $theme-space-3 * 2px;
+    margin-top: 0;
+  }
+}
+
+.link-with-icon {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+
+  span {
+    text-decoration: underline;
+  }
+
+  .icon {
+    text-decoration: none;
+  }
+
+  &:hover span {
+    text-decoration: none;
+  }
+}
+
+
+// Documents List
+
+.documents-list {
+  &__item {
+
+    & + & {
+      margin-top: $module * 12;
+      padding-top: $module * 6;
+      border-top: 1px dashed $theme-border-color;
+    }
+  }
+}
+
+
+// Document Info
+
+.document-info {
+  &__caption {
+    margin-bottom: 8px
+    line-height: 1;
+    letter-spacing: .25px;
+    font-size: $theme-font-size-small px;
+    font-weight: $font-weight-bold;
+  }
+
+  &__title {
+    display: inline;
+    margin-bottom: 0;
+    margin-top: 0;
+    margin-right: $module * 2;
+    font-size: 18px;
+    line-height: 24px;
+    color: $base-text-color;
+    font-weight: $font-weight-bold;
+    vertical-align: middle;
+
+    a {
+      color: $accent;
+      transition: color 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+
+      &:hover {
+        text-decoration: none;
+      }
+    }
+  }
+
+  &__subtitle {
+    color: $assistive-text-color;
+  }
+
+  &__title-holder {
+    .inline-mark {
+      vertical-align: middle;
+    }
+  }
+
+  &__toolbar {
+    display: flex;
+    align-items: center;
+    height: 36px;
+    margin-top: 2px;
+  }
+
+  &__description {
+    margin-top: $module * 6;
+    max-width: 800px;
+
+    &_wide {
+      max-width: 1000px;
+    }
+  }
+
+  &__actions-holder {
+    margin-top: $theme-space-2 px;
+  }
+}
+
+
+// Detail Page
+
+.details-view {
+  &__section {
+    & + & {
+      margin-top: $module * 12;
+    }
+  }
+
+  &__section-head {
+    display: flex;
+    align-items: flex-start;
+
+    button {
+      height: $theme-line-height-h2 px;
+    }
+  }
+
+  &__section-title {
+    line-height: $theme-line-height-h2 px;
+    font-size: 18px;
+    font-weight: $font-weight-bold;
+    margin-top: 0;
+    margin-bottom: $theme-space-2 px;
+  }
+
+  &__section-subtitle {
+    margin-top: 4px;
+    margin-bottom: $theme-space-2 px;
+    line-height: 20 px;
+    font-size: $theme-font-size-smaller px;
+    color: $assistive-text-color;
+  }
+}
+
+// Content columns
+
+.content-columns-holder {
+  display: flex;
+
+  flex: 1;
+  min-height: 0;
+}
+
+
+// Page navigation
+
+.page-navigation {
+  display: flex;
+  align-items: center;
+  margin-right: $theme-space-2 * 2px;
+
+  &__back-button.v-btn--icon {
+    margin: 0 ($theme-space-3 * 2px - $theme-space-2 / 4) 0 ($theme-space-2 / -4)px;
+    flex: 0 0 auto;
+  }
+  &__title {
+    flex: 0 1 auto;
+    font-size: $theme-font-size-h2 px;
+    font-weight: $font-weight-bold;
+    line-height: 1;
+    margin-top: 0;
+    margin-bottom: 0;
+    letter-spacing: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+
+// Navigation bar
+
+.search {
+    width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+
+    &_fluid {
+      width: auto;
+    }
+}
+
+// Markdown document holder
+
+.markdown-document {
+  background-color: rgba($base-text-color, 0.04);
+  padding: 32px 24px;
+  width: 640px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+
+// Object image
+
+.object-image {
+  border-radius: 6.25%;
+}
+
+.list {
+  padding: 8px 0 8px;
+  display: flex;
+  flex-direction: column;
+  .list-item {
+    justify-content: left;
+    align-items: center;
+    display: flex;
+    font-size: 16px;
+    font-weight: 400;
+    height: 48px;
+    margin: 0;
+    padding: 0 16px;
+    width: 100%;
+    position: relative;
+    text-decoration: none;
+    transition: background 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+  }
+}

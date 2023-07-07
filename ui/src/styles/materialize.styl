@@ -1,0 +1,197 @@
+@import "icons.styl"
+
+svg(path, color = $base-text-color, size = 24) {
+  url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="'size'" height="'size'" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="'color'" d="'path'"/></svg>')
+}
+
+
+input[type=text][materialize] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  width: 100%
+  padding: 12px;
+  background: $theme-controls-background;
+  border: 1px solid $theme-border-color;
+  border-radius: 2px;
+
+  color: $base-text-color;
+  font-family: $theme-font-family;
+  font-size: $theme-font-size-smaller;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.2em;
+
+  &:focus-visible {
+    outline-width: 0;
+    border-color: $accent;
+  }
+
+  &:disabled {
+    border-style: dashed;
+  }
+}
+
+input[type=password][materialize] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  width: 100%
+  padding: 12px;
+  background: $theme-controls-background;
+  border: 1px solid $theme-border-color;
+  border-radius: 2px;
+
+  color: $base-text-color;
+  font-family: $theme-font-family;
+  font-size: $theme-font-size-smaller;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.2em;
+
+  &:focus-visible {
+    outline-width: 0;
+    border-color: $accent;
+  }
+
+  &:disabled {
+    border-style: dashed;
+  }
+}
+
+textarea[materialize] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  width: 100%
+  padding: 12px;
+  background: $theme-controls-background;
+  border: 1px solid $theme-border-color;
+  border-radius: 2px;
+
+  color: $base-text-color;
+  font-family: $theme-font-family;
+  font-size: $theme-font-size-smaller;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.2em;
+
+  &:focus-visible {
+    outline-width: 0;
+    border-color: $accent;
+  }
+
+  &:disabled {
+    border-style: dashed;
+  }
+}
+
+input[type=radio][materialize] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  margin: 0;
+  background: $theme-controls-background;
+  width: 24px;
+  height: 24px;
+  border: 3px solid $theme-grey-1;
+  border-radius: 50%;
+  cursor: pointer;
+
+  &:checked {
+    background: radial-gradient(circle, $accent 45%, rgba(255,255,255,0) 45%)
+    border-color: $accent;
+  }
+
+  &:focus-visible {
+    outline-width: 0;
+    border-color: $accent;
+  }
+}
+
+input[type=checkbox][materialize] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  margin: 3px;
+  background: $theme-controls-background;
+  width: 18px;
+  height: 18px;
+  border: 3px solid $theme-grey-1;
+  border-radius: 2px;
+  cursor: pointer;
+
+  &:checked {
+    border-color: $accent;
+    background-color: $accent;
+    position: relative;
+
+    &:after {
+      content: svg(check_icon, 'white', 12);
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+    }
+  }
+
+  &:focus-visible {
+    outline-width: 0;
+    border-color: $accent;
+  }
+}
+
+label[materialize] {
+  color: $base-text-color;
+  font-family: $theme-font-family;
+  font-size: $theme-font-size-smaller;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.2em;
+
+  &[for] {
+    cursor: pointer;
+  }
+}
+
+select[materialize] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  width: 100%
+  padding: 12px;
+  background: $theme-controls-background;
+  border: 1px solid $theme-border-color;
+  border-radius: 2px;
+
+  background-image: svg(arrow_drop_down_icon, $theme-black-3);
+  background-repeat: no-repeat;
+  background-position: 100% center;
+
+  color: $base-text-color;
+  font-family: $theme-font-family;
+  font-size: $theme-font-size-smaller;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.2em;
+
+  &::-ms-expand {
+    display: none;
+  }
+
+  &:focus-visible {
+    outline-width: 0;
+    border-color: $accent;
+  }
+
+  &:disabled {
+    border-style: dashed;
+  }
+}

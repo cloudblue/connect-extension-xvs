@@ -1,0 +1,32 @@
+@import 'common'
+
+
+.empty-state {
+  padding: $layout-padding;
+  margin: auto;
+
+  text-align: center;
+
+  color: $theme-black-3;
+
+  $icon-size = 96px;
+
+  &__title {
+    margin-bottom: 30px;
+  }
+
+  &__text {
+    line-height: 1.388;
+
+    font-size: 18px;
+  }
+
+  &__icon {
+    margin: 0 0 30px;
+    font-size: $icon-size;
+    width: $icon-size;
+    height: $icon-size;
+    min-width: $icon-size;
+    min-height: $icon-size;
+  }
+}
