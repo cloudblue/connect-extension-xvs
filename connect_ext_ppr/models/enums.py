@@ -14,7 +14,7 @@ class MimeTypeChoices(str, enum.Enum):
     application_vnd_ms_xslx = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
 
-class ConfigurationStateChices(str, enum.Enum):
+class ConfigurationStateChoices(str, enum.Enum):
     ACTIVE = 'active'
     INACTIVE = 'inactive'
     DELETED = 'deleted'

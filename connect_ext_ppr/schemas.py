@@ -8,32 +8,32 @@ from typing import Dict, Optional, Union
 
 from pydantic import BaseModel
 
-from connect_ext_ppr.models.enums import DeploymentStatusChoices
+from connect_ext_ppr.models.enums import ConfigurationStateChoices, DeploymentStatusChoices
 
 
-class Vendor(BaseModel):
+class VendorSchema(BaseModel):
     id: str
     name: str
     icon: Optional[str]
 
 
-class Product(BaseModel):
+class ProductSchema(BaseModel):
     id: str
     name: str
     icon: Optional[str]
 
 
-class Hub(BaseModel):
+class HubSchema(BaseModel):
     id: str
     name: str
 
 
 class DeploymentSchema(BaseModel):
     id: str
-    product: Product
-    hub: Hub
+    product: ProductSchema
+    hub: HubSchema
     account_id: str
-    owner: Vendor
+    owner: VendorSchema
     last_sync_at: datetime
     status: DeploymentStatusChoices
     events: Dict[str, Dict[str, Union[datetime, str]]]
@@ -45,3 +45,18 @@ class DeploymentRequestSchema(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class FileSchema(BaseModel):
+    id: str
+    name: str
+    location: str
+    size: int
+
+
+class ConfigurationSchema(BaseModel):
+    id: str
+    file: FileSchema
+    deployment: Dict[str, str]
+    state: ConfigurationStateChoices
+    events: Dict[str, Dict[str, Union[datetime, str]]]

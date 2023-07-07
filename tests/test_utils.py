@@ -1,8 +1,15 @@
+import copy
+
 import pytest
 from connect.client import ClientError
 from connect.client.rql import R
 
-from connect_ext_ppr.utils import _process_exc, get_all_info
+from connect_ext_ppr.utils import (
+    _process_exc,
+    filter_object_list_by_id,
+    get_all_info,
+    get_marketplaces,
+)
 
 
 def test_process_exc():
@@ -39,3 +46,34 @@ def test_get_all_info_success(
     all_info = get_all_info(connect_client)
     listing['contract']['marketplace'] = marketplace
     assert all_info[0] == listing
+
+
+def test_get_marketplaces(
+        connect_client,
+        marketplace,
+        client_mocker_factory,
+):
+
+    client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
+    client_mocker.marketplaces.filter(R().id.in_([marketplace['id']])).mock(
+        return_value=[marketplace],
+    )
+    mkps = get_marketplaces(connect_client, [marketplace['id']])
+
+    assert list(mkps) == [marketplace]
+
+
+def test_filter_objects(marketplace):
+    mkp_2 = copy.copy(marketplace)
+    mkp_2['id'] = 'MP-XXXX'
+    mkp_list = [marketplace, mkp_2]
+
+    assert filter_object_list_by_id(mkp_list, mkp_2['id']) == mkp_2
+
+
+def test_filter_key_error(marketplace):
+    mkp_list = [marketplace]
+
+    with pytest.raises(KeyError) as ex:
+        filter_object_list_by_id(mkp_list, 'MP-XXXX')
+    assert str(ex.value).startswith("'MP-XXXX'")
