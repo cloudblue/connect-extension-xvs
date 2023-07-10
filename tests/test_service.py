@@ -2,12 +2,12 @@ from connect_ext_ppr.models.deployment import Deployment
 from connect_ext_ppr.service import add_deployments
 
 
-def test_add_deplyoments(
-        dbsession,
-        listing,
-        marketplace,
-        installation,
-        logger,
+def test_add_deployments(
+    dbsession,
+    listing,
+    marketplace,
+    installation,
+    logger,
 ):
 
     hub_id = 'HB-1111-2222'
@@ -21,12 +21,12 @@ def test_add_deplyoments(
 
 
 def test_nothing_to_create(
-        dbsession,
-        listing,
-        marketplace,
-        installation,
-        logger,
-        deployment,
+    dbsession,
+    listing,
+    marketplace,
+    installation,
+    logger,
+    deployment,
 ):
     hub = {'hub': {'id': deployment.hub_id, 'name': 'Some'}}
     listing['contract']['marketplace'] = marketplace

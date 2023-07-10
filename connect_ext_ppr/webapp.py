@@ -16,6 +16,7 @@ from connect.eaas.core.extension import WebApplicationBase
 from fastapi import Depends
 
 from connect_ext_ppr.db import create_db, get_db, VerboseBaseSession
+from connect_ext_ppr.errors import ObjectNotFound
 from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
 from connect_ext_ppr.service import add_deployments
 from connect_ext_ppr.schemas import (
@@ -27,6 +28,8 @@ from connect_ext_ppr.utils import (
     _get_installation,
     filter_object_list_by_id,
     get_all_info,
+    get_client_object,
+    get_deployment_schema,
 )
 
 
@@ -36,6 +39,32 @@ from connect_ext_ppr.utils import (
     url='/static/index.html',
 )
 class ConnectExtensionXvsWebApplication(WebApplicationBase):
+
+    @router.get(
+        '/deployments/{deployment_id}',
+        summary='Deployment details',
+        response_model=DeploymentSchema,
+    )
+    def get_deployment(
+        self,
+        deployment_id: str,
+        client: ConnectClient = Depends(get_installation_client),
+        db: VerboseBaseSession = Depends(get_db),
+        installation: dict = Depends(get_installation),
+    ):
+        dep = (
+            db.query(Deployment)
+            .filter_by(id=deployment_id, account_id=installation['owner']['id'])
+            .first()
+        )
+        if dep is None:
+            raise ObjectNotFound(deployment_id)
+
+        prod = get_client_object(client, 'products', dep.product_id)
+        hub = get_client_object(client, 'hubs', dep.hub_id)
+        vendor = prod['owner']
+        deployment = get_deployment_schema(dep, prod, vendor, hub)
+        return deployment
 
     @router.get(
         '/deployments',
@@ -60,30 +89,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             vendor = filter_object_list_by_id(vendors, dep.vendor_id)
             hub = filter_object_list_by_id(hubs, dep.hub_id)
             response_list.append(
-                DeploymentSchema(
-                    id=dep.id,
-                    account_id=dep.account_id,
-                    hub={
-                        'id': dep.hub_id,
-                        'name': hub['name'],
-                    },
-                    product={
-                        'id': dep.product_id,
-                        'name': prod['name'],
-                        'icon': prod.get('icon', None),
-                    },
-                    owner={
-                        'id': dep.vendor_id,
-                        'name': vendor['name'],
-                        'icon': vendor['icon'],
-                    },
-                    status=dep.status,
-                    last_sync_at=dep.last_sync_at,
-                    events={
-                        'created': {'at': dep.created_at},
-                        'updated': {'at': dep.updated_at},
-                    },
-                ),
+                get_deployment_schema(dep, prod, vendor, hub),
             )
         return response_list
 
