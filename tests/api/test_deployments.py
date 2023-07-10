@@ -1,3 +1,14 @@
+from connect.eaas.core.constants import PROXIED_CONNECT_API_ATTR_NAME
+
+
+def test_proxied_connect_endpoints(api_client):
+    proxied = getattr(api_client._webapp_class, PROXIED_CONNECT_API_ATTR_NAME)
+    assert isinstance(proxied, dict)
+    assert proxied == {
+        '/public/v1/media': 'edit',
+    }
+
+
 def test_get_deployments(
     mocker,
     deployment,

@@ -8,6 +8,7 @@ from typing import List
 from connect.client import ConnectClient
 from connect.eaas.core.decorators import (
     module_pages,
+    proxied_connect_api,
     router,
     web_app,
 )
@@ -37,6 +38,11 @@ from connect_ext_ppr.utils import (
 @module_pages(
     label='Deployments',
     url='/static/index.html',
+)
+@proxied_connect_api(
+    {
+        '/public/v1/media': 'edit',
+    },
 )
 class ConnectExtensionXvsWebApplication(WebApplicationBase):
 
