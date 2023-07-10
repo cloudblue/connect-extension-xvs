@@ -9,9 +9,10 @@ import pytest
 from connect.client import AsyncConnectClient, ConnectClient
 from sqlalchemy.orm import sessionmaker
 
-from connect_ext_ppr.db import create_db, get_engine, Model, VerboseBaseSession
+from connect_ext_ppr.db import create_db, get_db, get_engine, Model, VerboseBaseSession
 from connect_ext_ppr.models.deployment import Deployment
 from connect_ext_ppr.models.file import File
+from connect_ext_ppr.webapp import ConnectExtensionXvsWebApplication
 
 
 @pytest.fixture(scope="session")
@@ -347,3 +348,12 @@ def media_response():
             },
         },
     }
+
+
+@pytest.fixture
+def api_client(test_client_factory, dbsession):
+    client = test_client_factory(ConnectExtensionXvsWebApplication)
+    client.app.dependency_overrides = {
+        get_db: lambda: dbsession,
+    }
+    yield client

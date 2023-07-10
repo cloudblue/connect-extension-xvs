@@ -26,11 +26,13 @@ def test_handle_listing_processing(
 ):
     config = {}
     listing['status'] = status
-    client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
 
-    client_mocker.marketplaces.filter(R().id.in_([marketplace['id']])).limit(1).mock(
-        return_value=[marketplace],
-    )
+    if status == 'listed':
+        client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
+        client_mocker.marketplaces.filter(R().id.in_([marketplace['id']])).limit(1).mock(
+            return_value=[marketplace],
+        )
+
     ext = ConnectExtensionXvsEventsApplication(
         connect_client, logger, config,
         installation=installation,
@@ -105,12 +107,13 @@ def test_handle_installation_changed(
 
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
 
-    client_mocker.listings.filter(status="listed").mock(
-        return_value=[listing],
-    )
-    client_mocker.marketplaces.filter(id__in=[marketplace['id']]).mock(
-        return_value=[marketplace],
-    )
+    if status == 'installed':
+        client_mocker.listings.filter(status="listed").mock(
+            return_value=[listing],
+        )
+        client_mocker.marketplaces.filter(id__in=[marketplace['id']]).mock(
+            return_value=[marketplace],
+        )
     installation['status'] = status
     ext = ConnectExtensionXvsEventsApplication(
         connect_client, logger, config,

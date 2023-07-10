@@ -30,10 +30,10 @@ def test_fail_get_all_info_exc(mocker, connect_client):
 
 
 def test_get_all_info_success(
-        connect_client,
-        client_mocker_factory,
-        marketplace,
-        listing,
+    connect_client,
+    client_mocker_factory,
+    marketplace,
+    listing,
 ):
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
 
