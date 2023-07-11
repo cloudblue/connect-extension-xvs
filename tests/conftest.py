@@ -73,6 +73,27 @@ def deployment(dbsession):
 
 
 @pytest.fixture
+def deployment_factory():
+    def _build_deployment(
+            dbsession,
+            product_id='PRD-XXX-XXX-XXX',
+            account_id='PA-000-000',
+            vendor_id='VA-000-000',
+            hub_id='HB-0000-0000',
+    ):
+        dep = Deployment(
+            product_id=product_id,
+            account_id=account_id,
+            vendor_id=vendor_id,
+            hub_id=hub_id,
+        )
+        dbsession.set_verbose(dep)
+        dbsession.commit()
+        return dep
+    return _build_deployment
+
+
+@pytest.fixture
 def file(dbsession, media_response):
     file = File(
         id=media_response['id'],

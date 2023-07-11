@@ -18,3 +18,10 @@ class ConfigurationStateChoices(str, enum.Enum):
     ACTIVE = 'active'
     INACTIVE = 'inactive'
     DELETED = 'deleted'
+
+
+class PPRStatusChoices(str, enum.Enum):
+    PENDING = 'pending'
+    PROCESSING = 'processing'
+    READY = 'ready'
+    FAILED = 'failed'
