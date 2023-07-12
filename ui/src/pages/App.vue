@@ -1,5 +1,6 @@
 <template lang="pug">
-.app(:style="styleCustomizations")
+.app
+  portal-target(name="destination", multiple)
   .title XVS Extension
   ui-tabs
     ui-tab(default tab="Deployments") Deployments
@@ -7,6 +8,7 @@
     ui-pad(pad="Deployments")
       .summary-tab uno
       c-data-table(
+        v-if="localValue",
         v-model="localValue",
         :headers="headers",
         hide-go-to-page-section,

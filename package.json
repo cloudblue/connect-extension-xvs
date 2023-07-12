@@ -7,8 +7,8 @@
     "test": "ui/tests"
   },
   "scripts": {
-    "build": "webpack",
-    "watch": "webpack watch",
+    "build": "NODE_ENV=production webpack",
+    "watch": "NODE_ENV=development webpack watch",
     "lint": "eslint ui/src --ext .js",
     "lint:fix": "npm run lint -- --fix",
     "test": "NODE_ENV=test jest --no-cache"
@@ -18,9 +18,9 @@
   "dependencies": {
     "@cloudblueconnect/connect-ui-toolkit": "^26",
     "@cloudblueconnect/material-svg": "^1.0.32",
-    "@fontsource/roboto": "^4.5.8",
     "css-minimizer-webpack-plugin": "^4.2.2",
     "color-convert": "^2.0.1",
+    "portal-vue": "^2.1.7",
     "ramda": "^0.28.0",
     "vue": "^2.7.14",
     "vue-clipboard2": "^0.3.3",
