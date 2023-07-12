@@ -6,6 +6,10 @@
 /***/ ((__unused_webpack_module, __unused_webpack___webpack_exports__, __webpack_require__) => {
 
 
+// EXTERNAL MODULE: ./node_modules/vue/dist/vue.esm.js
+var vue_esm = __webpack_require__(538);
+// EXTERNAL MODULE: ./node_modules/portal-vue/dist/portal-vue.common.js
+var portal_vue_common = __webpack_require__(2433);
 // EXTERNAL MODULE: ./node_modules/@cloudblueconnect/connect-ui-toolkit/dist/index.js
 var dist = __webpack_require__(4164);
 ;// CONCATENATED MODULE: ./ui/src/utils.js
@@ -20,6 +24,8 @@ const getSettings = () => fetch('/api/settings').then((response) => response.jso
 const getChart = () => fetch('/api/chart').then((response) => response.json());
 
 const getMarketplaces = () => fetch('/api/marketplaces').then((response) => response.json());
+
+const getDeployments = () => fetch('/api/deployments').then((response) => response.json());
 
 const updateSettings = (settings) => fetch('/api/settings', {
   method: 'POST',
@@ -198,6 +204,13 @@ All rights reserved.
 
 
 
+
+
+
+
+
+vue_esm["default"].use(portal_vue_common/* default */.ZP);
+
 (0,dist/* default */.ZP)({ 'settings-card': dist/* Card */.Zb })
   .then(settings);
 
@@ -305,6 +318,17 @@ All rights reserved.
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/runtimeId */
