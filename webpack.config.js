@@ -3,42 +3,37 @@ Copyright (c) 2023, Ingram Micro
 All rights reserved.
 */
 const path = require('path');
-const htmlWebpackPlugin = require('html-webpack-plugin');
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
 
+
 const generateHtmlPlugin = (title) => {
   const moduleName = title.toLowerCase();
 
-  return new htmlWebpackPlugin({
+  return new HtmlWebpackPlugin({
     title,
     filename: `${moduleName}.html`,
     template: `./ui/pages/${moduleName}.html`,
-    chunks: [moduleName]
+    chunks: [moduleName],
   });
-}
+};
 
-const populateHtmlPlugins = (pagesArray) => {
-  res = [];
-  pagesArray.forEach(page => {
-    res.push(generateHtmlPlugin(page));
-  })
-  return res;
-}
+const populateHtmlPlugins = pagesArray => pagesArray.map(generateHtmlPlugin);
 
 const pages = populateHtmlPlugins([
-  "Index",
-  "Settings",
- ]);
+  'Index',
+  'Settings',
+]);
 
 module.exports = {
-  mode: 'production',
+  mode: process.env.NODE_ENV || 'production',
   entry: {
-    index: __dirname + "/ui/src/pages/index.js",
-    settings: __dirname + "/ui/src/pages/settings.js",
+    index: path.resolve(__dirname, 'ui/src/pages/index.js'),
+    settings: path.resolve(__dirname, 'ui/src/pages/settings.js'),
   },
   output: {
     filename: '[name].[contenthash].js',
@@ -55,7 +50,7 @@ module.exports = {
         },
       },
     },
-     minimizer: [
+    minimizer: [
       new CssMinimizerPlugin(),
     ],
   },
@@ -64,13 +59,14 @@ module.exports = {
 
     new VueLoaderPlugin(),
     new CopyWebpackPlugin({
-      patterns: [
-        { from: __dirname + "/ui/images", to: "images" },
-      ],
+      patterns: [{
+        from: path.resolve(__dirname, 'ui/images'),
+        to: 'images',
+      }],
     }),
     new MiniCssExtractPlugin({
-      filename: "[name].[contenthash].css",
-      chunkFilename: "[id].css",
+      filename: '[name].[contenthash].css',
+      chunkFilename: '[id].css',
     }),
     new ESLintPlugin(),
   ],
@@ -82,7 +78,7 @@ module.exports = {
       },
       {
         test: /\.css$/i,
-        use: [MiniCssExtractPlugin.loader, "css-loader"],
+        use: [MiniCssExtractPlugin.loader, 'css-loader'],
       },
       {
         test: /\.styl(us)?$/,
@@ -91,18 +87,6 @@ module.exports = {
           'css-loader',
           'postcss-loader',
           'stylus-loader',
-        ],
-      },
-      {
-        test: /\.(woff(2)?|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
-        use: [
-          {
-            loader: 'file-loader',
-            options: {
-              name: '[name].[ext]',
-              outputPath: 'fonts/'
-            },
-          },
         ],
       },
       {
@@ -141,11 +125,9 @@ module.exports = {
       '~mixins': path.resolve(__dirname, 'ui/src/tools/mixins'),
       '~plugins': path.resolve(__dirname, 'ui/src/tools/plugins'),
       '~views': path.resolve(__dirname, 'ui/src/views'),
-      '~components': path.resolve(__dirname, 'ui/src/components'),
       '~styles': path.resolve(__dirname, 'ui/src/styles'),
       '~api': path.resolve(__dirname, 'ui/src/api'),
       '~directives': path.resolve(__dirname, 'ui/src/tools/directives'),
     },
   },
-
-}
+};

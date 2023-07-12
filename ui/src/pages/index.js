@@ -3,19 +3,26 @@ Copyright (c) 2023, Ingram Micro
 All rights reserved.
 */
 import Vue from 'vue';
+import PortalVue from 'portal-vue';
+
 import App from './App.vue';
+
 import createApp, {
   Card,
   Pad,
   Tab,
   Tabs,
 } from '@cloudblueconnect/connect-ui-toolkit';
+
 import {
   index,
 } from '../pages';
-import '@fontsource/roboto/500.css';
+
+import '@/styles/app.styl';
 import '../../styles/index.css';
 
+
+Vue.use(PortalVue);
 
 createApp({
   'main-card': Card,
