@@ -14,7 +14,7 @@ c-data-table(
           v-if="header.value === 'deployment'",
           :key="header.value",
         )
-          span {{ row.id }}
+          router-link(:to="{ name: 'DeploymentDetails', params: { id: row.id } }") {{ row.id }}
 
         //- Product column
         td.nowrap-cell(
