@@ -3,6 +3,7 @@ Copyright (c) 2023, Ingram Micro
 All rights reserved.
 */
 import Vue from 'vue';
+import VueRouter from 'vue-router';
 import PortalVue from 'portal-vue';
 
 import App from './App.vue';
@@ -16,28 +17,31 @@ import createApp, {
   Tabs,
 } from '@cloudblueconnect/connect-ui-toolkit';
 
-import {
-  index,
-} from '../pages';
-
+import routes from '@/routes';
 import '@/styles/app.styl';
 import '../../styles/index.css';
 
 
 Vue.use(PortalVue);
+Vue.use(VueRouter);
 
 createApp({
   'main-card': Card,
   'ui-tab': Tab,
   'ui-tabs': Tabs,
   'ui-pad': Pad,
-}).then(() => { index(); });
+});
 
-Vue.use(PortalVue);
+const router = new VueRouter({
+  mode: 'hash',
+  routes,
+});
+
 Vue.filter('utcToLocal', utcToLocal);
 
 const app = new Vue({
   render: h => h(App),
+  router,
 });
 
 app.$mount('#app');
