@@ -6,46 +6,36 @@ import {
 
 
 export const utcToLocal = curry((
-  store,
   utcDateString,
   format = 'L LT',
-  localize = true,
-  timezoneInfo = {},
 ) => {
-  const settings = {
-    ...store.getters['auth/userTimezoneInfo'],
-    ...timezoneInfo,
-  };
+  let { timeZone, locale } = Intl.DateTimeFormat().resolvedOptions().locale;
 
-  let { timezone, region: locale } = settings;
-
-  if (!localize || !moment.localeData(locale)) {
+  if (!moment.localeData(locale)) {
     locale = 'en_US';
   }
 
-  if (!timezone || !moment.tz.names().includes(timezone)) {
-    timezone = 'UTC';
+  if (!timeZone || !moment.tz.names().includes(timeZone)) {
+    timeZone = 'UTC';
   }
 
-  const browserLocale = Intl.DateTimeFormat().resolvedOptions().locale;
-
-  const localeData = moment.localeData(browserLocale);
+  const localeData = moment.localeData(locale);
 
   // eslint-disable-next-line no-underscore-dangle
-  localeData._longDateFormat.LT = settings.time_24h ? 'HH:mm' : 'h:mm A';
+  localeData._longDateFormat.LT = 'HH:mm';
 
-  moment.locale(browserLocale);
+  moment.locale(locale);
 
   if (format === 'fromNow') {
     return moment
       .utc(utcDateString)
-      .tz(timezone)
+      .tz(timeZone)
       .fromNow();
   }
 
   return moment
     .utc(utcDateString)
-    .tz(timezone)
+    .tz(timeZone)
     .format(format);
 });
 
