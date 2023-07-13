@@ -4,7 +4,9 @@
 # All rights reserved.
 #
 from contextlib import contextmanager
+import json
 
+import pandas as pd
 import pytest
 from connect.client import AsyncConnectClient, ConnectClient
 from sqlalchemy.orm import sessionmaker
@@ -378,3 +380,14 @@ def api_client(test_client_factory, dbsession):
         get_db: lambda: dbsession,
     }
     yield client
+
+
+@pytest.fixture
+def ppr_workbook():
+    return pd.ExcelFile('./tests/fixtures/test_PPR_file.xlsx')
+
+
+@pytest.fixture
+def ppr_valid_schema():
+    with open('./tests/fixtures/ppr_valid_schema.json') as json_file:
+        return json.load(json_file)
