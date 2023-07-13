@@ -24,6 +24,7 @@ class CBCClient:
             endpoint: str,
             oauth_key: str,
             oauth_secret: str,
+            app_id: str,
             verify_certificate: bool = True,
             default_headers: Dict[str, str] = None,
     ):
@@ -32,6 +33,7 @@ class CBCClient:
         self.endpoint = endpoint
         self.auth_key = oauth_key
         self.auth_secret = oauth_secret
+        self.app_id = app_id
         self.verify = verify_certificate
         self.default_headers = default_headers
         self.path = self.endpoint
@@ -40,6 +42,8 @@ class CBCClient:
             self.default_headers = {
                 'User-Agent': 'Connect-CBC-Client',
             }
+
+        self.default_headers['aps-resource-id'] = self.app_id
 
         self.auth = OAuth1(
             client_key=oauth_key,

@@ -3,20 +3,8 @@ from unittest import TestCase
 
 import responses
 
-from connect_ext_ppr.client import CBCClient
 
-
-def test_resource(
-    cbc_endpoint,
-    cbc_oauth_key,
-    cbc_oauth_secret,
-):
-    cbc_client = CBCClient(
-        endpoint=cbc_endpoint,
-        oauth_key=cbc_oauth_key,
-        oauth_secret=cbc_oauth_secret,
-    )
-
+def test_resource(cbc_endpoint, cbc_client):
     resource = cbc_client.test_collection['identifier']
 
     assert resource.path == f'{cbc_endpoint}/test-collection/identifier'
@@ -25,20 +13,13 @@ def test_resource(
 @responses.activate
 def test_resource_get(
     cbc_endpoint,
-    cbc_oauth_key,
-    cbc_oauth_secret,
+    cbc_client,
     flat_catalog_type_object,
 ):
     responses.add(
         method='GET',
         url=f'{cbc_endpoint}/test-collection/identifier',
         json=flat_catalog_type_object,
-    )
-
-    cbc_client = CBCClient(
-        endpoint=cbc_endpoint,
-        oauth_key=cbc_oauth_key,
-        oauth_secret=cbc_oauth_secret,
     )
 
     obj = cbc_client.test_collection['identifier'].get()
@@ -49,20 +30,13 @@ def test_resource_get(
 @responses.activate
 def test_resource_action_with_payload(
     cbc_endpoint,
-    cbc_oauth_key,
-    cbc_oauth_secret,
+    cbc_client,
     flat_catalog_type_object,
 ):
     responses.add(
         method='POST',
         url=f'{cbc_endpoint}/test-collection/identifier/upload',
         json=flat_catalog_type_object,
-    )
-
-    cbc_client = CBCClient(
-        endpoint=cbc_endpoint,
-        oauth_key=cbc_oauth_key,
-        oauth_secret=cbc_oauth_secret,
     )
 
     obj = cbc_client.test_collection['identifier'].action(
@@ -76,20 +50,13 @@ def test_resource_action_with_payload(
 @responses.activate
 def test_resource_action_not_json_response(
     cbc_endpoint,
-    cbc_oauth_key,
-    cbc_oauth_secret,
+    cbc_client,
     flat_catalog_type_object,
 ):
     responses.add(
         method='POST',
         url=f'{cbc_endpoint}/test-collection/identifier/upload',
         body='Not a JSON',
-    )
-
-    cbc_client = CBCClient(
-        endpoint=cbc_endpoint,
-        oauth_key=cbc_oauth_key,
-        oauth_secret=cbc_oauth_secret,
     )
 
     obj = cbc_client.test_collection['identifier'].action(
@@ -103,20 +70,13 @@ def test_resource_action_not_json_response(
 @responses.activate
 def test_resource_action_with_extra_headers(
     cbc_endpoint,
-    cbc_oauth_key,
-    cbc_oauth_secret,
+    cbc_client,
     flat_catalog_type_object,
 ):
     responses.add(
         method='POST',
         url=f'{cbc_endpoint}/test-collection/identifier/upload',
         json=flat_catalog_type_object,
-    )
-
-    cbc_client = CBCClient(
-        endpoint=cbc_endpoint,
-        oauth_key=cbc_oauth_key,
-        oauth_secret=cbc_oauth_secret,
     )
 
     obj = cbc_client.test_collection['identifier'].action(
@@ -131,20 +91,13 @@ def test_resource_action_with_extra_headers(
 @responses.activate
 def test_resource_action_with_file(
     cbc_endpoint,
-    cbc_oauth_key,
-    cbc_oauth_secret,
+    cbc_client,
     flat_catalog_type_object,
 ):
     responses.add(
         method='POST',
         url=f'{cbc_endpoint}/test-collection/identifier/upload',
         json=flat_catalog_type_object,
-    )
-
-    cbc_client = CBCClient(
-        endpoint=cbc_endpoint,
-        oauth_key=cbc_oauth_key,
-        oauth_secret=cbc_oauth_secret,
     )
 
     obj = cbc_client.test_collection['identifier'].action(
@@ -158,20 +111,13 @@ def test_resource_action_with_file(
 @responses.activate
 def test_resource_action_with_headers_output(
     cbc_endpoint,
-    cbc_oauth_key,
-    cbc_oauth_secret,
+    cbc_client,
     flat_catalog_type_object,
 ):
     responses.add(
         method='POST',
         url=f'{cbc_endpoint}/test-collection/identifier/upload',
         json=flat_catalog_type_object,
-    )
-
-    cbc_client = CBCClient(
-        endpoint=cbc_endpoint,
-        oauth_key=cbc_oauth_key,
-        oauth_secret=cbc_oauth_secret,
     )
 
     obj = cbc_client.test_collection['identifier'].action(

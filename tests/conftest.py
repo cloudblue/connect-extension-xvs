@@ -9,6 +9,7 @@ import pytest
 from connect.client import AsyncConnectClient, ConnectClient
 from sqlalchemy.orm import sessionmaker
 
+from connect_ext_ppr.client import CBCClient
 from connect_ext_ppr.db import create_db, get_db, get_engine, Model, VerboseBaseSession
 from connect_ext_ppr.models.deployment import Deployment
 from connect_ext_ppr.models.file import File
@@ -302,6 +303,26 @@ def cbc_oauth_key():
 @pytest.fixture
 def cbc_oauth_secret():
     return '7b534af1-4110-4520-abf3-e78503ef78a6'
+
+
+@pytest.fixture
+def cbc_app_id():
+    return '30a22e97-c8b0-4e6f-bb6a-87fbcb724830'
+
+
+@pytest.fixture
+def cbc_client(
+    cbc_endpoint,
+    cbc_oauth_key,
+    cbc_oauth_secret,
+    cbc_app_id,
+):
+    return CBCClient(
+        endpoint=cbc_endpoint,
+        oauth_key=cbc_oauth_key,
+        oauth_secret=cbc_oauth_secret,
+        app_id=cbc_app_id,
+    )
 
 
 @pytest.fixture
