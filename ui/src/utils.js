@@ -10,6 +10,8 @@ export const getChart = () => fetch('/api/chart').then((response) => response.js
 
 export const getMarketplaces = () => fetch('/api/marketplaces').then((response) => response.json());
 
+export const getDeployments = () => fetch('/api/deployments').then((response) => response.json());
+
 export const updateSettings = (settings) => fetch('/api/settings', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },

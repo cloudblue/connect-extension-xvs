@@ -7,7 +7,7 @@
     "test": "ui/tests"
   },
   "scripts": {
-    "build": "NODE_ENV=production webpack",
+    "build": "NODE_ENV=development webpack",
     "watch": "NODE_ENV=development webpack watch",
     "lint": "eslint ui/src --ext .js",
     "lint:fix": "npm run lint -- --fix",
@@ -25,7 +25,9 @@
     "vue": "^2.7.14",
     "vue-clipboard2": "^0.3.3",
     "vuex": "^3.6.2",
-    "vue-input-facade": "^2.0.1"
+    "vue-input-facade": "^2.0.1",
+    "portal-vue": "^2.1.7",
+    "moment-timezone": "^0.5.43"
   },
   "devDependencies": {
     "@babel/core": "^7.18.0",
