@@ -6,7 +6,9 @@ import Vue from 'vue';
 import PortalVue from 'portal-vue';
 
 import App from './App.vue';
-
+import {
+  utcToLocal,
+} from '../tools/filters/utcToLocal';
 import createApp, {
   Card,
   Pad,
@@ -31,6 +33,8 @@ createApp({
   'ui-pad': Pad,
 }).then(() => { index(); });
 
+Vue.use(PortalVue);
+Vue.filter('utcToLocal', utcToLocal);
 
 const app = new Vue({
   render: h => h(App),
