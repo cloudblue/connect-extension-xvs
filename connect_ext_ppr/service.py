@@ -1,5 +1,12 @@
+from typing import Any, Dict
+
+import jsonschema
+from connect.client import ClientError
+
 from connect_ext_ppr.db import get_db_ctx_manager
 from connect_ext_ppr.models.deployment import Deployment
+from connect_ext_ppr.utils import _parse_json_schema_error
+from connect_ext_ppr.constants import PPR_SCHEMA
 
 
 def add_deployments(installation, listings, config, logger):
@@ -40,3 +47,16 @@ def add_deployments(installation, listings, config, logger):
             db.expire_all()
             dep_ids = ', '.join([d.id for d in deployments])
             logger.info(f"The following Deployments have been created: {dep_ids}.")
+
+
+def validate_ppr_schema(dict_file: Dict[str, Any]):
+    try:
+        jsonschema.validate(dict_file, PPR_SCHEMA)
+    except jsonschema.ValidationError as ex:
+        error = ClientError(
+            message=ex.message,
+            status_code=400,
+            error_code='VAL_000',
+            errors=_parse_json_schema_error(ex),
+        )
+        raise error

@@ -3,6 +3,8 @@ import os
 from connect.client import ClientError, ConnectClient
 from connect.client.rql import R
 from connect.eaas.core.logging import RequestLogger
+from jsonschema.exceptions import _Error
+import pandas as pd
 
 from connect_ext_ppr.schemas import DeploymentSchema
 
@@ -105,3 +107,24 @@ def get_client_object(client, collection_name, obj_id):
         return getattr(client, collection_name)[obj_id].get()
     except ClientError as exc:
         raise _process_exc(exc)
+
+
+def workbook_to_dict(wb: pd.ExcelFile, row_data=False):
+    dict_wb = {}
+    for sheet in wb.sheet_names:
+        df = wb.parse(sheet_name=sheet)
+        dict_wb[sheet] = process_worksheet(df, row_data)
+    return dict_wb
+
+
+def process_worksheet(df: pd.DataFrame, row_data=False):
+    return df.to_dict(orient='list') if row_data else df.columns.to_list()
+
+
+def _parse_json_schema_error(ex: _Error):
+    error_list = [ex.message]
+    if ex.context:
+        for sub_ex in ex.context:
+            sub_list = _parse_json_schema_error(sub_ex)
+            error_list.extend(sub_list)
+    return error_list
