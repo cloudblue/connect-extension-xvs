@@ -6,7 +6,10 @@ from connect.eaas.core.logging import RequestLogger
 from jsonschema.exceptions import _Error
 import pandas as pd
 
-from connect_ext_ppr.schemas import DeploymentSchema
+from connect_ext_ppr.errors import ObjectNotFound
+from connect_ext_ppr.models.configuration import Configuration
+from connect_ext_ppr.models.deployment import Deployment
+from connect_ext_ppr.schemas import ConfigurationSchema, DeploymentSchema, FileSchema
 
 
 def _get_extension_client(logger):
@@ -107,6 +110,58 @@ def get_client_object(client, collection_name, obj_id):
         return getattr(client, collection_name)[obj_id].get()
     except ClientError as exc:
         raise _process_exc(exc)
+
+
+def get_configuration_schema(configuration, file):
+    """
+    Returns ConfigurationSchema for the configuration
+    :param configuration: Configuration model
+    :param file: File model
+    :rtype: ConfigurationSchema
+    """
+    file_schema = FileSchema(
+        id=file.id,
+        name=file.name,
+        location=file.location,
+        size=file.size,
+        mime_type=file.mime_type,
+    )
+    return ConfigurationSchema(
+        id=configuration.id,
+        file=file_schema,
+        deployment={
+            'id': configuration.deployment,
+        },
+        state=configuration.state,
+        events={
+            'created': {'at': configuration.created_at},
+            'updated': {'at': configuration.updated_at},
+        },
+    )
+
+
+def get_deployment_by_id(deployment_id, db, installation):
+    """Return deployment or raise an error that it is not found"""
+    dep = (
+        db.query(Deployment)
+        .filter_by(id=deployment_id, account_id=installation['owner']['id'])
+        .one_or_none()
+    )
+    if dep is None:
+        raise ObjectNotFound(deployment_id)
+    return dep
+
+
+def get_configuration_by_id(configuration_id, deployment_id, db):
+    """Return configuration or raise an error that it is not found"""
+    conf = (
+        db.query(Configuration)
+        .filter_by(id=configuration_id, deployment=deployment_id)
+        .one_or_none()
+    )
+    if conf is None:
+        raise ObjectNotFound(configuration_id)
+    return conf
 
 
 def workbook_to_dict(wb: pd.ExcelFile, row_data=False):
