@@ -3,7 +3,6 @@ from datetime import datetime
 import sqlalchemy as db
 
 from connect_ext_ppr.db import Model
-from connect_ext_ppr.models.deployment import Deployment
 from connect_ext_ppr.models.enums import ConfigurationStateChoices
 from connect_ext_ppr.models.file import File
 
@@ -15,7 +14,7 @@ class Configuration(Model):
 
     id = db.Column(db.String(20), primary_key=True)
     file = db.Column(db.ForeignKey(File.id))
-    deployment = db.Column(db.ForeignKey(Deployment.id))
+    deployment = db.Column(db.ForeignKey('deployments.id'))
     state = db.Column(
         db.Enum(ConfigurationStateChoices, validate_strings=True),
         default=ConfigurationStateChoices.INACTIVE,
