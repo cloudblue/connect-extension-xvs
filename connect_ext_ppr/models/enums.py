@@ -7,6 +7,23 @@ class DeploymentStatusChoices(str, enum.Enum):
     SYNCED = 'synced'
 
 
+class DeploymentRequestStatusChoices(str, enum.Enum):
+    PENDING = 'pending'
+    PROCESSING = 'processing'
+    DONE = 'done'
+    ERROR = 'error'
+    ABORTING = 'aborting'
+    ABORTED = 'aborted'
+
+
+class TasksStatusChoices(str, enum.Enum):
+    PENDING = 'pending'
+    PROCESSING = 'processing'
+    DONE = 'done'
+    ERROR = 'error'
+    ABORTED = 'aborted'
+
+
 class MimeTypeChoices(str, enum.Enum):
     application_json = 'application/json'
     application_manifest_json = 'application/manifest+json'
