@@ -90,7 +90,7 @@ import {
 
 import {
   getDeployments,
-} from '../utils';
+} from '@/utils';
 
 const prepareRow = template({
   id: ['id'],

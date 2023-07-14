@@ -1,27 +1,34 @@
 <template lang="pug">
-  .dashboard
-    .title XVS Extension
-    ui-tabs
-      ui-tab(default tab="Deployments") Deployments
-      ui-tab(tab="Requests") Requests
-
-      ui-pad(pad="Deployments")
-        deployments-table
-
-      ui-pad(pad="Requests")
-        .subs-criptions-tab Requests
+  c-view.dashboard(
+    title="XVS Extension",
+    :tabs="tabs",
+    :current-tab.sync="currentTab",
+    no-padded,
+  )
+    deployments-table(v-if="currentTab?.value === 'deployments'")
+    .subscriptions-tab(v-else-if="currentTab?.value === 'requests'") Requests
 
 </template>
 
 <script>
+import cView from '~components/cView.vue';
 import DeploymentsTable from '~components/DeploymentsTable.vue';
 
 export default {
   components: {
+    cView,
     DeploymentsTable,
   },
-  data() {
-    return {};
+
+  data: () => ({
+    currentTab: null,
+  }),
+
+  computed: {
+    tabs: () => [
+      { label: 'Deployments', value: 'deployments' },
+      { label: 'Requests', value: 'requests' },
+    ],
   },
 };
 </script>

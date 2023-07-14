@@ -12,6 +12,8 @@ export const getMarketplaces = () => fetch('/api/marketplaces').then((response) 
 
 export const getDeployments = () => fetch('/api/deployments').then((response) => response.json());
 
+export const getDeployment = (id) => fetch(`/api/deployments/${id}`).then((response) => response.json());
+
 export const updateSettings = (settings) => fetch('/api/settings', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
