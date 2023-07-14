@@ -13,6 +13,7 @@ from sqlalchemy.orm import sessionmaker
 
 from connect_ext_ppr.client import CBCClient
 from connect_ext_ppr.db import create_db, get_db, get_engine, Model, VerboseBaseSession
+from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import Deployment
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.webapp import ConnectExtensionXvsWebApplication
@@ -401,6 +402,17 @@ def api_client(test_client_factory, dbsession):
         get_db: lambda: dbsession,
     }
     yield client
+
+
+@pytest.fixture
+def configuration(dbsession, deployment, file):
+    conf = Configuration(
+        file=file.id,
+        deployment=deployment.id,
+    )
+    dbsession.set_verbose(conf)
+    dbsession.commit()
+    return conf
 
 
 @pytest.fixture

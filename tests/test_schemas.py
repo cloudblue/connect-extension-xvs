@@ -87,6 +87,7 @@ def test_configuration_schema(state, file):
             name=file.name,
             location=file.location,
             size=file.size,
+            mime_type=file.mime_type,
         ),
         deployment={'id': 'DPL-000-000-000'},
         state=state,
@@ -97,13 +98,14 @@ def test_configuration_schema(state, file):
     )
     json = serializer.json()
     assert json == j.dumps({
-        "id": "CFL-000-000-000",
         "file": {
             "id": file.id,
             "name": file.name,
             "location": file.location,
             "size": file.size,
+            "mime_type": file.mime_type,
         },
+        "id": "CFL-000-000-000",
         "deployment": {"id": "DPL-000-000-000"},
         "state": state,
         "events": {

@@ -8,7 +8,11 @@ from typing import Dict, Optional, Union
 
 from pydantic import BaseModel
 
-from connect_ext_ppr.models.enums import ConfigurationStateChoices, DeploymentStatusChoices
+from connect_ext_ppr.models.enums import (
+    ConfigurationStateChoices,
+    DeploymentStatusChoices,
+    MimeTypeChoices,
+)
 
 
 class VendorSchema(BaseModel):
@@ -52,11 +56,15 @@ class FileSchema(BaseModel):
     name: str
     location: str
     size: int
+    mime_type: MimeTypeChoices
 
 
-class ConfigurationSchema(BaseModel):
-    id: str
+class ConfigurationCreateSchema(BaseModel):
     file: FileSchema
+
+
+class ConfigurationSchema(ConfigurationCreateSchema):
+    id: str
     deployment: Dict[str, str]
     state: ConfigurationStateChoices
     events: Dict[str, Dict[str, Union[datetime, str]]]
