@@ -5,7 +5,6 @@ from sqlalchemy.sql import desc, select
 
 from connect_ext_ppr.db import Model
 from connect_ext_ppr.models.configuration import Configuration
-from connect_ext_ppr.models.deployment import Deployment
 from connect_ext_ppr.models.enums import PPRStatusChoices
 from connect_ext_ppr.models.file import File
 
@@ -31,7 +30,7 @@ class PPRVersion(Model):
 
     id = db.Column(db.String(20), primary_key=True)
     file = db.Column(db.ForeignKey(File.id))
-    deployment = db.Column(db.ForeignKey(Deployment.id))
+    deployment = db.Column(db.ForeignKey('deployments.id'))
     configuration = db.Column(db.ForeignKey(Configuration.id), nullable=True)
     version = db.Column(db.Integer, default=make_version)
     description = db.Column(db.Text)

@@ -4,6 +4,7 @@ import sqlalchemy as db
 
 from connect_ext_ppr.db import Model
 from connect_ext_ppr.models.enums import DeploymentRequestStatusChoices, DeploymentStatusChoices
+from connect_ext_ppr.models.ppr import PPRVersion
 
 
 class Deployment(Model):
@@ -38,7 +39,7 @@ class DeploymentRequest(Model):
 
     id = db.Column(db.String(20), primary_key=True)
     deployment = db.Column(db.ForeignKey(Deployment.id))
-    ppr = db.Column(db.ForeignKey('ppr_version.id'))
+    ppr = db.Column(db.String, db.ForeignKey(PPRVersion.id))
     status = db.Column(
         db.Enum(DeploymentRequestStatusChoices, validate_strings=True),
         default=DeploymentRequestStatusChoices.PENDING,
