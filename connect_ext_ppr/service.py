@@ -1,8 +1,8 @@
 from typing import Any, Dict
 
 import jsonschema
-from connect.client import ClientError
 
+from connect_ext_ppr.errors import ExtensionValidationError
 from connect_ext_ppr.db import get_db_ctx_manager
 from connect_ext_ppr.models.deployment import Deployment
 from connect_ext_ppr.utils import _parse_json_schema_error
@@ -53,10 +53,7 @@ def validate_ppr_schema(dict_file: Dict[str, Any]):
     try:
         jsonschema.validate(dict_file, PPR_SCHEMA)
     except jsonschema.ValidationError as ex:
-        error = ClientError(
-            message=ex.message,
-            status_code=400,
-            error_code='VAL_000',
+        raise ExtensionValidationError.VAL_000(
+            format_kwargs={"validation_error": ex.message},
             errors=_parse_json_schema_error(ex),
         )
-        raise error

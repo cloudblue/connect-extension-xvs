@@ -8,19 +8,11 @@ from connect.client.rql import R
 
 from connect_ext_ppr.utils import (
     _parse_json_schema_error,
-    _process_exc,
     filter_object_list_by_id,
     get_all_info,
     get_marketplaces,
     workbook_to_dict,
 )
-
-
-def test_process_exc():
-    ex = ClientError(message='Some')
-    new_exc = _process_exc(ex)
-    assert new_exc.error_code == 'EXT_000'
-    assert str(new_exc) == str(ex)
 
 
 def test_fail_get_all_info_exc(mocker, connect_client):
@@ -30,7 +22,7 @@ def test_fail_get_all_info_exc(mocker, connect_client):
     )
     with pytest.raises(ClientError) as ex:
         get_all_info(connect_client)
-    assert 'Unexpected error: EXT_000 - Unexpected error' in str(ex.value)
+    assert '400 Bad Request: EXT_000 - Unexpected error.' in str(ex.value)
 
 
 def test_get_all_info_success(

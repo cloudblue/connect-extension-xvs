@@ -287,9 +287,11 @@ def marketplace():
 @pytest.fixture
 def product():
     return {
-        'id': 'PRD-000-000-000',
-        'version': 2,
-        'owner': {'id': 'VA-000-000'},
+        "id": "PRD-000-000-000",
+        "name": "Chat GPT",
+        "version": 2,
+        "owner": {"id": "VA-000-000"},
+        "icon": "/media/VA-000-000/PRD-000-000-000/media/PRD-000-000-000-logo_cLqk6Vm.png",
     }
 
 
@@ -390,6 +392,51 @@ def media_response():
             "PA-065-101": {
                 "view": True,
                 "delete": True,
+            },
+        },
+    }
+
+
+@pytest.fixture
+def item_response():
+    return {
+        "id": "PRD-000-000-000-00001",
+        "name": "New name",
+        "status": "published",
+        "unit": {
+            "id": "licenses",
+            "name": "Licenses",
+            "title": "Licenses",
+            "unit": "unit",
+        },
+        "mpn": "MPN-B",
+        "position": 20000,
+        "type": "reservation",
+        "local_id": "PRD_000_000_000_00001",
+        "display_name": "New name",
+        "period": "monthly",
+        "precision": "integer",
+        "commitment": {
+            "multiplier": "billing_period",
+            "count": 1,
+        },
+        "dynamic": False,
+        "description": "Some",
+        "depth": 0,
+        "ui": {
+            "visibility": True,
+        },
+        "ui_visibility": True,
+        "events": {
+            "created": {
+                "at": "2023-07-11T04:45:41+00:00",
+            },
+            "updated": {
+                "at": "2023-07-17T09:16:20+00:00",
+                "by": {
+                    "id": "UR-000-000-000",
+                    "name": "Jhon Doe",
+                },
             },
         },
     }

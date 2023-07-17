@@ -3,10 +3,11 @@ import os
 from connect.client import ClientError, ConnectClient
 from connect.client.rql import R
 from connect.eaas.core.logging import RequestLogger
+from fastapi import status
 from jsonschema.exceptions import _Error
 import pandas as pd
 
-from connect_ext_ppr.errors import ObjectNotFound
+from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import Deployment
 from connect_ext_ppr.schemas import ConfigurationSchema, DeploymentSchema, FileSchema
@@ -24,14 +25,6 @@ def _get_extension_client(logger):
 def _get_installation(client):
     rql = R().external_id.eq(os.getenv('ENVIRONMENT_ID'))
     return client('devops').installations.filter(rql).first()
-
-
-def _process_exc(exc: ClientError, error_code='EXT_000', errors=None):
-    if not exc.error_code:  # pragma: no branch
-        exc.error_code = error_code
-    if not exc.errors:  # pragma: no branch
-        exc.errors = [errors or str(exc)]
-    return exc
 
 
 def get_listings(client):
@@ -54,7 +47,11 @@ def get_all_info(client):
             list_['contract']['marketplace'] = filter_object_list_by_id(marketplaces, mkp_id)
         return listings
     except ClientError as exc:
-        raise _process_exc(exc)
+        raise ExtensionHttpError.EXT_000(
+            format_kwargs={"client_message": exc.message or ''},
+            status_code=exc.status_code,
+            errors=exc.errors,
+        )
 
 
 def filter_object_list_by_id(object_list, key):
@@ -109,7 +106,11 @@ def get_client_object(client, collection_name, obj_id):
     try:
         return getattr(client, collection_name)[obj_id].get()
     except ClientError as exc:
-        raise _process_exc(exc)
+        raise ExtensionHttpError.EXT_000(
+            format_kwargs={"client_message": exc.message or ''},
+            status_code=exc.status_code,
+            errors=exc.errors,
+        )
 
 
 def get_configuration_schema(configuration, file):
@@ -148,7 +149,10 @@ def get_deployment_by_id(deployment_id, db, installation):
         .one_or_none()
     )
     if dep is None:
-        raise ObjectNotFound(deployment_id)
+        raise ExtensionHttpError.EXT_001(
+            format_kwargs={'obj_id': deployment_id},
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
     return dep
 
 
@@ -160,7 +164,10 @@ def get_configuration_by_id(configuration_id, deployment_id, db):
         .one_or_none()
     )
     if conf is None:
-        raise ObjectNotFound(configuration_id)
+        raise ExtensionHttpError.EXT_001(
+            format_kwargs={'obj_id': configuration_id},
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
     return conf
 
 

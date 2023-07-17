@@ -90,7 +90,7 @@ def test_get_configuration_not_found(
     assert response.json() == {
         'error_code': 'EXT_001',
         'errors': [
-            'Object CFL-XXX-XXX not found',
+            'Object `CFL-XXX-XXX` not found.',
         ],
     }
 
@@ -193,7 +193,7 @@ def test_post_configuration_wrong_deployment(
     assert response.json() == {
         'error_code': 'EXT_001',
         'errors': [
-            'Object DPL-YYY-YYY not found',
+            'Object `DPL-YYY-YYY` not found.',
         ],
     }
 
@@ -219,11 +219,11 @@ def test_post_configuration_file_already_exists(
             },
         },
     )
-    assert response.status_code == 404
+    assert response.status_code == 400
     assert response.json() == {
         'error_code': 'EXT_002',
         'errors': [
-            f'Object {file.id} already exists, cannot create a new one',
+            f'Object `{file.id}` already exists, cannot create a new one.',
         ],
     }
 
@@ -270,7 +270,7 @@ def test_delete_configuration_not_found(
     assert response.json() == {
         'error_code': 'EXT_001',
         'errors': [
-            'Object CFL-XXX-XXX not found',
+            'Object `CFL-XXX-XXX` not found.',
         ],
     }
 
@@ -309,6 +309,6 @@ def test_delete_configuration_wrong_state(
     assert response.json() == {
         'error_code': 'EXT_004',
         'errors': [
-            f'Object {configuration.id} cannot be deleted now',
+            f'Object `{configuration.id}` cannot be deleted now.',
         ],
     }
