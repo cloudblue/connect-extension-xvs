@@ -54,10 +54,12 @@ def test_get_deployments(
     assert 'at' in data['events']['created']
     assert 'at' in data['events']['updated']
     assert data['account_id'] == 'PA-000-000'
+
+    product = deployment.product
     assert data['product'] == {
-        'id': 'PRD-XXX-XXX-XXX',
-        'name': 'Bottle of beer',
-        'icon': '/media/VA-000-000/PRD-XXX-XXX-XXX/media/beer.png',
+        'id': product.id,
+        'name': product.name,
+        'icon': product.logo,
     }
     assert data['owner'] == {
         'id': 'VA-000-000',
@@ -98,19 +100,13 @@ def test_get_deployment(
         'connect_ext_ppr.webapp.get_client_object',
         side_effect=[
             {
-                'id': 'PRD-XXX-XXX-XXX',
-                'icon': '/media/VA-000-000/PRD-XXX-XXX-XXX/media/beer.png',
-                'name': 'Bottle of beer',
-                'status': 'published',
-                'owner': {
-                    'id': 'VA-000-000',
-                    'name': 'Vendor account 00 for El Loro',
-                    'icon': '/media/VA-000-000/media/icon.png',
-                },
-            },
-            {
                 'id': 'HB-0000-0000',
                 'name': 'Hub for the best',
+            },
+            {
+                'id': 'VA-000-000',
+                'name': 'Vendor account 00 for El Loro',
+                'icon': '/media/VA-000-000/media/icon.png',
             },
         ],
     )
@@ -125,10 +121,11 @@ def test_get_deployment(
     assert 'at' in data['events']['created']
     assert 'at' in data['events']['updated']
     assert data['account_id'] == 'PA-000-000'
+    product = deployment.product
     assert data['product'] == {
-        'id': 'PRD-XXX-XXX-XXX',
-        'name': 'Bottle of beer',
-        'icon': '/media/VA-000-000/PRD-XXX-XXX-XXX/media/beer.png',
+        'id': product.id,
+        'name': product.name,
+        'icon': product.logo,
     }
     assert data['owner'] == {
         'id': 'VA-000-000',

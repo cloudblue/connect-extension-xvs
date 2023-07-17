@@ -8,6 +8,6 @@ class Product(Model):
 
     id = db.Column(db.String(100), primary_key=True)
     name = db.Column(db.String(255))
-    logo = db.Column(db.String(2000), nullable=False)
-    version = db.Column(db.SmallInteger())
-    owner = db.Column(db.String(255))
+    logo = db.Column(db.String(2000), nullable=True)
+    version = db.Column(db.SmallInteger(), nullable=True)
+    owner_id = db.Column(db.String(255))

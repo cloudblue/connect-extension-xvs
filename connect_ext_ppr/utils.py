@@ -81,9 +81,9 @@ def get_deployment_schema(deployment, product, vendor, hub):
             'name': hub['name'],
         },
         product={
-            'id': deployment.product_id,
-            'name': product['name'],
-            'icon': product.get('icon'),
+            'id': product.id,
+            'name': product.name,
+            'icon': product.logo,
         },
         owner={
             'id': deployment.vendor_id,

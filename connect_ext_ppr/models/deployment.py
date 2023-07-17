@@ -1,10 +1,12 @@
 from datetime import datetime
 
 import sqlalchemy as db
+from sqlalchemy.orm import relationship
 
 from connect_ext_ppr.db import Model
 from connect_ext_ppr.models.enums import DeploymentRequestStatusChoices, DeploymentStatusChoices
 from connect_ext_ppr.models.ppr import PPRVersion
+from connect_ext_ppr.models.replicas import Product
 
 
 class Deployment(Model):
@@ -19,7 +21,7 @@ class Deployment(Model):
     PREFIX = 'DPL'
 
     id = db.Column(db.String(20), primary_key=True)
-    product_id = db.Column(db.String(20))
+    product_id = db.Column(db.String, db.ForeignKey(Product.id))
     hub_id = db.Column(db.String(20))
     account_id = db.Column(db.String(20))
     vendor_id = db.Column(db.String(20))
@@ -30,6 +32,8 @@ class Deployment(Model):
     last_sync_at = db.Column(db.DateTime(), default=datetime.utcnow)
     created_at = db.Column(db.DateTime(), default=datetime.utcnow)
     updated_at = db.Column(db.DateTime(), onupdate=datetime.utcnow, default=datetime.utcnow)
+
+    product = relationship('Product', backref="deployments")
 
 
 class DeploymentRequest(Model):

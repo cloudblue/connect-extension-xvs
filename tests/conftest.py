@@ -16,6 +16,7 @@ from connect_ext_ppr.db import create_db, get_db, get_engine, Model, VerboseBase
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import Deployment
 from connect_ext_ppr.models.file import File
+from connect_ext_ppr.models.replicas import Product
 from connect_ext_ppr.webapp import ConnectExtensionXvsWebApplication
 
 
@@ -64,9 +65,12 @@ def mocked_get_db_ctx(dbsession, mocker):
 
 
 @pytest.fixture
-def deployment(dbsession):
+def deployment(dbsession, product_factory):
+    product = product_factory()
+    dbsession.add(product)
+    dbsession.commit()
     dep = Deployment(
-        product_id='PRD-XXX-XXX-XXX',
+        product_id=product.id,
         account_id='PA-000-000',
         vendor_id='VA-000-000',
         hub_id='HB-0000-0000',
@@ -77,7 +81,7 @@ def deployment(dbsession):
 
 
 @pytest.fixture
-def deployment_factory():
+def deployment_factory(product_factory):
     def _build_deployment(
             dbsession,
             product_id='PRD-XXX-XXX-XXX',
@@ -85,16 +89,33 @@ def deployment_factory():
             vendor_id='VA-000-000',
             hub_id='HB-0000-0000',
     ):
+        product = product_factory(id=product_id, owner_id=vendor_id)
         dep = Deployment(
-            product_id=product_id,
+            product_id=product.id,
             account_id=account_id,
             vendor_id=vendor_id,
             hub_id=hub_id,
         )
+        dbsession.add(product)
         dbsession.set_verbose(dep)
         dbsession.commit()
         return dep
     return _build_deployment
+
+
+@pytest.fixture
+def product_factory(dbsession):
+    def _build_product(
+        id='PRD-XXX-XXX-XXX',
+        name='Chat GPT',
+        logo='/media/VA-000-000/PRD-000-000-000/media/PRD-000-000-000-logo_cLqk6Vm.png',
+        owner_id='VA-000-000',
+    ):
+        product = Product(id=id, name=name, logo=logo, owner_id=owner_id)
+        dbsession.add(product)
+        dbsession.commit()
+        return product
+    return _build_product
 
 
 @pytest.fixture
@@ -288,6 +309,8 @@ def marketplace():
 def product():
     return {
         'id': 'PRD-000-000-000',
+        'name': 'Product name',
+        'icon': 'http://icon.png',
         'version': 2,
         'owner': {'id': 'VA-000-000'},
     }

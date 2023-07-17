@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 
 from connect_ext_ppr.db import VerboseSessionError
 from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
+from connect_ext_ppr.models.replicas import Product
 
 
 def _get_id_prefix_or_body(id_: str, idx: int):
@@ -10,8 +11,10 @@ def _get_id_prefix_or_body(id_: str, idx: int):
 
 
 def test_generate_deployment_w_verbose_id(dbsession):
+    product = Product(id='PRD-000-000-000', name='Product Name')
+    dbsession.add(product)
     dep = Deployment(
-        product_id='PRD-000-000-001',
+        product_id=product.id,
         account_id='PA-000-000',
         vendor_id='VA-000-000',
         hub_id='HB-0000-0001',
@@ -24,15 +27,17 @@ def test_generate_deployment_w_verbose_id(dbsession):
 
 
 def test_generate_deployment_list_w_verbose_id(dbsession):
+    product = Product(id='PRD-000-000-000', name='Product Name')
+    dbsession.add(product)
     dep_list = [
         Deployment(
-            product_id='PRD-000-000-000',
+            product_id=product.id,
             account_id='PA-000-001',
             vendor_id='VA-000-000',
             hub_id='HB-0000-0002',
         ),
         Deployment(
-            product_id='PRD-000-000-000',
+            product_id=product.id,
             account_id='PA-000-002',
             vendor_id='VA-000-000',
             hub_id='HB-0000-0003',
@@ -75,8 +80,10 @@ def test_generate_next_verbose_id(dbsession, deployment):
 
 def test_fail_to_create_valid_verbose_id(dbsession, mocker, deployment):
     mocker.patch('connect_ext_ppr.db._generate_verbose_id', return_value=deployment.id)
+    product = Product(id='PRD-000-000-000', name='Product Name')
+    dbsession.add(product)
     dep = Deployment(
-        product_id='PRD-000-000-000',
+        product_id=product.id,
         account_id='PA-000-000',
         vendor_id='VA-000-000',
         hub_id='HB-0000-0004',
@@ -88,15 +95,16 @@ def test_fail_to_create_valid_verbose_id(dbsession, mocker, deployment):
 
 def test_fail_to_bulk_create_valid_verbose_id(dbsession, mocker, deployment):
     mocker.patch('connect_ext_ppr.db._generate_verbose_id', return_value=deployment.id)
+    product = Product(id='PRD-000-000-000', name='Product Name')
     dep_list = [
         Deployment(
-            product_id='PRD-000-000-000',
+            product_id=product.id,
             account_id='PA-000-000',
             vendor_id='VA-000-000',
             hub_id='HB-0000-0005',
         ),
         Deployment(
-            product_id='PRD-000-000-000',
+            product_id=product.id,
             account_id='PA-000-001',
             vendor_id='VA-000-000',
             hub_id='HB-0000-0006',
