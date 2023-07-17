@@ -14,7 +14,7 @@ from connect.eaas.core.responses import (
 )
 from sqlalchemy.exc import DBAPIError
 
-from connect_ext_ppr.service import add_deployments
+from connect_ext_ppr.service import add_deployments, update_product
 from connect_ext_ppr.utils import get_all_info, get_marketplaces
 
 
@@ -64,6 +64,7 @@ class ConnectExtensionXvsEventsApplication(EventsApplicationBase):
         db, create a new one.
         '''
         self.logger.info(f"Product {request['id']} changed.")
+        update_product(request, self.config, self.logger)
         return BackgroundResponse.done()
 
     @event(

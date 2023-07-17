@@ -5,8 +5,25 @@ from connect.client import ClientError
 
 from connect_ext_ppr.db import get_db_ctx_manager
 from connect_ext_ppr.models.deployment import Deployment
+from connect_ext_ppr.models.replicas import Product
 from connect_ext_ppr.utils import _parse_json_schema_error
 from connect_ext_ppr.constants import PPR_SCHEMA
+
+
+def insert_product_from_listing(listing_data, config, logger):
+    with get_db_ctx_manager(config) as db:
+        product_data = listing_data['product']
+        q = db.query(Product).filter_by(id=product_data['id'])
+        if not db.query(q.exists()).scalar():
+            logger.info(f"Adding new product: {product_data['id']}.")
+            product = Product(
+                id=product_data.get('id'),
+                name=product_data['name'],
+                logo=product_data.get('icon'),
+                owner_id=listing_data['vendor']['id'],
+            )
+            db.add(product)
+            db.commit()
 
 
 def add_deployments(installation, listings, config, logger):
@@ -14,7 +31,9 @@ def add_deployments(installation, listings, config, logger):
         deployments = []
         seen = set()
         for li in listings:
+            insert_product_from_listing(li, config, logger)
             product_id = li['product']['id']
+
             for hub in li['contract']['marketplace']['hubs']:
                 comb = (product_id, installation['owner']['id'], hub['hub']['id'])
                 q = db.query(Deployment).filter_by(
@@ -60,3 +79,16 @@ def validate_ppr_schema(dict_file: Dict[str, Any]):
             errors=_parse_json_schema_error(ex),
         )
         raise error
+
+
+def update_product(data, config, logger):
+    product_id = data['id']
+    with get_db_ctx_manager(config) as db:
+        q = db.query(Product).filter_by(id=product_id)
+        if db.query(q.exists()).scalar():
+            logger.info(f"Updating product: {product_id}.")
+            product = q.first()
+            product.name = data['name']
+            product.logo = data.get('icon')
+            db.add(product)
+            db.commit()

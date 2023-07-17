@@ -33,7 +33,7 @@ def test_nothing_to_create(
 ):
     hub = {'hub': {'id': deployment.hub_id, 'name': 'Some'}}
     listing['contract']['marketplace'] = marketplace
-    listing['product']['id'] = deployment.product_id
+    listing['product']['id'] = deployment.product.id
     listing['contract']['marketplace']['hubs'] = [hub]
 
     count_before = dbsession.query(Deployment).count()

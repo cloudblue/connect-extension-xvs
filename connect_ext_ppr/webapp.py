@@ -81,10 +81,9 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         if dep is None:
             raise ObjectNotFound(deployment_id)
 
-        prod = get_client_object(client, 'products', dep.product_id)
         hub = get_client_object(client, 'hubs', dep.hub_id)
-        vendor = prod['owner']
-        deployment = get_deployment_schema(dep, prod, vendor, hub)
+        vendor = get_client_object(client, 'accounts', dep.product.owner_id)
+        deployment = get_deployment_schema(dep, dep.product, vendor, hub)
         return deployment
 
     @router.get(
@@ -101,16 +100,14 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
 
         deployments = db.query(Deployment).filter_by(account_id=installation['owner']['id'])
         listings = get_all_info(client)
-        products = [li['product'] for li in listings]
         vendors = [li['vendor'] for li in listings]
         hubs = [hub['hub'] for li in listings for hub in li['contract']['marketplace']['hubs']]
         response_list = []
         for dep in deployments:
-            prod = filter_object_list_by_id(products, dep.product_id)
             vendor = filter_object_list_by_id(vendors, dep.vendor_id)
             hub = filter_object_list_by_id(hubs, dep.hub_id)
             response_list.append(
-                get_deployment_schema(dep, prod, vendor, hub),
+                get_deployment_schema(dep, dep.product, vendor, hub),
             )
         return response_list
 
