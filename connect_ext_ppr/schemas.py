@@ -15,24 +15,30 @@ from connect_ext_ppr.models.enums import (
 )
 
 
-class VendorSchema(BaseModel):
+class NonNullSchema(BaseModel):
+    def dict(self, *args, **kwargs):
+        kwargs['exclude_none'] = True
+        return super().dict(*args, **kwargs)
+
+
+class VendorSchema(NonNullSchema):
     id: str
     name: str
     icon: Optional[str]
 
 
-class ProductSchema(BaseModel):
+class ProductSchema(NonNullSchema):
     id: str
     name: str
     icon: Optional[str]
 
 
-class HubSchema(BaseModel):
+class HubSchema(NonNullSchema):
     id: str
     name: str
 
 
-class DeploymentSchema(BaseModel):
+class DeploymentSchema(NonNullSchema):
     id: str
     product: ProductSchema
     hub: HubSchema
@@ -43,7 +49,7 @@ class DeploymentSchema(BaseModel):
     events: Dict[str, Dict[str, Union[datetime, str]]]
 
 
-class DeploymentRequestSchema(BaseModel):
+class DeploymentRequestSchema(NonNullSchema):
     id: str
     deployment: str
 
@@ -51,7 +57,7 @@ class DeploymentRequestSchema(BaseModel):
         orm_mode = True
 
 
-class FileSchema(BaseModel):
+class FileSchema(NonNullSchema):
     id: str
     name: str
     location: str
@@ -59,7 +65,7 @@ class FileSchema(BaseModel):
     mime_type: MimeTypeChoices
 
 
-class ConfigurationCreateSchema(BaseModel):
+class ConfigurationCreateSchema(NonNullSchema):
     file: FileSchema
 
 

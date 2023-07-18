@@ -9,6 +9,7 @@ def test_add_deployments(
     dbsession,
     listing,
     marketplace,
+    product,
     installation,
     logger,
 ):
@@ -16,6 +17,7 @@ def test_add_deployments(
     hub_id = 'HB-1111-2222'
     listing['contract']['marketplace'] = marketplace
     listing['contract']['marketplace']['hubs'][0]['hub']['id'] = hub_id
+    listing['product'] = product
 
     add_deployments(installation, [listing], {}, logger)
     new_dep = dbsession.query(Deployment).filter_by(hub_id=hub_id).first()

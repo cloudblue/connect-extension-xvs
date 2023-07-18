@@ -17,6 +17,7 @@ def test_create_ppr(dbsession, file, deployment, status):
         description='Some',
         created_by='SU-295-689-628',
         status=status,
+        product_version=3,
     )
 
     dbsession.set_verbose(ppr)
@@ -39,6 +40,7 @@ def test_multiple_versions(dbsession, file, deployment_factory):
                 summary={},
                 description='Some',
                 created_by='SU-295-689-628',
+                product_version=3,
             )
 
             dbsession.set_verbose(ppr)

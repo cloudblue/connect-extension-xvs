@@ -33,6 +33,7 @@ class PPRVersion(Model):
     deployment = db.Column(db.ForeignKey('deployments.id'))
     configuration = db.Column(db.ForeignKey(Configuration.id), nullable=True)
     version = db.Column(db.Integer, default=make_version)
+    product_version = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
     summary = db.Column(db.JSON)
     status = db.Column(

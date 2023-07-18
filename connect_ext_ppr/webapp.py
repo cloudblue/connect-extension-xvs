@@ -14,17 +14,12 @@ from connect.eaas.core.decorators import (
 )
 from connect.eaas.core.inject.synchronous import get_installation, get_installation_client
 from connect.eaas.core.extension import WebApplicationBase
-from fastapi import Depends, Response
+from fastapi import Depends, Response, status
 from sqlalchemy import exists
 from sqlalchemy.exc import SQLAlchemyError
 
 from connect_ext_ppr.db import create_db, get_db, VerboseBaseSession
-from connect_ext_ppr.errors import (
-    AlreadyExists,
-    CannotDeleteObject,
-    DatabaseError,
-    ObjectNotFound,
-)
+from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
 from connect_ext_ppr.models.enums import ConfigurationStateChoices, DeploymentStatusChoices
@@ -79,7 +74,10 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             .one_or_none()
         )
         if dep is None:
-            raise ObjectNotFound(deployment_id)
+            raise ExtensionHttpError.EXT_001(
+                format_kwargs={'obj_id': deployment_id},
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
 
         hub = get_client_object(client, 'hubs', dep.hub_id)
         vendor = get_client_object(client, 'accounts', dep.product.owner_id)
@@ -184,7 +182,9 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         get_deployment_by_id(deployment_id, db, installation)
         file_data = configuration.file
         if db.query(exists().where(File.id == file_data.id)).scalar():
-            raise AlreadyExists(file_data.id)
+            raise ExtensionHttpError.EXT_002(
+                format_kwargs={'obj_id': file_data.id},
+            )
 
         try:
             file_instance = File(
@@ -220,7 +220,9 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
 
         except SQLAlchemyError as e:
             db.rollback()
-            raise DatabaseError(str(e))
+            raise ExtensionHttpError.EXT_003(
+                format_kwargs={'err': str(e)},
+            )
 
     @router.delete(
         '/deployments/{deployment_id}/configurations/{configuration_id}',
@@ -242,7 +244,9 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             configuration.state == ConfigurationStateChoices.ACTIVE
             or deployment.status != DeploymentStatusChoices.SYNCED
         ):
-            raise CannotDeleteObject(configuration_id)
+            raise ExtensionHttpError.EXT_004(
+                format_kwargs={'obj_id': configuration_id},
+            )
 
         file = db.query(File).get(configuration.file)
         path = (

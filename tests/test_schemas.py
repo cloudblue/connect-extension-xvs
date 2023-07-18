@@ -1,5 +1,5 @@
 from datetime import datetime
-import json as j
+from typing import Optional
 
 import pytest
 
@@ -12,9 +12,36 @@ from connect_ext_ppr.schemas import (
     DeploymentSchema,
     FileSchema,
     HubSchema,
+    NonNullSchema,
     ProductSchema,
     VendorSchema,
 )
+
+
+def test_remove_null_values_from_representation():
+    class MyInnerSchema(NonNullSchema):
+        foo: Optional[str]
+        bar: str
+
+    class MyOuterSchema(NonNullSchema):
+        id: str
+        inner: MyInnerSchema
+        name: Optional[str]
+        version: int
+
+    serializer = MyOuterSchema(
+        id='XXX',
+        inner=MyInnerSchema(bar='Some'),
+        version=10,
+    )
+
+    assert serializer.dict() == {
+        "id": "XXX",
+        "inner": {
+            "bar": "Some",
+        },
+        "version": 10,
+    }
 
 
 @pytest.mark.parametrize(
@@ -23,7 +50,6 @@ from connect_ext_ppr.schemas import (
 )
 def test_deployment_schema(status):
     now = datetime.utcnow()
-    iso = now.isoformat()
     serializer = DeploymentSchema(
         id='DPL-000-000-000',
         product=ProductSchema(
@@ -45,8 +71,8 @@ def test_deployment_schema(status):
         status=status,
         events={'created': {'at': now}},
     )
-    json = serializer.json()
-    assert json == j.dumps({
+
+    assert serializer.dict() == {
         "id": "DPL-000-000-000",
         "product": {
             "id": "PRD-000-000-000",
@@ -63,14 +89,14 @@ def test_deployment_schema(status):
             "name": "Vendor",
             "icon": "/media/VA-000-000/media/icon.png",
         },
-        "last_sync_at": iso,
+        "last_sync_at": now,
         "status": status,
         "events": {
             "created": {
-                "at": iso,
+                "at": now,
             },
         },
-    })
+    }
 
 
 @pytest.mark.parametrize(
@@ -79,7 +105,6 @@ def test_deployment_schema(status):
 )
 def test_configuration_schema(state, file):
     now = datetime.utcnow()
-    iso = now.isoformat()
     serializer = ConfigurationSchema(
         id='CFL-000-000-000',
         file=FileSchema(
@@ -96,8 +121,7 @@ def test_configuration_schema(state, file):
             'updated': {'at': now, 'by': 'SU-295-689-628'},
         },
     )
-    json = serializer.json()
-    assert json == j.dumps({
+    assert serializer.dict() == {
         "file": {
             "id": file.id,
             "name": file.name,
@@ -110,12 +134,12 @@ def test_configuration_schema(state, file):
         "state": state,
         "events": {
             "created": {
-                "at": iso,
+                "at": now,
                 "by": "SU-295-689-628",
             },
             "updated": {
-                "at": iso,
+                "at": now,
                 "by": "SU-295-689-628",
             },
         },
-    })
+    }

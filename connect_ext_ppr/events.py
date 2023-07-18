@@ -15,7 +15,7 @@ from connect.eaas.core.responses import (
 from sqlalchemy.exc import DBAPIError
 
 from connect_ext_ppr.service import add_deployments, update_product
-from connect_ext_ppr.utils import get_all_info, get_marketplaces
+from connect_ext_ppr.utils import get_all_info, get_marketplaces, get_products
 
 
 @variables([
@@ -43,7 +43,9 @@ class ConnectExtensionXvsEventsApplication(EventsApplicationBase):
                 self.installation_client,
                 [request['contract']['marketplace']['id']],
             ).first()
+            prod = get_products(self.installation_client, [request['product']['id']]).first()
             request['contract']['marketplace'] = mp
+            request['product'] = prod
             add_deployments(self.installation, [request], self.config, self.logger)
         else:
             self.logger.info(f"Skipping event for listing {request['id']}.")
