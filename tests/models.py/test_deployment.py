@@ -56,18 +56,18 @@ def test_generate_deployment_list_w_verbose_id(dbsession):
 def test_generate_next_verbose_id(dbsession, deployment):
     req_list = [
         DeploymentRequest(
-            deployment=deployment.id,
+            deployment_id=deployment.id,
         ),
         DeploymentRequest(
-            deployment=deployment.id,
+            deployment_id=deployment.id,
         ),
         DeploymentRequest(
-            deployment=deployment.id,
+            deployment_id=deployment.id,
         ),
     ]
     dep_id_body = _get_id_prefix_or_body(deployment.id, 1)
     for idx, req in enumerate(req_list):
-        dbsession.set_next_verbose(req, 'deployment')
+        dbsession.set_next_verbose(req, 'deployment_id')
         dbsession.commit()
         id_prefix = _get_id_prefix_or_body(req.id, 0)
         body, suffix = req.id.rsplit('-', 1)
