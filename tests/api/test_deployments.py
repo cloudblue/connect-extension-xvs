@@ -152,6 +152,6 @@ def test_get_deployment_not_found(
     assert response.json() == {
         'error_code': 'EXT_001',
         'errors': [
-            'Object DPL-YYY-YYY not found',
+            'Object `DPL-YYY-YYY` not found.',
         ],
     }

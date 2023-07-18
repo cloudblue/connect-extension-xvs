@@ -19,6 +19,7 @@ def test_handle_listing_processing_listed(
     marketplace,
     installation,
     dbsession,
+    product,
 ):
     config = {}
     listing['status'] = 'listed'
@@ -26,6 +27,12 @@ def test_handle_listing_processing_listed(
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
     client_mocker.marketplaces.filter(R().id.in_([marketplace['id']])).limit(1).mock(
         return_value=[marketplace],
+    )
+    rql = R().visibility.listing.eq(True)
+    rql |= R().visibility.syndication.eq(True)
+    rql & R().id.in_([product['id']])
+    client_mocker.products.filter(rql).limit(1).mock(
+        return_value=[product],
     )
 
     ext = ConnectExtensionXvsEventsApplication(
@@ -152,6 +159,7 @@ def test_handle_installation_changed(
     installation,
     listing,
     marketplace,
+    product,
     status,
 ):
     config = {}
@@ -164,6 +172,12 @@ def test_handle_installation_changed(
         )
         client_mocker.marketplaces.filter(id__in=[marketplace['id']]).mock(
             return_value=[marketplace],
+        )
+        rql = R().visibility.listing.eq(True)
+        rql |= R().visibility.syndication.eq(True)
+        rql & R().id.in_([product['id']])
+        client_mocker.products.filter(rql).mock(
+            return_value=[product],
         )
     installation['status'] = status
     ext = ConnectExtensionXvsEventsApplication(

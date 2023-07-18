@@ -8,19 +8,11 @@ from connect.client.rql import R
 
 from connect_ext_ppr.utils import (
     _parse_json_schema_error,
-    _process_exc,
     filter_object_list_by_id,
     get_all_info,
     get_marketplaces,
     workbook_to_dict,
 )
-
-
-def test_process_exc():
-    ex = ClientError(message='Some')
-    new_exc = _process_exc(ex)
-    assert new_exc.error_code == 'EXT_000'
-    assert str(new_exc) == str(ex)
 
 
 def test_fail_get_all_info_exc(mocker, connect_client):
@@ -30,7 +22,7 @@ def test_fail_get_all_info_exc(mocker, connect_client):
     )
     with pytest.raises(ClientError) as ex:
         get_all_info(connect_client)
-    assert 'Unexpected error: EXT_000 - Unexpected error' in str(ex.value)
+    assert '400 Bad Request: EXT_000 - Unexpected error.' in str(ex.value)
 
 
 def test_get_all_info_success(
@@ -38,6 +30,7 @@ def test_get_all_info_success(
     client_mocker_factory,
     marketplace,
     listing,
+    product,
 ):
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
 
@@ -47,8 +40,15 @@ def test_get_all_info_success(
     client_mocker.marketplaces.filter(R().id.in_([marketplace['id']])).mock(
         return_value=[marketplace],
     )
+    rql = R().visibility.listing.eq(True)
+    rql |= R().visibility.syndication.eq(True)
+    rql & R().id.in_([product['id']])
+    client_mocker.products.filter(rql).mock(
+        return_value=[product],
+    )
     all_info = get_all_info(connect_client)
     listing['contract']['marketplace'] = marketplace
+    listing['product'] = product
     assert all_info[0] == listing
 
 
