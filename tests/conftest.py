@@ -5,6 +5,7 @@
 #
 from contextlib import contextmanager
 import json
+import random
 
 import pandas as pd
 import pytest
@@ -14,9 +15,10 @@ from sqlalchemy.orm import sessionmaker
 from connect_ext_ppr.client import CBCClient
 from connect_ext_ppr.db import create_db, get_db, get_engine, Model, VerboseBaseSession
 from connect_ext_ppr.models.configuration import Configuration
-from connect_ext_ppr.models.deployment import Deployment
+from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.replicas import Product
+from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.webapp import ConnectExtensionXvsWebApplication
 
 
@@ -65,6 +67,23 @@ def mocked_get_db_ctx(dbsession, mocker):
 
 
 @pytest.fixture
+def product_factory(dbsession):
+    def _build_product(
+        id=None,
+        name='Chat GPT',
+        logo='/media/VA-000-000/PRD-000-000-000/media/PRD-000-000-000-logo_cLqk6Vm.png',
+        owner_id='VA-000-000',
+    ):
+        if not id:
+            id = 'PR-{0}'.format(random.randint(10000, 99999))
+        product = Product(id=id, name=name, logo=logo, owner_id=owner_id)
+        dbsession.add(product)
+        dbsession.commit()
+        return product
+    return _build_product
+
+
+@pytest.fixture
 def deployment(dbsession, product_factory):
     product = product_factory()
     dbsession.add(product)
@@ -84,19 +103,21 @@ def deployment(dbsession, product_factory):
 def deployment_factory(product_factory):
     def _build_deployment(
             dbsession,
-            product_id='PRD-XXX-XXX-XXX',
+            product_id=None,
             account_id='PA-000-000',
             vendor_id='VA-000-000',
             hub_id='HB-0000-0000',
     ):
-        product = product_factory(id=product_id, owner_id=vendor_id)
+        if not product_id:
+            product = product_factory()
+            product_id = product.id
+
         dep = Deployment(
-            product_id=product.id,
+            product_id=product_id,
             account_id=account_id,
             vendor_id=vendor_id,
             hub_id=hub_id,
         )
-        dbsession.add(product)
         dbsession.set_verbose(dep)
         dbsession.commit()
         return dep
@@ -104,18 +125,25 @@ def deployment_factory(product_factory):
 
 
 @pytest.fixture
-def product_factory(dbsession):
-    def _build_product(
-        id='PRD-XXX-XXX-XXX',
-        name='Chat GPT',
-        logo='/media/VA-000-000/PRD-000-000-000/media/PRD-000-000-000-logo_cLqk6Vm.png',
-        owner_id='VA-000-000',
+def deployment_request_factory(dbsession):
+    def _build_deployment_request(
+            deployment=None,
+            ppr_id='PPRFL-12345',
     ):
-        product = Product(id=id, name=name, logo=logo, owner_id=owner_id)
-        dbsession.add(product)
+        if not deployment:
+            deployment = deployment_factory(dbsession, id='DPLR-123-123-123')
+
+        ppr = PPRVersion(id=ppr_id, product_version=1)
+        dep_req = DeploymentRequest(
+            deployment_id=deployment.id,
+            ppr_id=ppr_id,
+            created_by=deployment.account_id,
+        )
+        dbsession.add(ppr)
+        dbsession.set_verbose(dep_req)
         dbsession.commit()
-        return product
-    return _build_product
+        return dep_req
+    return _build_deployment_request
 
 
 @pytest.fixture

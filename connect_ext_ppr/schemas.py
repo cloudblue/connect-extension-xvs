@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 from connect_ext_ppr.models.enums import (
     ConfigurationStateChoices,
+    DeploymentRequestStatusChoices,
     DeploymentStatusChoices,
     MimeTypeChoices,
     PPRStatusChoices,
@@ -48,14 +49,6 @@ class DeploymentSchema(NonNullSchema):
     last_sync_at: datetime
     status: DeploymentStatusChoices
     events: Dict[str, Dict[str, Union[datetime, str]]]
-
-
-class DeploymentRequestSchema(NonNullSchema):
-    id: str
-    deployment: str
-
-    class Config:
-        orm_mode = True
 
 
 class FileSchema(NonNullSchema):
@@ -97,3 +90,25 @@ class PPRVersionSchema(NonNullSchema):
     description: Optional[str] = Field(None, max_length=512)
     events: Dict[str, Dict[str, Union[datetime, str]]]
     status: PPRStatusChoices
+
+
+class PPRVersionReferenceSchema(NonNullSchema):
+    id: str
+    version: int
+
+
+class DeploymentReferenceSchema(NonNullSchema):
+    id: str
+
+
+class DeploymentRequestSchema(NonNullSchema):
+    id: str
+    deployment: DeploymentReferenceSchema
+    ppr: PPRVersionReferenceSchema
+    status: DeploymentRequestStatusChoices
+    manually: bool
+    delegate_l2: bool
+    events: Dict[str, Dict[str, Union[datetime, str]]]
+
+    class Config:
+        orm_mode = True

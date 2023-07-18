@@ -42,8 +42,8 @@ class DeploymentRequest(Model):
     PREFIX = 'DPLR'
 
     id = db.Column(db.String(20), primary_key=True)
-    deployment = db.Column(db.ForeignKey(Deployment.id))
-    ppr = db.Column(db.String, db.ForeignKey(PPRVersion.id))
+    deployment_id = db.Column(db.ForeignKey(Deployment.id))
+    ppr_id = db.Column(db.String, db.ForeignKey(PPRVersion.id))
     status = db.Column(
         db.Enum(DeploymentRequestStatusChoices, validate_strings=True),
         default=DeploymentRequestStatusChoices.PENDING,
@@ -57,6 +57,9 @@ class DeploymentRequest(Model):
     finished_at = db.Column(db.DateTime(), nullable=True)
     aborted_at = db.Column(db.DateTime(), nullable=True)
     aborted_by = db.Column(db.String(20), nullable=True)
+
+    ppr = relationship('PPRVersion', foreign_keys="DeploymentRequest.ppr_id")
+    deployment = relationship('Deployment', foreign_keys="DeploymentRequest.deployment_id")
 
 
 class MarketplaceConfiguration(Model):

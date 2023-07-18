@@ -8,6 +8,7 @@ from connect.client.rql import R
 
 from connect_ext_ppr.utils import (
     _parse_json_schema_error,
+    clean_empties_from_dict,
     filter_object_list_by_id,
     get_all_info,
     get_marketplaces,
@@ -142,3 +143,24 @@ def test_parse_validation_error():
     assert _parse_json_schema_error(error) == [
         'some', 'really', 'nested', 'error', 'to', 'parse',
     ]
+
+
+@pytest.mark.parametrize(
+    ('data', 'result'),
+    (
+        (
+            {'a': None, 'b': {}, 'c': {'c1': {'c1.1': None, 'c1.2': 'a value'}}},
+            {'c': {'c1': {'c1.2': 'a value'}}},
+        ),
+        (
+            [{'a': None, 'b': {}, 'c': {'c1': {'c1.1': None, 'c1.2': 'a value'}}}],
+            [{'a': None, 'b': {}, 'c': {'c1': {'c1.1': None, 'c1.2': 'a value'}}}],
+        ),
+        (
+            {'a': {'by': None}},
+            {},
+        ),
+    ),
+)
+def test_clean_empties_from_dict(data, result):
+    assert clean_empties_from_dict(data) == result
