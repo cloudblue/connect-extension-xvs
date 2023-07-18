@@ -6,13 +6,17 @@ import pytest
 from connect_ext_ppr.models.enums import (
     ConfigurationStateChoices,
     DeploymentStatusChoices,
+    PPRStatusChoices,
 )
 from connect_ext_ppr.schemas import (
+    ConfigurationReferenceSchema,
     ConfigurationSchema,
     DeploymentSchema,
+    FileReferenceSchema,
     FileSchema,
     HubSchema,
     NonNullSchema,
+    PPRVersionSchema,
     ProductSchema,
     VendorSchema,
 )
@@ -114,7 +118,6 @@ def test_configuration_schema(state, file):
             size=file.size,
             mime_type=file.mime_type,
         ),
-        deployment={'id': 'DPL-000-000-000'},
         state=state,
         events={
             'created': {'at': now, 'by': 'SU-295-689-628'},
@@ -122,6 +125,7 @@ def test_configuration_schema(state, file):
         },
     )
     assert serializer.dict() == {
+        "id": "CFL-000-000-000",
         "file": {
             "id": file.id,
             "name": file.name,
@@ -129,8 +133,6 @@ def test_configuration_schema(state, file):
             "size": file.size,
             "mime_type": file.mime_type,
         },
-        "id": "CFL-000-000-000",
-        "deployment": {"id": "DPL-000-000-000"},
         "state": state,
         "events": {
             "created": {
@@ -142,4 +144,114 @@ def test_configuration_schema(state, file):
                 "by": "SU-295-689-628",
             },
         },
+    }
+
+
+@pytest.mark.parametrize(
+    'status',
+    PPRStatusChoices,
+)
+def test_ppr_version_schema(status, file, configuration):
+    now = datetime.utcnow()
+    serializer = PPRVersionSchema(
+        id='PPRFL-000-000-000',
+        version=4,
+        product_version=5,
+        file=FileSchema(
+            id=file.id,
+            name=file.name,
+            location=file.location,
+            size=file.size,
+            mime_type=file.mime_type,
+        ),
+        configuration=ConfigurationReferenceSchema(
+            id=configuration.id,
+            file=FileReferenceSchema(
+                id=file.id,
+                name=file.name,
+            ),
+            state=configuration.state,
+        ),
+        status=status,
+        description='It was morning, and the new sun sparkled gold across the ripples of a gentle '
+                    'sea',
+        events={
+            'created': {'at': now, 'by': 'SU-295-689-628'},
+            'updated': {'at': now, 'by': 'SU-295-689-628'},
+        },
+    )
+    assert serializer.dict() == {
+        "id": "PPRFL-000-000-000",
+        "version": 4,
+        "product_version": 5,
+        "file": {
+            "id": file.id,
+            "name": file.name,
+            "location": file.location,
+            "size": file.size,
+            "mime_type": file.mime_type,
+        },
+        "configuration": {
+            "id": configuration.id,
+            "file": {
+                "id": file.id,
+                "name": file.name,
+            },
+            "state": configuration.state,
+        },
+        "description": 'It was morning, and the new sun sparkled gold across the ripples of a '
+                       'gentle sea',
+        "events": {
+            "created": {
+                "at": now,
+                "by": "SU-295-689-628",
+            },
+            "updated": {
+                "at": now,
+                "by": "SU-295-689-628",
+            },
+        },
+        "status": status,
+    }
+
+
+def test_ppr_version_schema_wo_optional_fields(file, configuration):
+    now = datetime.utcnow()
+    serializer = PPRVersionSchema(
+        id='PPRFL-000-000-000',
+        version=4,
+        file=FileSchema(
+            id=file.id,
+            name=file.name,
+            location=file.location,
+            size=file.size,
+            mime_type=file.mime_type,
+        ),
+        status=PPRStatusChoices.PENDING,
+        events={
+            'created': {'at': now, 'by': 'SU-295-689-628'},
+            'updated': {'at': now, 'by': 'SU-295-689-628'},
+        },
+    )
+    assert serializer.dict() == {
+        "id": "PPRFL-000-000-000",
+        "version": 4,
+        "file": {
+            "id": file.id,
+            "name": file.name,
+            "location": file.location,
+            "size": file.size,
+            "mime_type": file.mime_type,
+        },
+        "events": {
+            "created": {
+                "at": now,
+                "by": "SU-295-689-628",
+            },
+            "updated": {
+                "at": now,
+                "by": "SU-295-689-628",
+            },
+        },
+        "status": PPRStatusChoices.PENDING,
     }

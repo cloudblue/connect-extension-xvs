@@ -141,9 +141,6 @@ def get_configuration_schema(configuration, file):
     return ConfigurationSchema(
         id=configuration.id,
         file=file_schema,
-        deployment={
-            'id': configuration.deployment,
-        },
         state=configuration.state,
         events={
             'created': {'at': configuration.created_at},

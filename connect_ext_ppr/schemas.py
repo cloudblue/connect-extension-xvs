@@ -6,12 +6,13 @@
 from datetime import datetime
 from typing import Dict, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from connect_ext_ppr.models.enums import (
     ConfigurationStateChoices,
     DeploymentStatusChoices,
     MimeTypeChoices,
+    PPRStatusChoices,
 )
 
 
@@ -65,12 +66,34 @@ class FileSchema(NonNullSchema):
     mime_type: MimeTypeChoices
 
 
+class FileReferenceSchema(NonNullSchema):
+    id: str
+    name: str
+
+
 class ConfigurationCreateSchema(NonNullSchema):
     file: FileSchema
 
 
-class ConfigurationSchema(ConfigurationCreateSchema):
+class ConfigurationSchema(NonNullSchema):
     id: str
-    deployment: Dict[str, str]
+    file: FileSchema
     state: ConfigurationStateChoices
     events: Dict[str, Dict[str, Union[datetime, str]]]
+
+
+class ConfigurationReferenceSchema(NonNullSchema):
+    id: str
+    file: FileReferenceSchema
+    state: ConfigurationStateChoices
+
+
+class PPRVersionSchema(NonNullSchema):
+    id: str
+    version: int
+    product_version: Optional[int]
+    file: FileSchema
+    configuration: Optional[ConfigurationReferenceSchema]
+    description: Optional[str] = Field(None, max_length=512)
+    events: Dict[str, Dict[str, Union[datetime, str]]]
+    status: PPRStatusChoices
