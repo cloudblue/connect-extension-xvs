@@ -91,7 +91,7 @@ def test_service_discovery_collection_with_underscore(
 
 
 @responses.activate
-def test_service_discovery_collection_without_underscore(
+def test_service_discovery_collection(
         cbc_endpoint,
         cbc_client,
         flat_catalog_type,
@@ -104,9 +104,17 @@ def test_service_discovery_collection_without_underscore(
         json=flat_catalog_type_objects,
     )
 
-    collection = cbc_client(flat_catalog_type).flatcatalog
+    service = cbc_client(flat_catalog_type)
+
+    # First time -  calls service discovery API
+    collection = service.flatcatalog
 
     assert collection.path == f'{cbc_endpoint}/aps/2/resources/{service_id}/flatcatalog'
+
+    # 2nd time - no call to service discovery API
+    collection = service.subscriptions
+
+    assert collection.path == f'{cbc_endpoint}/aps/2/resources/{service_id}/subscriptions'
 
 
 @responses.activate

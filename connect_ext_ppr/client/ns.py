@@ -1,3 +1,5 @@
+from functools import cached_property
+
 from connect_ext_ppr.client.mixin import (
     ActionMixin,
     GetMixin,
@@ -65,7 +67,15 @@ class Service(
     NSBase,
     ActionMixin,
 ):
-    def _get_service_path(self):
+    def __init__(self, client, aps_type: str, path: str):
+        super().__init__(
+            client=client,
+            path=path,
+        )
+        self.aps_type = aps_type
+
+    @cached_property
+    def service_path(self):
         aps_type_object = self.client.execute_request(
             method='GET',
             path=f'{self.path}/aps/2/resources/?implementing({self.aps_type})',
@@ -78,13 +88,6 @@ class Service(
         else:
             service_id = aps_type_object[0]['aps']['id']
             return f'{self.path}/aps/2/resources/{service_id}'
-
-    def __init__(self, client, aps_type: str, path: str):
-        super().__init__(
-            client=client,
-            path=path,
-        )
-        self.aps_type = aps_type
 
     def __getattr__(self, name):
         if '_' in name:
@@ -101,7 +104,7 @@ class Service(
 
         return Collection(
             self.client,
-            f'{self._get_service_path()}/{name}',
+            f'{self.service_path}/{name}',
         )
 
     def get(self, **kwargs):
