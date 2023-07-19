@@ -74,7 +74,8 @@ class ExtensionHttpError(ExtensionErrorBase):
         1: "Object `{obj_id}` not found.",
         2: "Object `{obj_id}` already exists, cannot create a new one.",
         3: "Database error occurred: {err}.",
-        4: "Object `{obj_id}` cannot be deleted now.",
+        4: "Active configuration `{obj_id}` cannot be deleted.",
+        5: "Configuration `{obj_id}` cannot be deleted, because related deployment is not synced.",
     }
 
 

@@ -240,11 +240,12 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         deployment = get_deployment_by_id(deployment_id, db, installation)
         configuration = get_configuration_by_id(configuration_id, deployment_id, db)
 
-        if (
-            configuration.state == ConfigurationStateChoices.ACTIVE
-            or deployment.status != DeploymentStatusChoices.SYNCED
-        ):
+        if configuration.state == ConfigurationStateChoices.ACTIVE:
             raise ExtensionHttpError.EXT_004(
+                format_kwargs={'obj_id': configuration_id},
+            )
+        if deployment.status != DeploymentStatusChoices.SYNCED:
+            raise ExtensionHttpError.EXT_005(
                 format_kwargs={'obj_id': configuration_id},
             )
 

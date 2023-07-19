@@ -275,17 +275,43 @@ def test_delete_configuration_not_found(
     }
 
 
+def test_delete_configuration_active(
+    deployment,
+    configuration,
+    file,
+    installation,
+    api_client,
+    dbsession,
+    client_mocker_factory,
+    connect_client,
+):
+    configuration.state = ConfigurationStateChoices.ACTIVE
+    deployment.status = DeploymentStatusChoices.SYNCED
+    dbsession.commit()
+
+    response = api_client.delete(
+        f'/api/deployments/{deployment.id}/configurations/{configuration.id}',
+        installation=installation,
+    )
+    assert response.status_code == 400
+    assert response.json() == {
+        'error_code': 'EXT_004',
+        'errors': [
+            f'Active configuration `{configuration.id}` cannot be deleted.',
+        ],
+    }
+
+
 @pytest.mark.parametrize(
     ('conf_state', 'dep_status'),
     (
-        (ConfigurationStateChoices.ACTIVE, DeploymentStatusChoices.SYNCED),
         (ConfigurationStateChoices.INACTIVE, DeploymentStatusChoices.PENDING),
         (ConfigurationStateChoices.INACTIVE, DeploymentStatusChoices.PROCESSING),
         (ConfigurationStateChoices.DELETED, DeploymentStatusChoices.PENDING),
         (ConfigurationStateChoices.DELETED, DeploymentStatusChoices.PROCESSING),
     ),
 )
-def test_delete_configuration_wrong_state(
+def test_delete_configuration_deployment_not_synced(
     deployment,
     configuration,
     file,
@@ -307,8 +333,9 @@ def test_delete_configuration_wrong_state(
     )
     assert response.status_code == 400
     assert response.json() == {
-        'error_code': 'EXT_004',
+        'error_code': 'EXT_005',
         'errors': [
-            f'Object `{configuration.id}` cannot be deleted now.',
+            f'Configuration `{configuration.id}` cannot be deleted, because related deployment is '
+            'not synced.',
         ],
     }
