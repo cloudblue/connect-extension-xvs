@@ -10,7 +10,37 @@ import pandas as pd
 from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import Deployment
-from connect_ext_ppr.schemas import ConfigurationSchema, DeploymentSchema, FileSchema
+from connect_ext_ppr.schemas import (
+    ConfigurationSchema,
+    DeploymentReferenceSchema,
+    DeploymentRequestSchema,
+    DeploymentSchema,
+    FileSchema,
+    HubSchema,
+    PPRVersionReferenceSchema,
+    ProductSchema,
+)
+
+
+def clean_empties_from_dict(data):
+    """
+    Removes inplace all the fields that are None or empty dicts in data.
+    Returns param data, that was modified inplace.
+    If the param is not a dict, will return the param unmodified.
+    :param data: dict
+    :rtype: dict
+    """
+    if not isinstance(data, dict):
+        return data
+
+    for key in list(data.keys()):
+        value = data[key]
+        if isinstance(value, dict):
+            clean_empties_from_dict(value)
+            value = data[key]
+        if not value:
+            del data[key]
+    return data
 
 
 def _get_extension_client(logger):
@@ -37,10 +67,15 @@ def get_marketplaces(client, mkp_ids):
     return client.marketplaces.filter(rql)
 
 
+def get_hubs(client, hubs_ids):
+    rql = R().id.in_(hubs_ids)
+    return client.hubs.filter(rql)
+
+
 def get_products(client, prod_ids):
     rql = R().visibility.listing.eq(True)
     rql |= R().visibility.syndication.eq(True)
-    rql & R().id.in_(prod_ids)
+    rql &= R().id.in_(prod_ids)
     return client.products.filter(rql)
 
 
@@ -104,6 +139,52 @@ def get_deployment_schema(deployment, product, vendor, hub):
             'created': {'at': deployment.created_at},
             'updated': {'at': deployment.updated_at},
         },
+    )
+
+
+def get_deployment_reference_schema(deployment, hub):
+    product = deployment.product
+    product_schema = ProductSchema(id=product.id, name=product.name, icon=product.logo)
+    hub_id = deployment.hub_id
+    hub_schema = HubSchema(id=hub_id, name=hub['name'])
+    return DeploymentReferenceSchema(id=deployment.id, product=product_schema, hub=hub_schema)
+
+
+def get_deployment_request_schema(deployment_request, hub):
+    """
+    Returns DeploymentSchema for the deployment
+    :param deployment: Deployment model
+    :param product: Product model from Connect
+    :param vendor: Vendor Account model from Connect
+    :param hub: Hub model from Connect
+    :rtype: DeploymentSchema
+    """
+    ppr = deployment_request.ppr
+    ppr_schema = PPRVersionReferenceSchema(
+        id=ppr.id,
+        version=ppr.version,
+    )
+    events = clean_empties_from_dict({
+        'created': {
+            'at': deployment_request.created_at,
+            'by': deployment_request.created_by,
+        },
+        'started': {'at': deployment_request.started_at},
+        'finished': {'at': deployment_request.finished_at},
+        'aborted': {
+            'at': deployment_request.aborted_at,
+            'by': deployment_request.aborted_by,
+        },
+    })
+
+    return DeploymentRequestSchema(
+        id=deployment_request.id,
+        deployment=get_deployment_reference_schema(deployment_request.deployment, hub),
+        ppr=ppr_schema,
+        status=deployment_request.status,
+        manually=deployment_request.manually,
+        delegate_l2=deployment_request.delegate_l2,
+        events=events,
     )
 
 

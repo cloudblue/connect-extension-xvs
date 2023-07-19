@@ -47,8 +47,10 @@ services:
     env_file:
       - .connect-extension-xvs_dev.env
     depends_on:
-      - db
       - cbc_db
+      - db_ram
+    links:
+      - "db_ram:db"
 
   db:
     image: postgres:9.6-alpine

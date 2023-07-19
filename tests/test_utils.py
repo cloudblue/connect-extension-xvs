@@ -10,6 +10,7 @@ from connect_ext_ppr.utils import (
     _parse_json_schema_error,
     filter_object_list_by_id,
     get_all_info,
+    get_hubs,
     get_marketplaces,
     workbook_to_dict,
 )
@@ -42,7 +43,7 @@ def test_get_all_info_success(
     )
     rql = R().visibility.listing.eq(True)
     rql |= R().visibility.syndication.eq(True)
-    rql & R().id.in_([product['id']])
+    rql &= R().id.in_([product['id']])
     client_mocker.products.filter(rql).mock(
         return_value=[product],
     )
@@ -142,3 +143,10 @@ def test_parse_validation_error():
     assert _parse_json_schema_error(error) == [
         'some', 'really', 'nested', 'error', 'to', 'parse',
     ]
+
+
+def test_get_hubs(connect_client, client_mocker_factory):
+    hub = {'id': 'HB-0000-0000', 'name': 'An awesome hub'}
+    client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
+    client_mocker.hubs.filter(R().id.in_([hub['id']])).mock(return_value=[hub])
+    assert list(get_hubs(connect_client, [hub['id']])) == [hub]

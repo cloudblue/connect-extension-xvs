@@ -17,6 +17,7 @@ from connect.eaas.core.extension import WebApplicationBase
 from fastapi import Depends, Response, status
 from sqlalchemy import exists
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
 
 from connect_ext_ppr.db import create_db, get_db, VerboseBaseSession
 from connect_ext_ppr.errors import ExtensionHttpError
@@ -40,7 +41,9 @@ from connect_ext_ppr.utils import (
     get_configuration_by_id,
     get_configuration_schema,
     get_deployment_by_id,
+    get_deployment_request_schema,
     get_deployment_schema,
+    get_hubs,
 )
 
 
@@ -55,6 +58,46 @@ from connect_ext_ppr.utils import (
     },
 )
 class ConnectExtensionXvsWebApplication(WebApplicationBase):
+
+    @router.get(
+        '/deployments/requests',
+        summary='List all request accross deployments',
+        response_model=List[DeploymentRequestSchema],
+    )
+    def list_deployment_requests(
+        self,
+        client: ConnectClient = Depends(get_installation_client),
+        db: VerboseBaseSession = Depends(get_db),
+        installation: dict = Depends(get_installation),
+    ):
+        hubs_ids = [
+            h[0] for h in db.query(Deployment.hub_id).filter_by(
+                account_id=installation['owner']['id'],
+            ).distinct()
+        ]
+        hubs = get_hubs(client, hubs_ids)
+
+        deployments = db.query(Deployment.id).filter_by(
+            account_id=installation['owner']['id'],
+        )
+
+        deployment_requests = db.query(DeploymentRequest).options(
+            joinedload(DeploymentRequest.ppr),
+            joinedload(DeploymentRequest.deployment),
+        ).filter(
+            DeploymentRequest.deployment_id.in_(deployments),
+        )
+
+        response_list = []
+        for dr in deployment_requests:
+            response_list.append(
+                get_deployment_request_schema(
+                    dr,
+                    filter_object_list_by_id(hubs, dr.deployment.hub_id),
+                ),
+            )
+
+        return response_list
 
     @router.get(
         '/deployments/{deployment_id}',
@@ -95,7 +138,6 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
     ):
-
         deployments = db.query(Deployment).filter_by(account_id=installation['owner']['id'])
         listings = get_all_info(client)
         vendors = [li['vendor'] for li in listings]
@@ -117,7 +159,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     )
     def add_dep_request(self, db: VerboseBaseSession = Depends(get_db)):
         deployment = db.query(Deployment).first()
-        instance = DeploymentRequest(deployment=deployment.id)
+        instance = DeploymentRequest(deployment_id=deployment.id)
         db.set_next_verbose(instance, 'deployment')
         db.commit()
         db.refresh(instance)
