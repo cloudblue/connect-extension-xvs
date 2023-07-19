@@ -12,7 +12,14 @@ from connect.client import AsyncConnectClient, ConnectClient
 from sqlalchemy.orm import sessionmaker
 
 from connect_ext_ppr.client import CBCClient
-from connect_ext_ppr.db import create_db, get_db, get_engine, Model, VerboseBaseSession
+from connect_ext_ppr.db import (
+    create_db,
+    get_cbc_extension_db_ctx_manager,
+    get_db,
+    get_engine,
+    Model,
+    VerboseBaseSession,
+)
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import Deployment
 from connect_ext_ppr.models.file import File
@@ -447,3 +454,54 @@ def ppr_workbook():
 def ppr_valid_schema():
     with open('./tests/fixtures/ppr_valid_schema.json') as json_file:
         return json.load(json_file)
+
+
+@pytest.fixture
+def cbc_db_session():
+    with get_cbc_extension_db_ctx_manager({}) as db:
+        transaction = db.begin()
+        queries = [
+            'CREATE TABLE IF NOT EXISTS configuration ('
+            ' oauth_key varchar(100) primary key,'
+            ' oauth_secret varchar(100) not null,'
+            ' product_id varchar(100) not null,'
+            ' api_key varchar(100) null,'
+            ' provider_api_key varchar(100) null,'
+            ' api_url varchar(100) not null'
+            ')',
+            'CREATE TABLE IF NOT EXISTS global_app_configuration('
+            ' app_instance_id varchar(100) primary key,'
+            ' hub_uuid varchar(100) not null'
+            ')',
+            'CREATE TABLE IF NOT EXISTS hub_instances('
+            ' hub_id varchar(100) primary key,'
+            ' app_instance_id varchar(100) null,'
+            ' extension_resource_uid varchar(100) null,'
+            ' controller_uri varchar(400) null,'
+            ' last_check timestamp DEFAULT CURRENT_TIMESTAMP'
+            ')',
+            "INSERT INTO configuration values ("
+            " '91b56e8f-cdc9-4352-8d6d-ccaa510be770',"
+            " 'a4a279ec-ee05-4d03-9aca-f043975f5104',"
+            " 'e4608f13-0582-4780-876f-224add5fa4fd',"
+            " null,"
+            " null,"
+            " 'https://api.connect.cloudblue.com/v1/api'"
+            ")",
+            "INSERT INTO global_app_configuration values ("
+            " '15965e86-62cc-43e3-b5fb-338e69c53725',"
+            " 'e4608f13-0582-4780-876f-224add5fa4fd'"
+            ")",
+            "INSERT INTO hub_instances values ("
+            " 'HB-000-000',"
+            " '39deb31d-d6ad-48bb-ba0f-82e99a88a7e9',"
+            " 'e4608f13-0582-4780-876f-224add5fa4fd',"
+            " 'https://www.cbc-instance.com'"
+            ")",
+        ]
+        for query in queries:
+            db.execute(query)
+
+        yield db
+
+        transaction.rollback()
