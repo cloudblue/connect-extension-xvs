@@ -17,6 +17,8 @@ jobs:
         python-version: ['3.8', '3.9', '3.10']
         database-name:
         - extension_xvs
+        cbc-database-name:
+        - cbc_extension
         database-password:
         - 1q2w3e
     services:
@@ -27,6 +29,18 @@ jobs:
           POSTGRES_DB: ${{ matrix.database-name }}
         ports:
         - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      cbc_db:
+        image: postgres:11.5
+        env:
+          POSTGRES_PASSWORD: ${{ matrix.database-password }}
+          POSTGRES_DB: ${{ matrix.cbc-database-name }}
+        ports:
+          - 5433:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -51,7 +65,7 @@ jobs:
           flake8 .
       - name: Testing
         run: |
-          DATABASE_URL=postgresql+psycopg2://postgres:${{ matrix.database-password }}@localhost:5432/${{ matrix.database-name }} pytest
+          DATABASE_URL=postgresql+psycopg2://postgres:${{ matrix.database-password }}@localhost:5432/${{ matrix.database-name }} CBC_EXTENSION_DATABASE_URL=postgresql+psycopg2://postgres:${{ matrix.database-password }}@localhost:5433/${{ matrix.cbc-database-name }} pytest
 
   frontend:
     runs-on: ubuntu-latest

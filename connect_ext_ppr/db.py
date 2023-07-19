@@ -14,6 +14,7 @@ from sqlalchemy.exc import DontWrapMixin
 
 _MAX_RETRIES = 1000
 _ENGINE = None
+_CBC_EXTENSION_ENGINE = None
 
 
 def _get_numeric_string(size):
@@ -151,6 +152,61 @@ def create_db(config: dict = Depends(get_config)):
 def get_db_ctx_manager(config):
     engine: Engine = get_engine(config)
     db: VerboseBaseSession = SessionLocal(bind=engine)
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def get_cbc_extension_db_engine(config: dict = Depends(get_config)):
+    global _CBC_EXTENSION_ENGINE
+    if not _CBC_EXTENSION_ENGINE:
+        connection_args = {
+            'url': config.get(
+                'CBC_EXTENSION_DATABASE_URL',
+                os.getenv(
+                    'CBC_EXTENSION_DATABASE_URL',
+                    'postgresql+psycopg2://postgres:1q2w3e@cbc_db/cbc_extension',
+                ),
+            ),
+            'pool_pre_ping': True,
+            'pool_recycle': 300,
+        }
+
+        database_ssl = os.getenv('CBC_EXTENSION_SSL_ENABLED', '')
+        if database_ssl.lower() in ('y', 'yes', 't', 'true', 'on', '1'):
+            connection_args['connect_args'] = {
+                'sslmode': 'verify-full',
+                'sslrootcert': 'AZURE_ALL.cert',
+            }
+
+        _CBC_EXTENSION_ENGINE = create_engine(**connection_args)
+
+    return _CBC_EXTENSION_ENGINE
+
+
+def get_cbc_extension_db(engine: Engine = Depends(get_cbc_extension_db_engine)):
+    SessionMaker = sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        class_=Session,
+    )
+    db: Session = SessionMaker(bind=engine)
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@contextmanager
+def get_cbc_extension_db_ctx_manager(config):
+    engine: Engine = get_cbc_extension_db_engine(config)
+    SessionMaker = sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        class_=Session,
+    )
+    db: Session = SessionMaker(bind=engine)
     try:
         yield db
     finally:

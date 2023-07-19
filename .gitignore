@@ -5,6 +5,7 @@ coverage.xml
 .connect-extension-xvs_dev.env
 node_modules
 ui/tests/coverage
+cbc_pg_data
 pg_data
 .vscode
 .idea

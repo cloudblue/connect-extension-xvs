@@ -9,9 +9,7 @@ from connect.eaas.core.decorators import (
     variables,
 )
 from connect.eaas.core.extension import EventsApplicationBase
-from connect.eaas.core.responses import (
-    BackgroundResponse,
-)
+from connect.eaas.core.responses import BackgroundResponse
 from sqlalchemy.exc import DBAPIError
 
 from connect_ext_ppr.service import add_deployments, update_product
@@ -20,9 +18,19 @@ from connect_ext_ppr.utils import get_all_info, get_marketplaces, get_products
 
 @variables([
     {
-        "name": "DATABASE_URL",
-        "initial_value": "postgresql+psycopg2://postgres:1q2w3e@db/extension_xvs",
-        "secure": True,
+        'name': 'DATABASE_URL',
+        'initial_value': 'postgresql+psycopg2://postgres:1q2w3e@db/extension_xvs',
+        'secure': True,
+    },
+    {
+        'name': 'CBC_EXTENSION_DATABASE_URL',
+        'initial_value': 'postgresql+psycopg2://postgres:1q2w3e@cbc_db/cbc_extension',
+        'secure': True,
+    },
+    {
+        'name': 'CBC_EXTENSION_SSL_ENABLED',
+        'initial_value': 'True',
+        'secure': False,
     },
 ])
 class ConnectExtensionXvsEventsApplication(EventsApplicationBase):

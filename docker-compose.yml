@@ -9,13 +9,14 @@ services:
       context: .
     working_dir: /extension
     command: cextrun -d --no-rich-logging
-    volumes: 
+    volumes:
       - .:/extension
       - node_modules:/extension/node_modules
     env_file:
       - .connect-extension-xvs_dev.env
     depends_on:
       - db
+      - cbc_db
 
   connect-extension-xvs_bash:
     container_name: connect-extension-xvs_bash
@@ -32,6 +33,7 @@ services:
       - .connect-extension-xvs_dev.env
     depends_on:
       - db
+      - cbc_db
 
   connect-extension-xvs_test:
     container_name: connect-extension-xvs_test
@@ -46,6 +48,7 @@ services:
       - .connect-extension-xvs_dev.env
     depends_on:
       - db
+      - cbc_db
 
   db:
     image: postgres:9.6-alpine
@@ -59,6 +62,19 @@ services:
     environment:
       POSTGRES_PASSWORD: 1q2w3e
       POSTGRES_DB: extension_xvs
+
+  cbc_db:
+    image: postgres:9.6-alpine
+    restart: always
+    ports:
+      - '5434:5432'
+    expose:
+      - '5432'
+    volumes:
+      - ./cbc_pg_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: 1q2w3e
+      POSTGRES_DB: cbc_extension
 
   db_ram:
     image: postgres:9.6-alpine
