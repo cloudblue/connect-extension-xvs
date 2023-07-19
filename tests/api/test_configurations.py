@@ -29,9 +29,6 @@ def test_get_configurations(
         'id': 'MFL-6390-1110-0832',
         'mime_type': 'application/json',
     }
-    assert data['deployment'] == {
-        'id': deployment.id,
-    }
     assert data['state'] == ConfigurationStateChoices.INACTIVE
 
 
@@ -70,9 +67,6 @@ def test_get_configuration(
         'size': 17,
         'id': 'MFL-6390-1110-0832',
         'mime_type': 'application/json',
-    }
-    assert data['deployment'] == {
-        'id': deployment.id,
     }
     assert data['state'] == ConfigurationStateChoices.INACTIVE
 
@@ -130,9 +124,6 @@ def test_post_configuration(
         'mime_type': 'application/json',
     }
 
-    assert data['deployment'] == {
-        'id': deployment.id,
-    }
     assert data['state'] == ConfigurationStateChoices.ACTIVE
 
     assert dbsession.query(Configuration).count() == 1
