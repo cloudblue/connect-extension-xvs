@@ -12,7 +12,7 @@ class Task(Model):
 
     PREFIX = 'TSK'
 
-    id = db.Column(db.String(20), primary_key=True)
+    id = db.Column(db.String(30), primary_key=True)
     status = db.Column(
         db.Enum(TasksStatusChoices, validate_strings=True),
         default=TasksStatusChoices.PENDING,

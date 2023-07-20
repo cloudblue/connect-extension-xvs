@@ -24,9 +24,10 @@ from connect_ext_ppr.db import (
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
 from connect_ext_ppr.models.file import File
-from connect_ext_ppr.models.replicas import Product
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.services.cbc_extension import get_hub_credentials
+from connect_ext_ppr.models.replicas import Product
+from connect_ext_ppr.models.task import Task
 from connect_ext_ppr.webapp import ConnectExtensionXvsWebApplication
 
 
@@ -70,6 +71,11 @@ def mocked_get_db_ctx(dbsession, mocker):
 
     mocker.patch(
         'connect_ext_ppr.service.get_db_ctx_manager',
+        wraps=mocked_context,
+    )
+
+    mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_db_ctx_manager',
         wraps=mocked_context,
     )
 
@@ -137,6 +143,7 @@ def deployment_request_factory(dbsession):
     def _build_deployment_request(
             deployment=None,
             ppr_id='PPRFL-12345',
+            delegate_l2=False,
     ):
         if not deployment:
             deployment = deployment_factory(dbsession, id='DPLR-123-123-123')
@@ -146,12 +153,34 @@ def deployment_request_factory(dbsession):
             deployment_id=deployment.id,
             ppr_id=ppr_id,
             created_by=deployment.account_id,
+            delegate_l2=delegate_l2,
         )
         dbsession.add(ppr)
         dbsession.set_verbose(dep_req)
         dbsession.commit()
         return dep_req
     return _build_deployment_request
+
+
+@pytest.fixture
+def task_factory(dbsession, deployment_request_factory):
+    def _build_task(
+        deployment_request=None,
+        task_index='001',
+    ):
+        if not deployment_request:
+            deployment_request = deployment_request_factory()
+
+        task_id = f'TSK-{deployment_request.id[4:]}-{task_index}'
+        task = Task(
+            id=task_id,
+            deployment_request=deployment_request.id,
+            title=f'Title Task {task_index}',
+        )
+        dbsession.add(task)
+        dbsession.commit()
+        return task
+    return _build_task
 
 
 @pytest.fixture
