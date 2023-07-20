@@ -241,7 +241,7 @@ export const prepareSelectItems = cond([
  * Input:: dropHidden([{v: '1', hide: true}, {v: '2'}])
  * Output:: [{v: '2'}]
  */
-export const dropHidden = reject(propEq('hide', true));
+export const dropHidden = reject(propEq(true, 'hide'));
 
 /**
  * Returns value based on condition.

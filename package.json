@@ -22,7 +22,7 @@
     "css-minimizer-webpack-plugin": "^4.2.2",
     "moment-timezone": "^0.5.43",
     "portal-vue": "^2.1.7",
-    "ramda": "^0.28.0",
+    "ramda": "^0.29.0",
     "vue": "^2.7.14",
     "vue-clipboard2": "^0.3.3",
     "vue-input-facade": "^2.0.1",

@@ -180,7 +180,6 @@ i font::first-letter {
 }
 html,
 body {
-  height: 100%;
   overflow-y: auto;
   overflow-x: auto;
   margin: 0;

@@ -494,7 +494,7 @@ export default {
         'c-text-field_disabled': prop('disabled'),
         'c-text-field_error': anyPass([
           path(['validationErrors', 'length']),
-          propEq('isValid', false),
+          propEq(false, 'isValid'),
         ]),
         'c-text-field_warning': pipe(
           path(['warningMessages', 'length']),
@@ -507,7 +507,7 @@ export default {
     ),
 
     classNameByMode: ifElse(
-      propEq('mode', 'default'),
+      propEq('default', 'mode'),
       always(''),
       pipe(
         prop('mode'),
@@ -517,8 +517,8 @@ export default {
 
     classNameBySize: ifElse(
       anyPass([
-        propEq('size', 'large'),
-        propEq('size', ''),
+        propEq('large', 'size'),
+        propEq('', 'size'),
       ]),
       always(''),
       pipe(
@@ -536,7 +536,7 @@ export default {
     fieldClasses: vm => [...vm.customClasses, ...vm.computedClasses],
 
     visibilityIcon: ifElse(
-      propEq('currentType', 'password'),
+      propEq('password', 'currentType'),
       path(['icons', 'googleVisibilityOffBaseline']),
       path(['icons', 'googleVisibilityBaseline']),
     ),
@@ -570,7 +570,7 @@ export default {
 
     showVisibilityToggle: allPass([
       prop('passwordToggle'),
-      propEq('type', 'password'),
+      propEq('password', 'type'),
     ]),
 
     showAppendInner: anyPass([
@@ -642,7 +642,7 @@ export default {
 
     computedIconSize: pipe(
       cond([
-        [propEq('size', 'small'), path(['iconSizesDict', 'small'])],
+        [propEq('small', 'size'), path(['iconSizesDict', 'small'])],
         [T, path(['iconSizesDict', 'large'])],
       ]),
       toString,
@@ -650,7 +650,7 @@ export default {
 
     computedLabelIconSize: pipe(
       cond([
-        [propEq('size', 'small'), path(['labelIconSizesDict', 'small'])],
+        [propEq('small', 'size'), path(['labelIconSizesDict', 'small'])],
         [T, path(['labelIconSizesDict', 'large'])],
       ]),
       toString,
@@ -661,7 +661,7 @@ export default {
         value: prop('localValue'),
         // NOTE: for cButtons:
         disabled: prop('disabled'),
-        small: propEq('size', 'small'),
+        small: propEq('small', 'size'),
         // NOTE: for cIcons:
         size: prop('computedIconSize'),
         // NOTE: don't need `sizes` in the options object, which used for v-bind
