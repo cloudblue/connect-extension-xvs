@@ -4,7 +4,6 @@ from connect.client import ClientError
 from connect_ext_ppr.models.deployment import Deployment
 from connect_ext_ppr.service import (
     add_deployments,
-    get_hub_credentials,
     validate_ppr_schema,
 )
 
@@ -121,17 +120,3 @@ def test_extra_field_not_matching_pattern_allowed(ppr_valid_schema, not_allow):
             f"'Published', 'VendorTimezone', 'MPN']"
         ),
     ]
-
-
-def test_get_hub_credentials(cbc_db_session, logger):
-    hub_id = 'HB-000-000'
-    hub_credentials = get_hub_credentials(hub_id, cbc_db_session)
-
-    assert hub_credentials
-
-
-def test_get_hub_credentials_none(cbc_db_session, logger):
-    hub_id = 'HB-000-001'
-    hub_credentials = get_hub_credentials(hub_id, cbc_db_session)
-
-    assert not hub_credentials

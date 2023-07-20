@@ -26,6 +26,7 @@ from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.replicas import Product
 from connect_ext_ppr.models.ppr import PPRVersion
+from connect_ext_ppr.services.cbc_extension import get_hub_credentials
 from connect_ext_ppr.webapp import ConnectExtensionXvsWebApplication
 
 
@@ -524,7 +525,7 @@ def cbc_db_session():
             " 'HB-000-000',"
             " '39deb31d-d6ad-48bb-ba0f-82e99a88a7e9',"
             " 'e4608f13-0582-4780-876f-224add5fa4fd',"
-            " 'https://www.cbc-instance.com'"
+            " 'https://example.com/api/v1'"
             ")",
         ]
         for query in queries:
@@ -533,3 +534,155 @@ def cbc_db_session():
         yield db
 
         transaction.rollback()
+
+
+@pytest.fixture
+def hub_credentials(cbc_db_session):
+    return get_hub_credentials(
+        'HB-000-000',
+        cbc_db_session,
+    )
+
+
+@pytest.fixture
+def aps_controller_details():
+    return json.load(open('./tests/fixtures/aps_controller_details.json'))
+
+
+@pytest.fixture
+def product_details():
+    return {
+        'id': 'PRD-000-000-000',
+        'name': 'Product F9',
+        'vendor': "Adrian's Inc",
+        'isImporting': False,
+        'isInstalled': False,
+        'isUpdateAvailable': False,
+        'version': '1',
+        'isSyndicated': False,
+        'availableCountries': [],
+        'category': 'Finance',
+        'vendorLinks': [
+            {
+                'description': 'Admin Manual',
+                'linkUrl': 'https://example.com/manual/admin',
+            },
+        ],
+        'releaseInformation': [
+            {
+                'version': '1',
+                'releaseNotes': '',
+            },
+        ],
+    }
+
+
+@pytest.fixture
+def get_product_details_not_found_response():
+    return {
+        'error': 'com.ingrammicro.imcp.library.aps.exception.APSError',
+        'packageId': '04f3fca3-9a61-4af5-b722-dd0e8e25b51b',
+        'message': '404 Not Found '
+                   'ConnectError(error_code=CNCT_001, errors=[Not found.], params=null)',
+        'http_request': 'GET https://inhouse-products:8081/rest/application/'
+                        '4b4b65ec-149a-4a8c-9897-dc32f2e9e379/appDetails/'
+                        'PRD-361-577-149?fulfillmentSystem=connect',
+    }
+
+
+@pytest.fixture
+def import_product_not_found_response():
+    return {
+        'error': 'com.ingrammicro.imcp.library.aps.exception.APSError',
+        'packageId': '04f3fca3-9a61-4af5-b722-dd0e8e25b51b',
+        'message': 'java.lang.NullPointerException: Cannot invoke '
+                   '"com.odin.platform.application.rest.FulfillmentProduct.getFulfillmentSystem()"'
+                   ' because "product" is null',
+        'http_request': 'POST https://inhouse-products:8081/rest/application/'
+                        '4b4b65ec-149a-4a8c-9897-dc32f2e9e379/appDetails/PRD-361-577-149/import',
+    }
+
+
+@pytest.fixture
+def update_product_response():
+    return {
+        'aps': {
+            'id': '25ef793d-9a6e-4176-83b2-55d4849bdddb',
+            'type': 'http://aps-standard.org/inhouse-products/connectProduct/1.0',
+            'status': 'aps:ready',
+            'revision': 5,
+            'modified': '2023-07-13T09:05:21Z',
+        },
+        'productId': 'PRD-000-000-000',
+        'version': 1,
+        'paAccountId': '2fe324f0-68bc-45fa-91d6-d081c76f29d6',
+        'subscriptionId': '7c83c18d-1d3d-40e5-973c-26a26c6eac4f',
+        'cartValidation': False,
+        'tierConfigValidation': False,
+        'tierConfigUpdateValidation': False,
+        'changeRequestValidation': False,
+        'editableOrderingParameters': False,
+        'payAsYouGo': False,
+        'dynamicPAYG': False,
+        'createNotificationId': 'f9650d3f-77da-49de-a240-5575ab4df3ec',
+        'status': 'installed',
+        'tenant': {
+            'aps': {
+                'id': '2c638143-bf4f-4520-90c0-981e36a15acb',
+            },
+        },
+    }
+
+
+@pytest.fixture
+def product_not_installed_response():
+    return {
+        'error': 'com.ingrammicro.imcp.library.aps.exception.APSError',
+        'packageId': '04f3fca3-9a61-4af5-b722-dd0e8e25b51b',
+        'message': 'java.lang.NullPointerException: Cannot invoke '
+                   '"com.odin.platform.application.rest.FulfillmentProduct.getFulfillmentSystem()"'
+                   ' because "product" is null',
+        'http_request': 'POST https://inhouse-products:8081/rest/application/'
+                        '4b4b65ec-149a-4a8c-9897-dc32f2e9e379/appDetails/PRD-361-577-149/import',
+    }
+
+
+@pytest.fixture
+def subscriptions():
+    return [
+        {
+            'name': 'License key',
+            'trial': False,
+            'oneTime': False,
+            'disabled': False,
+            'description': 'Parallels Automation License Key',
+            'subscriptionId': 1,
+            'serviceTemplateId': 0,
+            'aps': {
+                'modified': '2023-07-13T06:57:12Z',
+                'id': '7c83c18d-1d3d-40e5-973c-26a26c6eac4f',
+                'type': 'http://parallels.com/aps/types/pa/subscription/1.0',
+                'status': 'aps:ready',
+                'revision': 1,
+            },
+        },
+    ]
+
+
+@pytest.fixture
+def plm_service():
+    return {
+        'aps':
+            {
+                'modified': '2023-07-13T07:01:38Z',
+                'id': '4b4b65ec-149a-4a8c-9897-dc32f2e9e379',
+                'type': 'http://com.odin.platform/inhouse-products/application/1.0',
+                'status': 'aps:ready',
+                'revision': 3,
+            },
+    }
+
+
+@pytest.fixture
+def plm_services(plm_service):
+    return [plm_service]

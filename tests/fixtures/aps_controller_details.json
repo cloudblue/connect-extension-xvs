@@ -1,0 +1,210 @@
+{
+  "versions": {
+    "2.0": {
+      "features": {
+        "navigation": {
+          "vars": [
+            "filter"
+          ]
+        },
+        "async": {
+          "customOperation": true
+        },
+        "rql": [
+          "and()",
+          "or()",
+          "not()",
+          "eq()",
+          "ne()",
+          "ge()",
+          "le()",
+          "lt()",
+          "gt()",
+          "like()",
+          "in()",
+          "out()",
+          "true",
+          "false",
+          "true()",
+          "false()",
+          "empty()",
+          "null()",
+          "select()",
+          "limit()",
+          "sort()",
+          "implementing()",
+          "composing()"
+        ]
+      },
+      "version": "2.0.0",
+      "href": "/aps/2.0"
+    },
+    "2.1": {
+      "features": {
+        "navigation": {
+          "vars": [
+            "filter",
+            "collection",
+            "required"
+          ]
+        },
+        "async": {
+          "customOperation": true
+        },
+        "rql": [
+          "and()",
+          "or()",
+          "not()",
+          "eq()",
+          "ne()",
+          "ge()",
+          "le()",
+          "lt()",
+          "gt()",
+          "like()",
+          "in()",
+          "out()",
+          "true",
+          "false",
+          "true()",
+          "false()",
+          "empty()",
+          "null()",
+          "select()",
+          "limit()",
+          "sort()",
+          "implementing()",
+          "composing()"
+        ]
+      },
+      "version": "2.1.0",
+      "href": "/aps/2.1"
+    },
+    "2.2": {
+      "features": {
+        "navigation": {
+          "vars": [
+            "filter",
+            "collection",
+            "required"
+          ],
+          "view-plugin": "true"
+        },
+        "async": {
+          "customOperation": true
+        },
+        "rql": [
+          "and()",
+          "or()",
+          "not()",
+          "eq()",
+          "ne()",
+          "ge()",
+          "le()",
+          "lt()",
+          "gt()",
+          "like()",
+          "in()",
+          "out()",
+          "true",
+          "false",
+          "true()",
+          "false()",
+          "empty()",
+          "null()",
+          "select()",
+          "limit()",
+          "sort()",
+          "implementing()",
+          "composing()"
+        ]
+      },
+      "version": "2.2.0",
+      "href": "/aps/2.2"
+    },
+    "2.3": {
+      "features": {
+        "navigation": {
+          "vars": [
+            "filter",
+            "collection",
+            "required"
+          ],
+          "view-plugin": "true"
+        },
+        "async": {
+          "customOperation": true
+        },
+        "rql": [
+          "and()",
+          "or()",
+          "not()",
+          "eq()",
+          "ne()",
+          "ge()",
+          "le()",
+          "lt()",
+          "gt()",
+          "like()",
+          "in()",
+          "out()",
+          "true",
+          "false",
+          "true()",
+          "false()",
+          "empty()",
+          "null()",
+          "select()",
+          "limit()",
+          "sort()",
+          "implementing()",
+          "composing()"
+        ]
+      },
+      "version": "2.3.0",
+      "href": "/aps/2.3"
+    },
+    "21.12": {
+      "features": {
+        "navigation": {
+          "vars": [
+            "filter",
+            "collection",
+            "required"
+          ],
+          "view-plugin": "true"
+        },
+        "async": {
+          "customOperation": true
+        },
+        "rql": [
+          "and()",
+          "or()",
+          "not()",
+          "eq()",
+          "ne()",
+          "ge()",
+          "le()",
+          "lt()",
+          "gt()",
+          "like()",
+          "in()",
+          "out()",
+          "true",
+          "false",
+          "true()",
+          "false()",
+          "empty()",
+          "null()",
+          "select()",
+          "limit()",
+          "sort()",
+          "implementing()",
+          "composing()"
+        ]
+      },
+      "version": "21.12.0",
+      "href": "/aps/21.12"
+    }
+  }
+}

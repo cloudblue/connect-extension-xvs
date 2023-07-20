@@ -12,11 +12,14 @@ endpoint = '******'
 client_id = '*****'
 # CBC OAuth Key
 client_secret = '*****'
+# CBC Extension App ID
+app_id = '*****'
 
 client = CBCClient(
     endpoint=endpoint,
     oauth_key=client_id,
     oauth_secret=client_secret,
+    app_id=app_id,
 )
 
 ```
