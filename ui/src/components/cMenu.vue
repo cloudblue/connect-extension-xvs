@@ -167,8 +167,8 @@ export default {
     ),
 
     containerLeft: vm => cond([
-      [propEq('position', 'center'), always(`${vm.triggerBox.left - (vm.containerWidth - vm.triggerBox.width) / 2}px`)],
-      [propEq('position', 'left'), always(`${vm.triggerBox.left}px`)],
+      [propEq('center', 'position'), always(`${vm.triggerBox.left - (vm.containerWidth - vm.triggerBox.width) / 2}px`)],
+      [propEq('left', 'position'), always(`${vm.triggerBox.left}px`)],
       [T, always(`${vm.triggerBox.left + vm.triggerBox.width - vm.containerWidth}px`)],
     ])(vm),
 
@@ -221,7 +221,7 @@ export default {
       // w/a for v-select inside menu container click event
       // should be removed after replacing v-select with c-select component in scope of LITE-16180
       const selectedOptionsList = (this.$refs.cMenuContainer) ? this.$refs.cMenuContainer.querySelectorAll('.v-select__selection') : [];
-      const selectedOptionInContainer = any(propEq('textContent', e.target.textContent))(selectedOptionsList);
+      const selectedOptionInContainer = any(propEq(e.target.textContent, 'textContent'))(selectedOptionsList);
 
       if (
         !this.localValue

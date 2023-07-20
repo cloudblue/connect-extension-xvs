@@ -556,7 +556,7 @@ export const ensureArray = unless(is(Array), of);
  * @example
  * findByPath(['a', 'b'], [{ a: { b: 1} }, { a: { b: 2 } }], 2) //=> { a: { b: 2 } }
  */
-export const findByPath = curry((k, a, v) => find(pathEq(k, v), a));
+export const findByPath = curry((k, a, v) => find(pathEq(v, k), a));
 
 /**
   * Wrap up a value to array.
@@ -630,7 +630,7 @@ export const enrich = curry((bysrc, bytrg, to, s, t) => {
  * @param {array} arr Searched array
  * @returns {*|undefined}
  */
-export const findByProp = curry((p, v, a) => find(propEq(p, v), a));
+export const findByProp = curry((p, v, a) => find(propEq(v, p), a));
 
 /**
  * Standarizes a format for an alias with a prefix
@@ -682,7 +682,7 @@ export const arr = () => ([]);
  * @return {number}
  */
 export const findIndexByProp = curry(
-  (propName, value, array) => findIndex(propEq(propName, value))(array),
+  (propName, value, array) => findIndex(propEq(value, propName))(array),
 );
 
 /**

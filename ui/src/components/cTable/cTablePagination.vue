@@ -245,7 +245,7 @@ export default {
   computed: {
     preparedOptions: pathTo(['options'], map(value => ({ value, text: value }))),
     previousItemsCount: vm => dec(vm.localPagination.page) * vm.localPagination.rowsPerPage,
-    isFirstPage: pathEq(['localPagination', 'page'], 1),
+    isFirstPage: pathEq(1, ['localPagination', 'page']),
     pageStart: vm => vm.previousItemsCount + 1,
 
     pageStop: vm => alt(
@@ -254,7 +254,7 @@ export default {
       vm.isLastPage,
     ),
 
-    isAllOptionSelected: pathEq(['localPagination', 'rowsPerPage'], allOption.value),
+    isAllOptionSelected: pathEq(allOption.value, ['localPagination', 'rowsPerPage']),
 
     allOptions: vm => alt(
       [...vm.preparedOptions, allOption],
@@ -263,7 +263,7 @@ export default {
     ),
 
     showLeftPart: both(propTo('onlyRightPart', not), propTo('hideAllSections', not)),
-    showGoToPage: both(propTo('hideGoToPageSection', not), pathNotEq(['lastPage'], 1)),
+    showGoToPage: both(propTo('hideGoToPageSection', not), pathNotEq(1, ['lastPage'])),
     showRowsPerPage: both(propTo('hideRowsPerPageSection', not), propTo('hideAllSections', not)),
 
     lastPage: vm => Math.ceil(vm.total / vm.localPagination.rowsPerPage),
@@ -300,7 +300,7 @@ export default {
       ({ beforePages, currentPage, afterPages }) => [...beforePages, currentPage, ...afterPages],
 
     rowsMenuPositionY: ifElse(
-      propEq('position', paginationPositions.bottom),
+      propEq(paginationPositions.bottom, 'position'),
       always('top'),
       always('bottom'),
     ),
@@ -308,8 +308,8 @@ export default {
     // NOTE: for c-menu-list
 
     dynamicClassesMenu: template({
-      'c-menu-list_at-top': propEq('rowsMenuPositionY', 'top'),
-      'c-menu-list_at-bottom': propEq('rowsMenuPositionY', 'bottom'),
+      'c-menu-list_at-top': propEq('top', 'rowsMenuPositionY'),
+      'c-menu-list_at-bottom': propEq('bottom', 'rowsMenuPositionY'),
     }),
 
     rowsPerPageBtnLabel: vm => String(

@@ -89,7 +89,7 @@ export const getSkeletonsArray = number => (new Array(10)).fill(null)
  * Input:: dropHidden([{v: '1', hide: true}, {v: '2'}])
  * Output:: [{v: '2'}]
  */
-export const dropHidden = reject(propEq('hide', true));
+export const dropHidden = reject(propEq(true, 'hide'));
 
 export const idFilter = curry((field, prefix, value) => alt(
   { [field]: { $ilike: { start: value } } },

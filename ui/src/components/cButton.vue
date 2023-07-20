@@ -205,7 +205,7 @@ export default {
       iconRight: isNotNilOrEmpty,
     }),
 
-    isSolidBtn: propEq('mode', cButtonModesDict.solid),
+    isSolidBtn: propEq(cButtonModesDict.solid, 'mode'),
 
     initialBtnColor: cond([
       [prop('color'), pathTo(['color'], hexColor)],
