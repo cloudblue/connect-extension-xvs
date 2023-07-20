@@ -1,6 +1,8 @@
 import base64
 from functools import cached_property
 from io import FileIO
+import re
+from typing import Dict
 
 from connect_ext_ppr.client import CBCClient
 from connect_ext_ppr.client.exception import ClientError
@@ -11,6 +13,7 @@ class CBCService:
 
     PLM_TYPE = 'http://com.odin.platform/inhouse-products/application'
     SUBSCRIPTION_TYPE = 'http://parallels.com/aps/types/pa/subscription'
+    ADAPTER_TYPE = 'http://connect.cloudblue.com/aps-openapi-adapter/app'
 
     def __init__(self, hub_credential: HubCredential, verify_certificate: bool = False):
         self.hub_credential = hub_credential
@@ -61,6 +64,10 @@ class CBCService:
     def subscription_service(self):
         return self.client(self.SUBSCRIPTION_TYPE)
 
+    @cached_property
+    def adapter_service(self):
+        return self.client(self.ADAPTER_TYPE)
+
     def get_product_details(self, product_id: str):
         return self.plm_service.appDetails[product_id].get(
             fulfillmentSystem='connect',
@@ -92,4 +99,26 @@ class CBCService:
             payload={
                 'excelConfig': base64_content,
             },
+        )
+
+    def apply_ppr(self, parsed_ppr: Dict):
+        headers = self.plm_service.action(
+            name='applyConfig',
+            payload=parsed_ppr,
+            output='headers',
+        )
+
+        task_info = headers['APS-Info'] if 'APS-Info' in headers.keys() else None
+
+        if task_info:
+            tracking_ids = re.findall(
+                r'[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}',
+                task_info,
+            )
+
+            return tracking_ids[0] if tracking_ids else None
+
+    def search_task_logs_by_name(self, partial_name: str):
+        return self.adapter_service.getTaskLog.get(
+            task_name=f'%{partial_name}%',
         )

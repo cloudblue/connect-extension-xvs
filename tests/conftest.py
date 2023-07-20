@@ -417,25 +417,6 @@ def cbc_client(
 
 
 @pytest.fixture
-def flat_catalog_type_object():
-    return {
-        'refreshStatsUUID': '83dc93d4-2722-4cb9-b581-9a26aeeb0fe0',
-        'aps': {
-            'modified': '2023-06-30T22:28:16Z',
-            'id': '3e123a60-b055-45d1-b838-b35d34405927',
-            'type': 'http://ingrammicro.com/pa/flat-catalog/1.4',
-            'status': 'aps:ready',
-            'revision': 4,
-        },
-    }
-
-
-@pytest.fixture
-def flat_catalog_type_objects(flat_catalog_type_object):
-    return [flat_catalog_type_object]
-
-
-@pytest.fixture
 def flat_catalog_type():
     return 'http://ingrammicro.com/pa/flat-catalog'
 
@@ -699,13 +680,12 @@ def subscriptions():
 
 
 @pytest.fixture
-def plm_service():
+def service():
     return {
         'aps':
             {
                 'modified': '2023-07-13T07:01:38Z',
                 'id': '4b4b65ec-149a-4a8c-9897-dc32f2e9e379',
-                'type': 'http://com.odin.platform/inhouse-products/application/1.0',
                 'status': 'aps:ready',
                 'revision': 3,
             },
@@ -713,8 +693,8 @@ def plm_service():
 
 
 @pytest.fixture
-def plm_services(plm_service):
-    return [plm_service]
+def services(service):
+    return [service]
 
 
 @pytest.fixture
@@ -725,3 +705,22 @@ def sample_ppr_file():
 @pytest.fixture
 def parse_ppr_success_response():
     return json.load(open('./tests/fixtures/parse_ppr_success_response.json'))
+
+
+@pytest.fixture
+def task_logs_response():
+    return [
+        {
+            'actionOutput': '',
+            'location': 'SCREF:JMSQueue:0',
+            'method': 'APSAsyncOperations',
+            'mutex': 'PL:8',
+            'name': "Execute operation '/applyConfig'(eebc63a9-ed15-4a7f-83d5-bb2d262c7650)"
+                    ' on resource application(4b4b65ec-149a-4a8c-9897-dc32f2e9e379)',
+            'orderId': 0,
+            'startedAt': 1689262873,
+            'status': 's',
+            'subscription_id': 0,
+            'task_id': 106,
+        },
+    ]

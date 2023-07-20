@@ -25,17 +25,17 @@ def test_collection_wrong_collection_value_type(cbc_client):
 def test_collection_get(
     cbc_endpoint,
     cbc_client,
-    flat_catalog_type_objects,
+        services,
 ):
     responses.add(
         method='GET',
         url=f'{cbc_endpoint}/flat-catalog',
-        json=flat_catalog_type_objects,
+        json=services,
     )
 
     objs = cbc_client.flat_catalog.get()
 
-    TestCase().assertListEqual(objs, flat_catalog_type_objects)
+    TestCase().assertListEqual(objs, services)
 
 
 def test_sub_collection(cbc_endpoint, cbc_client):
@@ -74,31 +74,31 @@ def test_collection_resource_wrong_type(cbc_client):
 def test_collection_get_with_identifier(
     cbc_endpoint,
     cbc_client,
-    flat_catalog_type_object,
+        service,
 ):
-    object_id = flat_catalog_type_object['aps']['id']
+    object_id = service['aps']['id']
 
     responses.add(
         method='GET',
         url=f'{cbc_endpoint}/flat-catalog/wizard/{object_id}',
-        json=flat_catalog_type_object,
+        json=service,
     )
 
     obj = cbc_client.flat_catalog.wizard[object_id].get()
 
-    TestCase().assertDictEqual(obj, flat_catalog_type_object)
+    TestCase().assertDictEqual(obj, service)
 
 
 @responses.activate
 def test_collection_action(
     cbc_endpoint,
     cbc_client,
-    flat_catalog_type_object,
+        service,
 ):
     responses.add(
         method='POST',
         url=f'{cbc_endpoint}/flat-catalog/wizard/upload',
-        json=flat_catalog_type_object,
+        json=service,
     )
 
     obj = cbc_client.flat_catalog.wizard.action(
@@ -106,7 +106,7 @@ def test_collection_action(
         payload={},
     )
 
-    TestCase().assertDictEqual(obj, flat_catalog_type_object)
+    TestCase().assertDictEqual(obj, service)
 
 
 def test_collection_action_with_both_payload_and_file(cbc_client):
