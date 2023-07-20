@@ -93,7 +93,6 @@ class CBCClient:
                 if response is not None:
                     raise ClientError(
                         message=f'{type(e).__name__} : {str(e)}',
-                        status_code=response.status_code,
                         response=response,
                         cause=e,
                     )

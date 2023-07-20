@@ -282,3 +282,32 @@ def test_client_validation_invalid(
 
     with pytest.raises(ValueError):
         CBCService(hub_credentials)
+
+
+@responses.activate
+def test_parse_ppr_positive(
+    hub_credentials,
+    cbc_endpoint,
+    aps_controller_details,
+    plm_services,
+    sample_ppr_file,
+    parse_ppr_success_response,
+):
+    service_id = plm_services[0]['aps']['id']
+
+    __mock_common_services(
+        cbc_endpoint,
+        aps_controller_details,
+        plm_services,
+    )
+    responses.add(
+        method='POST',
+        url=f'{cbc_endpoint}/aps/2/resources/'
+            f'{service_id}/parseConfig',
+        json=parse_ppr_success_response,
+    )
+
+    cbc_service = CBCService(hub_credentials)
+    response = cbc_service.parse_ppr(sample_ppr_file)
+
+    TestCase().assertDictEqual(response, parse_ppr_success_response)

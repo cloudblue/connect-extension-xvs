@@ -1,4 +1,6 @@
+import base64
 from functools import cached_property
+from io import FileIO
 
 from connect_ext_ppr.client import CBCClient
 from connect_ext_ppr.client.exception import ClientError
@@ -79,5 +81,15 @@ class CBCService:
             payload={
                 'subscriptionId': self.primary_subscription_id,
                 'fulfillmentSystem': 'connect',
+            },
+        )
+
+    def parse_ppr(self, file: FileIO):
+        base64_content = base64.b64encode(file.read()).decode('ascii')
+
+        return self.plm_service.action(
+            name='parseConfig',
+            payload={
+                'excelConfig': base64_content,
             },
         )
