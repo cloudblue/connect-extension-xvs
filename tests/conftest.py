@@ -686,3 +686,13 @@ def plm_service():
 @pytest.fixture
 def plm_services(plm_service):
     return [plm_service]
+
+
+@pytest.fixture
+def sample_ppr_file():
+    return open('./tests/fixtures/Sweet_Pies_v2.xlsx', 'rb')
+
+
+@pytest.fixture
+def parse_ppr_success_response():
+    return json.load(open('./tests/fixtures/parse_ppr_success_response.json'))

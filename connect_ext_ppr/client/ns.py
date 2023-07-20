@@ -1,4 +1,6 @@
 from functools import cached_property
+from io import FileIO
+from typing import Dict
 
 from connect_ext_ppr.client.mixin import (
     ActionMixin,
@@ -63,10 +65,7 @@ class Collection(
         )
 
 
-class Service(
-    NSBase,
-    ActionMixin,
-):
+class Service(NSBase):
     def __init__(self, client, aps_type: str, path: str):
         super().__init__(
             client=client,
@@ -112,4 +111,25 @@ class Service(
             method='GET',
             path=f'{self.path}/aps/2/resources/?implementing({self.aps_type})',
             params=kwargs,
+        )
+
+    def action(
+        self,
+        name: str,
+        method: str = 'POST',
+        payload: dict = None,
+        file: FileIO = None,
+        headers: Dict[str, str] = None,
+        output: str = 'body',
+    ):
+        if payload and file:
+            raise ValueError('Either payload or file can be specified.')
+
+        return self.client.execute_request(
+            method=method,
+            path=f'{self.service_path}/{name}',
+            payload=payload,
+            file=file,
+            headers=headers,
+            output=output,
         )

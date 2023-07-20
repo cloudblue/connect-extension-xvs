@@ -1,0 +1,795 @@
+{
+  "owner": {
+    "accountId": 1,
+    "memberId": 1
+  },
+  "serviceTemplateId": 8,
+  "serviceTerms": {
+    "Default": {
+      "bssId": 0,
+      "serviceTermsName": "Default",
+      "holdPeriodInDays": 30,
+      "gracePeriodInDays": 10
+    },
+    "Domain Service Terms": {
+      "bssId": 3,
+      "serviceTermsName": "Domain Service Terms",
+      "holdPeriodInDays": 0,
+      "gracePeriodInDays": 30
+    },
+    "Hosting Service Terms": {
+      "bssId": 2,
+      "serviceTermsName": "Hosting Service Terms",
+      "holdPeriodInDays": 30,
+      "gracePeriodInDays": 10
+    },
+    "In-House Products for Resellers": {
+      "bssId": 4,
+      "serviceTermsName": "In-House Products for Resellers",
+      "holdPeriodInDays": 0,
+      "gracePeriodInDays": 0
+    }
+  },
+  "termsAndConditions": {
+    "1": {}
+  },
+  "existingPdiPlans": {
+    "geraardsbergse mattentaart": {
+      "aps": {
+        "id": "f7fe45dd-0329-4bf7-a993-0059f876c603",
+        "type": "http://com.odin.platform/inhouse-products/pdiPlan/1.0",
+        "status": "aps:ready",
+        "revision": 6,
+        "modified": "2023-07-13T15:41:13Z"
+      },
+      "autoRenewPlanPeriodId": 12,
+      "autoRenewPlanId": 10,
+      "name": {
+        "de_DE": "Geraardsbergse Mattentaart",
+        "en_US": "Geraardsbergse Mattentaart",
+        "es_ES": "Geraardsbergse Mattentaart",
+        "fr_FR": "Geraardsbergse Mattentaart",
+        "it_IT": "Geraardsbergse Mattentaart",
+        "nl_NL": "Geraardsbergse Mattentaart",
+        "pt_BR": "Geraardsbergse Mattentaart",
+        "pt_PT": "Geraardsbergse Mattentaart",
+        "tr_TR": "Geraardsbergse Mattentaart"
+      },
+      "description": {
+        "de_DE": "Geraardsbergse Mattentaart",
+        "en_US": "Geraardsbergse Mattentaart",
+        "es_ES": "Geraardsbergse Mattentaart",
+        "fr_FR": "Geraardsbergse Mattentaart",
+        "it_IT": "Geraardsbergse Mattentaart",
+        "nl_NL": "Geraardsbergse Mattentaart",
+        "pt_BR": "Geraardsbergse Mattentaart",
+        "pt_PT": "Geraardsbergse Mattentaart",
+        "tr_TR": "Geraardsbergse Mattentaart"
+      },
+      "bssServicePlanId": 10,
+      "serviceTemplateId": 8,
+      "isDefault": false,
+      "isOneTimeFeePlan": false,
+      "billingPeriod": 1,
+      "billingPeriodType": "month",
+      "pricePeriodType": "billing period",
+      "planCategory": "Sweet Pies",
+      "billingModel": "charge before billing period",
+      "autoRenewType": "Before Expiration",
+      "renewOrderInterval": 4,
+      "vendorTimezone": "UTC",
+      "subscriptionPeriods": [
+        {
+          "bssId": 12,
+          "active": true,
+          "period": 1,
+          "periodType": "month",
+          "cancellationFeeType": "none",
+          "cancellationFeeValue": "",
+          "isAutoRenewPeriod": false,
+          "isTrial": false,
+          "afterRefundPeriod": "no_refund",
+          "fullRefundPeriod": 1
+        }
+      ],
+      "salesCategories": [
+        {
+          "id": 5,
+          "name": {
+            "en": "Sweet Pies"
+          },
+          "description": {
+            "en": "Sweet Pies"
+          },
+          "expand": true,
+          "inCCP": true
+        }
+      ],
+      "serviceTerms": {
+        "bssId": 0,
+        "serviceTermsName": "Default",
+        "holdPeriodInDays": 30,
+        "gracePeriodInDays": 10
+      },
+      "termsAndConditions": [],
+      "availableNotifications": [],
+      "enabledNotifications": [],
+      "alignWithStatementDay": false,
+      "isSalesOrderProrated": false,
+      "isFirstPeriodForFree": false,
+      "customStatementDay": 0,
+      "isAllowedScheduledChanges": true,
+      "resellerGroups": [],
+      "volumePricingRatingMode": true,
+      "ratingMode": "Revenue and Costs",
+      "billingPeriodAlignment": "Subscription Period Start",
+      "coTermingPossibilities": "Restricted",
+      "expDateAlignedWithEndOfMonth": false,
+      "expDateAlignedWithSubscr": false,
+      "billingAlignmentResellerRedefineAllowed": false,
+      "isPublished": true
+    },
+    "karpouzopita": {
+      "aps": {
+        "id": "474a9ba4-2cea-4b73-99cc-199cc5c48b69",
+        "type": "http://com.odin.platform/inhouse-products/pdiPlan/1.0",
+        "status": "aps:ready",
+        "revision": 6,
+        "modified": "2023-07-13T15:41:13Z"
+      },
+      "autoRenewPlanPeriodId": 11,
+      "autoRenewPlanId": 9,
+      "name": {
+        "de_DE": "Karpouzopita",
+        "en_US": "Karpouzopita",
+        "es_ES": "Karpouzopita",
+        "fr_FR": "Karpouzopita",
+        "it_IT": "Karpouzopita",
+        "nl_NL": "Karpouzopita",
+        "pt_BR": "Karpouzopita",
+        "pt_PT": "Karpouzopita",
+        "tr_TR": "Karpouzopita"
+      },
+      "description": {
+        "de_DE": "Karpouzopita",
+        "en_US": "Karpouzopita",
+        "es_ES": "Karpouzopita",
+        "fr_FR": "Karpouzopita",
+        "it_IT": "Karpouzopita",
+        "nl_NL": "Karpouzopita",
+        "pt_BR": "Karpouzopita",
+        "pt_PT": "Karpouzopita",
+        "tr_TR": "Karpouzopita"
+      },
+      "bssServicePlanId": 9,
+      "serviceTemplateId": 8,
+      "isDefault": false,
+      "isOneTimeFeePlan": false,
+      "billingPeriod": 1,
+      "billingPeriodType": "month",
+      "pricePeriodType": "billing period",
+      "planCategory": "Sweet Pies",
+      "billingModel": "charge before billing period",
+      "autoRenewType": "Before Expiration",
+      "renewOrderInterval": 4,
+      "vendorTimezone": "UTC",
+      "subscriptionPeriods": [
+        {
+          "bssId": 11,
+          "active": true,
+          "period": 1,
+          "periodType": "month",
+          "cancellationFeeType": "none",
+          "cancellationFeeValue": "",
+          "isAutoRenewPeriod": false,
+          "isTrial": false,
+          "afterRefundPeriod": "no_refund",
+          "fullRefundPeriod": 1
+        }
+      ],
+      "salesCategories": [
+        {
+          "id": 5,
+          "name": {
+            "en": "Sweet Pies"
+          },
+          "description": {
+            "en": "Sweet Pies"
+          },
+          "expand": true,
+          "inCCP": true
+        }
+      ],
+      "serviceTerms": {
+        "bssId": 0,
+        "serviceTermsName": "Default",
+        "holdPeriodInDays": 30,
+        "gracePeriodInDays": 10
+      },
+      "termsAndConditions": [],
+      "availableNotifications": [],
+      "enabledNotifications": [],
+      "alignWithStatementDay": false,
+      "isSalesOrderProrated": false,
+      "isFirstPeriodForFree": false,
+      "customStatementDay": 0,
+      "isAllowedScheduledChanges": true,
+      "resellerGroups": [],
+      "volumePricingRatingMode": true,
+      "ratingMode": "Revenue and Costs",
+      "billingPeriodAlignment": "Subscription Period Start",
+      "coTermingPossibilities": "Restricted",
+      "expDateAlignedWithEndOfMonth": false,
+      "expDateAlignedWithSubscr": false,
+      "billingAlignmentResellerRedefineAllowed": false,
+      "isPublished": true
+    },
+    "melopita": {
+      "aps": {
+        "id": "82aec4df-ea7a-4dcd-9e75-5380ec37d08e",
+        "type": "http://com.odin.platform/inhouse-products/pdiPlan/1.0",
+        "status": "aps:ready",
+        "revision": 7,
+        "modified": "2023-07-13T15:41:13Z"
+      },
+      "autoRenewPlanPeriodId": 10,
+      "autoRenewPlanId": 8,
+      "name": {
+        "de_DE": "Melopita",
+        "en_US": "Melopita",
+        "es_ES": "Melopita",
+        "fr_FR": "Melopita",
+        "it_IT": "Melopita",
+        "nl_NL": "Melopita",
+        "pt_BR": "Melopita",
+        "pt_PT": "Melopita",
+        "tr_TR": "Melopita"
+      },
+      "description": {
+        "de_DE": "Melopita",
+        "en_US": "Melopita",
+        "es_ES": "Melopita",
+        "fr_FR": "Melopita",
+        "it_IT": "Melopita",
+        "nl_NL": "Melopita",
+        "pt_BR": "Melopita",
+        "pt_PT": "Melopita",
+        "tr_TR": "Melopita"
+      },
+      "bssServicePlanId": 8,
+      "serviceTemplateId": 8,
+      "isDefault": false,
+      "isOneTimeFeePlan": false,
+      "billingPeriod": 1,
+      "billingPeriodType": "month",
+      "pricePeriodType": "billing period",
+      "planCategory": "Sweet Pies",
+      "billingModel": "charge before billing period",
+      "autoRenewType": "Before Expiration",
+      "renewOrderInterval": 4,
+      "vendorTimezone": "UTC",
+      "subscriptionPeriods": [
+        {
+          "bssId": 10,
+          "active": true,
+          "period": 1,
+          "periodType": "month",
+          "cancellationFeeType": "none",
+          "cancellationFeeValue": "",
+          "isAutoRenewPeriod": false,
+          "isTrial": false,
+          "afterRefundPeriod": "no_refund",
+          "fullRefundPeriod": 1
+        }
+      ],
+      "salesCategories": [
+        {
+          "id": 5,
+          "name": {
+            "en": "Sweet Pies"
+          },
+          "description": {
+            "en": "Sweet Pies"
+          },
+          "expand": true,
+          "inCCP": true
+        }
+      ],
+      "serviceTerms": {
+        "bssId": 0,
+        "serviceTermsName": "Default",
+        "holdPeriodInDays": 30,
+        "gracePeriodInDays": 10
+      },
+      "termsAndConditions": [],
+      "availableNotifications": [],
+      "enabledNotifications": [],
+      "alignWithStatementDay": false,
+      "isSalesOrderProrated": false,
+      "isFirstPeriodForFree": false,
+      "customStatementDay": 0,
+      "isAllowedScheduledChanges": true,
+      "resellerGroups": [],
+      "volumePricingRatingMode": true,
+      "ratingMode": "Revenue and Costs",
+      "billingPeriodAlignment": "Subscription Period Start",
+      "coTermingPossibilities": "Restricted",
+      "expDateAlignedWithEndOfMonth": false,
+      "expDateAlignedWithSubscr": false,
+      "billingAlignmentResellerRedefineAllowed": false,
+      "isPublished": true
+    }
+  },
+  "excelConfig": {
+    "resources": [
+      {
+        "value": {
+          "resourceType": {
+            "name": {
+              "en": "Geraardsbergse Mattentaart"
+            },
+            "description": {
+              "en": "Geraardsbergse Mattentaart"
+            }
+          },
+          "resourceCategory": {
+            "id": 5,
+            "name": {
+              "en": "Other Products"
+            }
+          },
+          "uom": "Units",
+          "measurable": false
+        },
+        "action": "EDIT"
+      },
+      {
+        "value": {
+          "resourceType": {
+            "name": {
+              "en": "Karpouzopita"
+            },
+            "description": {
+              "en": "SP-002"
+            }
+          },
+          "resourceCategory": {
+            "id": 5,
+            "name": {
+              "en": "Other Products"
+            }
+          },
+          "uom": "Units",
+          "measurable": false
+        },
+        "action": "EDIT"
+      },
+      {
+        "value": {
+          "resourceType": {
+            "name": {
+              "en": "Melopita"
+            },
+            "description": {
+              "en": "SP-001"
+            }
+          },
+          "resourceCategory": {
+            "id": 5,
+            "name": {
+              "en": "Other Products"
+            }
+          },
+          "uom": "Units",
+          "measurable": false
+        },
+        "action": "EDIT"
+      }
+    ],
+    "serviceTemplates": [],
+    "servicePlans": [
+      {
+        "value": {
+          "name": {
+            "br": "Melopita",
+            "de": "Melopita",
+            "en": "Melopita",
+            "es": "Melopita",
+            "fr": "Melopita",
+            "it": "Melopita",
+            "nl": "Melopita",
+            "pt": "Melopita",
+            "tr": "Melopita"
+          },
+          "pricePeriodType": "billing period",
+          "autoRenewType": "Before Expiration",
+          "renewOrderInterval": 4,
+          "vendorTimezone": "UTC",
+          "description": {
+            "br": "Melopita",
+            "de": "Melopita",
+            "pt": "Melopita",
+            "en": "Melopita",
+            "it": "Melopita",
+            "fr": "Melopita",
+            "tr": "Melopita",
+            "nl": "Melopita",
+            "es": "Melopita"
+          },
+          "resources": [
+            {
+              "value": {
+                "name": {
+                  "en": "Melopita"
+                },
+                "composite": false,
+                "createPlanRatePeriods": false,
+                "unitOfMeasure": "Units",
+                "inCP": true,
+                "resourceType": {
+                  "name": {
+                    "en": "Melopita"
+                  },
+                  "resClass": "rc.saas.countedlenk"
+                },
+                "max": 10.0,
+                "min": 2.0,
+                "measurable": false,
+                "allowModificationInTrial": false,
+                "rFeePerUnit": false,
+                "rFeeShowZeroPrice": false,
+                "sFeePerUnit": false,
+                "sFeeShowZeroPrice": false,
+                "oFeeShowZeroPrice": false,
+                "instore": true,
+                "resourceCategory": {
+                  "id": 5,
+                  "name": {
+                    "en": "Other Products"
+                  }
+                },
+                "periods": []
+              },
+              "action": "EDIT"
+            }
+          ],
+          "subscriptionPeriods": [
+            {
+              "value": {
+                "trial": false,
+                "periodType": "month",
+                "refundType": "no_refund",
+                "active": true,
+                "period": 1,
+                "fullRefundPeriod": 1,
+                "renewalFee": 0.0,
+                "recurringFee": 0.0,
+                "depositFee": 0.0,
+                "setupFee": 0.0,
+                "transferFee": 0.0,
+                "cancellationFeeType": "none",
+                "cancellationFeeValue": ""
+              },
+              "action": "EDIT"
+            }
+          ],
+          "planCategory": "Sweet Pies",
+          "salesCategories": [],
+          "serviceTerms": "Default",
+          "termsConditions": [],
+          "vendorId": 1,
+          "delegatedServicePlans": [
+            {
+              "value": {
+                "name": {
+                  "en": "Melopita"
+                },
+                "resources": [],
+                "subscriptionPeriods": [],
+                "salesCategories": [],
+                "termsConditions": [],
+                "vendorId": 1000001,
+                "vendorName": "IngramMicro US",
+                "delegatedServicePlans": [],
+                "upgrades": [],
+                "isPublished": true,
+                "resellerGroups": [
+                  {
+                    "id": 1000006,
+                    "name": {
+                      "en_US": "Reseller US L2 ST"
+                    }
+                  }
+                ]
+              },
+              "action": "EDIT"
+            }
+          ],
+          "isEnableVolumePricingModel": true,
+          "ratingMode": "Revenue and Costs",
+          "upgrades": [],
+          "isPublished": true,
+          "isAllowedScheduledChanges": true,
+          "resellerGroups": [],
+          "billingPeriodAlignment": "Subscription Period Start",
+          "coTermingPossibilities": "Restricted",
+          "expDateAlignedWithEndOfMonth": false,
+          "expDateAlignedWithSubscr": false,
+          "billingAlignmentResellerRedefineAllowed": false
+        },
+        "action": "EDIT"
+      },
+      {
+        "value": {
+          "name": {
+            "br": "Karpouzopita",
+            "de": "Karpouzopita",
+            "en": "Karpouzopita",
+            "es": "Karpouzopita",
+            "fr": "Karpouzopita",
+            "it": "Karpouzopita",
+            "nl": "Karpouzopita",
+            "pt": "Karpouzopita",
+            "tr": "Karpouzopita"
+          },
+          "pricePeriodType": "billing period",
+          "autoRenewType": "Before Expiration",
+          "renewOrderInterval": 4,
+          "vendorTimezone": "UTC",
+          "description": {
+            "br": "Karpouzopita",
+            "de": "Karpouzopita",
+            "pt": "Karpouzopita",
+            "en": "Karpouzopita",
+            "it": "Karpouzopita",
+            "fr": "Karpouzopita",
+            "tr": "Karpouzopita",
+            "nl": "Karpouzopita",
+            "es": "Karpouzopita"
+          },
+          "resources": [
+            {
+              "value": {
+                "name": {
+                  "en": "Karpouzopita"
+                },
+                "composite": false,
+                "createPlanRatePeriods": false,
+                "unitOfMeasure": "Units",
+                "inCP": true,
+                "resourceType": {
+                  "name": {
+                    "en": "Karpouzopita"
+                  },
+                  "resClass": "rc.saas.countedlenk"
+                },
+                "max": 200.0,
+                "min": 2.0,
+                "measurable": false,
+                "allowModificationInTrial": false,
+                "rFeePerUnit": false,
+                "rFeeShowZeroPrice": false,
+                "sFeePerUnit": false,
+                "sFeeShowZeroPrice": false,
+                "oFeeShowZeroPrice": false,
+                "instore": true,
+                "resourceCategory": {
+                  "id": 5,
+                  "name": {
+                    "en": "Other Products"
+                  }
+                },
+                "periods": []
+              },
+              "action": "EDIT"
+            }
+          ],
+          "subscriptionPeriods": [
+            {
+              "value": {
+                "trial": false,
+                "periodType": "month",
+                "refundType": "no_refund",
+                "active": true,
+                "period": 1,
+                "fullRefundPeriod": 1,
+                "renewalFee": 0.0,
+                "recurringFee": 0.0,
+                "depositFee": 0.0,
+                "setupFee": 0.0,
+                "transferFee": 0.0,
+                "cancellationFeeType": "none",
+                "cancellationFeeValue": ""
+              },
+              "action": "EDIT"
+            }
+          ],
+          "planCategory": "Sweet Pies",
+          "salesCategories": [],
+          "serviceTerms": "Default",
+          "termsConditions": [],
+          "vendorId": 1,
+          "delegatedServicePlans": [
+            {
+              "value": {
+                "name": {
+                  "en": "Karpouzopita"
+                },
+                "resources": [],
+                "subscriptionPeriods": [],
+                "salesCategories": [],
+                "termsConditions": [],
+                "vendorId": 1000001,
+                "vendorName": "IngramMicro US",
+                "delegatedServicePlans": [],
+                "upgrades": [],
+                "isPublished": true,
+                "resellerGroups": [
+                  {
+                    "id": 1000006,
+                    "name": {
+                      "en_US": "Reseller US L2 ST"
+                    }
+                  }
+                ]
+              },
+              "action": "EDIT"
+            }
+          ],
+          "isEnableVolumePricingModel": true,
+          "ratingMode": "Revenue and Costs",
+          "upgrades": [],
+          "isPublished": true,
+          "isAllowedScheduledChanges": true,
+          "resellerGroups": [],
+          "billingPeriodAlignment": "Subscription Period Start",
+          "coTermingPossibilities": "Restricted",
+          "expDateAlignedWithEndOfMonth": false,
+          "expDateAlignedWithSubscr": false,
+          "billingAlignmentResellerRedefineAllowed": false
+        },
+        "action": "EDIT"
+      },
+      {
+        "value": {
+          "name": {
+            "br": "Geraardsbergse Mattentaart",
+            "de": "Geraardsbergse Mattentaart",
+            "en": "Geraardsbergse Mattentaart",
+            "es": "Geraardsbergse Mattentaart",
+            "fr": "Geraardsbergse Mattentaart",
+            "it": "Geraardsbergse Mattentaart",
+            "nl": "Geraardsbergse Mattentaart",
+            "pt": "Geraardsbergse Mattentaart",
+            "tr": "Geraardsbergse Mattentaart"
+          },
+          "pricePeriodType": "billing period",
+          "autoRenewType": "Before Expiration",
+          "renewOrderInterval": 4,
+          "vendorTimezone": "UTC",
+          "description": {
+            "br": "Geraardsbergse Mattentaart",
+            "de": "Geraardsbergse Mattentaart",
+            "pt": "Geraardsbergse Mattentaart",
+            "en": "Geraardsbergse Mattentaart",
+            "it": "Geraardsbergse Mattentaart",
+            "fr": "Geraardsbergse Mattentaart",
+            "tr": "Geraardsbergse Mattentaart",
+            "nl": "Geraardsbergse Mattentaart",
+            "es": "Geraardsbergse Mattentaart"
+          },
+          "resources": [
+            {
+              "value": {
+                "name": {
+                  "en": "Geraardsbergse Mattentaart"
+                },
+                "composite": false,
+                "createPlanRatePeriods": false,
+                "unitOfMeasure": "Units",
+                "inCP": true,
+                "resourceType": {
+                  "name": {
+                    "en": "Geraardsbergse Mattentaart"
+                  },
+                  "resClass": "rc.saas.countedlenk"
+                },
+                "max": 100.0,
+                "min": 2.0,
+                "measurable": false,
+                "allowModificationInTrial": false,
+                "rFeePerUnit": false,
+                "rFeeShowZeroPrice": false,
+                "sFeePerUnit": false,
+                "sFeeShowZeroPrice": false,
+                "oFeeShowZeroPrice": false,
+                "instore": true,
+                "resourceCategory": {
+                  "id": 5,
+                  "name": {
+                    "en": "Other Products"
+                  }
+                },
+                "periods": []
+              },
+              "action": "EDIT"
+            }
+          ],
+          "subscriptionPeriods": [
+            {
+              "value": {
+                "trial": false,
+                "periodType": "month",
+                "refundType": "no_refund",
+                "active": true,
+                "period": 1,
+                "fullRefundPeriod": 1,
+                "renewalFee": 0.0,
+                "recurringFee": 0.0,
+                "depositFee": 0.0,
+                "setupFee": 0.0,
+                "transferFee": 0.0,
+                "cancellationFeeType": "none",
+                "cancellationFeeValue": ""
+              },
+              "action": "EDIT"
+            }
+          ],
+          "planCategory": "Sweet Pies",
+          "salesCategories": [],
+          "serviceTerms": "Default",
+          "termsConditions": [],
+          "vendorId": 1,
+          "delegatedServicePlans": [
+            {
+              "value": {
+                "name": {
+                  "en": "Geraardsbergse Mattentaart"
+                },
+                "resources": [],
+                "subscriptionPeriods": [],
+                "salesCategories": [],
+                "termsConditions": [],
+                "vendorId": 1000001,
+                "vendorName": "IngramMicro US",
+                "delegatedServicePlans": [],
+                "upgrades": [],
+                "isPublished": true,
+                "resellerGroups": [
+                  {
+                    "id": 1000006,
+                    "name": {
+                      "en_US": "Reseller US L2 ST"
+                    }
+                  }
+                ]
+              },
+              "action": "EDIT"
+            }
+          ],
+          "isEnableVolumePricingModel": true,
+          "ratingMode": "Revenue and Costs",
+          "upgrades": [],
+          "isPublished": true,
+          "isAllowedScheduledChanges": true,
+          "resellerGroups": [],
+          "billingPeriodAlignment": "Subscription Period Start",
+          "coTermingPossibilities": "Restricted",
+          "expDateAlignedWithEndOfMonth": false,
+          "expDateAlignedWithSubscr": false,
+          "billingAlignmentResellerRedefineAllowed": false
+        },
+        "action": "EDIT"
+      }
+    ],
+    "termsConditionsDetails": {},
+    "subscriptionNotificationTemplates": [],
+    "resourceDependencies": [],
+    "opUnitResourceCategories": {}
+  },
+  "appInfo": {
+    "appId": "PRD-001-808-753",
+    "appCustomIconUrl": "https://api.connect.cloud.im/media/VA-857-219/PRD-001-808-753/media/PRD-001-808-753-logo_Px2g45L.png",
+    "impersonationUid": "dab4f679-a6fb-4af1-a476-690a8ca7d65e"
+  }
+}
