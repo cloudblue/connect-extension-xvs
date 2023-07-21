@@ -11,16 +11,16 @@ def test_service_discovery(
     cbc_endpoint,
     cbc_client,
     flat_catalog_type,
-    flat_catalog_type_objects,
+        services,
 ):
     responses.add(
         method='GET',
         url=f'{cbc_endpoint}/aps/2/resources/?implementing({flat_catalog_type})',
-        json=flat_catalog_type_objects,
+        json=services,
     )
 
     services = cbc_client(flat_catalog_type).get()
-    TestCase().assertListEqual(services, flat_catalog_type_objects)
+    TestCase().assertListEqual(services, services)
 
 
 @responses.activate
@@ -76,13 +76,13 @@ def test_service_discovery_collection_with_underscore(
         cbc_endpoint,
         cbc_client,
         flat_catalog_type,
-        flat_catalog_type_objects,
+        services,
 ):
-    service_id = flat_catalog_type_objects[0]['aps']['id']
+    service_id = services[0]['aps']['id']
     responses.add(
         method='GET',
         url=f'{cbc_endpoint}/aps/2/resources/?implementing({flat_catalog_type})',
-        json=flat_catalog_type_objects,
+        json=services,
     )
 
     collection = cbc_client(flat_catalog_type).flat_catalog
@@ -95,13 +95,13 @@ def test_service_discovery_collection(
         cbc_endpoint,
         cbc_client,
         flat_catalog_type,
-        flat_catalog_type_objects,
+        services,
 ):
-    service_id = flat_catalog_type_objects[0]['aps']['id']
+    service_id = services[0]['aps']['id']
     responses.add(
         method='GET',
         url=f'{cbc_endpoint}/aps/2/resources/?implementing({flat_catalog_type})',
-        json=flat_catalog_type_objects,
+        json=services,
     )
 
     service = cbc_client(flat_catalog_type)
@@ -122,12 +122,12 @@ def test_service_discovery_collection_wrong_collection_value_type(
         cbc_endpoint,
         cbc_client,
         flat_catalog_type,
-        flat_catalog_type_objects,
+        services,
 ):
     responses.add(
         method='GET',
         url=f'{cbc_endpoint}/aps/2/resources/?implementing({flat_catalog_type})',
-        json=flat_catalog_type_objects,
+        json=services,
     )
 
     with pytest.raises(TypeError):
@@ -139,12 +139,12 @@ def test_service_discovery_collection_blank_collection_value(
         cbc_endpoint,
         cbc_client,
         flat_catalog_type,
-        flat_catalog_type_objects,
+        services,
 ):
     responses.add(
         method='GET',
         url=f'{cbc_endpoint}/aps/2/resources/?implementing({flat_catalog_type})',
-        json=flat_catalog_type_objects,
+        json=services,
     )
 
     with pytest.raises(ValueError):

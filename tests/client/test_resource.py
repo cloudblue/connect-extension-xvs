@@ -14,29 +14,29 @@ def test_resource(cbc_endpoint, cbc_client):
 def test_resource_get(
     cbc_endpoint,
     cbc_client,
-    flat_catalog_type_object,
+        service,
 ):
     responses.add(
         method='GET',
         url=f'{cbc_endpoint}/test-collection/identifier',
-        json=flat_catalog_type_object,
+        json=service,
     )
 
     obj = cbc_client.test_collection['identifier'].get()
 
-    TestCase().assertDictEqual(obj, flat_catalog_type_object)
+    TestCase().assertDictEqual(obj, service)
 
 
 @responses.activate
 def test_resource_action_with_payload(
     cbc_endpoint,
     cbc_client,
-    flat_catalog_type_object,
+        service,
 ):
     responses.add(
         method='POST',
         url=f'{cbc_endpoint}/test-collection/identifier/upload',
-        json=flat_catalog_type_object,
+        json=service,
     )
 
     obj = cbc_client.test_collection['identifier'].action(
@@ -44,14 +44,14 @@ def test_resource_action_with_payload(
         payload={},
     )
 
-    TestCase().assertDictEqual(obj, flat_catalog_type_object)
+    TestCase().assertDictEqual(obj, service)
 
 
 @responses.activate
 def test_resource_action_not_json_response(
     cbc_endpoint,
     cbc_client,
-    flat_catalog_type_object,
+        service,
 ):
     responses.add(
         method='POST',
@@ -71,12 +71,12 @@ def test_resource_action_not_json_response(
 def test_resource_action_with_extra_headers(
     cbc_endpoint,
     cbc_client,
-    flat_catalog_type_object,
+        service,
 ):
     responses.add(
         method='POST',
         url=f'{cbc_endpoint}/test-collection/identifier/upload',
-        json=flat_catalog_type_object,
+        json=service,
     )
 
     obj = cbc_client.test_collection['identifier'].action(
@@ -85,19 +85,19 @@ def test_resource_action_with_extra_headers(
         headers={'Content-Type': 'application/json'},
     )
 
-    TestCase().assertDictEqual(obj, flat_catalog_type_object)
+    TestCase().assertDictEqual(obj, service)
 
 
 @responses.activate
 def test_resource_action_with_file(
     cbc_endpoint,
     cbc_client,
-    flat_catalog_type_object,
+        service,
 ):
     responses.add(
         method='POST',
         url=f'{cbc_endpoint}/test-collection/identifier/upload',
-        json=flat_catalog_type_object,
+        json=service,
     )
 
     obj = cbc_client.test_collection['identifier'].action(
@@ -105,19 +105,19 @@ def test_resource_action_with_file(
         file=io.StringIO("some initial text data"),
     )
 
-    TestCase().assertDictEqual(obj, flat_catalog_type_object)
+    TestCase().assertDictEqual(obj, service)
 
 
 @responses.activate
 def test_resource_action_with_headers_output(
     cbc_endpoint,
     cbc_client,
-    flat_catalog_type_object,
+        service,
 ):
     responses.add(
         method='POST',
         url=f'{cbc_endpoint}/test-collection/identifier/upload',
-        json=flat_catalog_type_object,
+        json=service,
     )
 
     obj = cbc_client.test_collection['identifier'].action(

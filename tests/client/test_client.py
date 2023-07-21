@@ -13,19 +13,19 @@ from connect_ext_ppr.client.exception import ClientError
 def test_client_get(
     cbc_client,
     cbc_endpoint,
-    flat_catalog_type_object,
+    service,
 ):
-    object_id = flat_catalog_type_object['aps']['id']
+    object_id = service['aps']['id']
 
     responses.add(
         method='GET',
         url=f'{cbc_endpoint}/aps/2/resources/{object_id}',
-        json=flat_catalog_type_object,
+        json=service,
     )
 
     obj = cbc_client.get(object_id)
 
-    TestCase().assertDictEqual(obj, flat_catalog_type_object)
+    TestCase().assertDictEqual(obj, service)
 
 
 @responses.activate
