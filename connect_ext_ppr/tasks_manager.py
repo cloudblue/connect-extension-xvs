@@ -7,8 +7,10 @@ from connect_ext_ppr.models.enums import (
     DeploymentRequestStatusChoices,
     DeploymentStatusChoices,
     TasksStatusChoices,
+    TaskTypesChoices,
 )
 from connect_ext_ppr.models.deployment import DeploymentRequest
+from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.task import Task
 
 
@@ -24,20 +26,14 @@ async def delegate_to_l2():
     return True
 
 
-async def execute_task(task, db, task_function):
-    if task.status == TasksStatusChoices.PENDING:
-        task.started_at = datetime.utcnow()
-        finished_ok = await task_function()
-        task.status = TasksStatusChoices.DONE if finished_ok else TasksStatusChoices.ERROR
-        task.finished_at = datetime.utcnow()
-        db.add(task)
-        db.commit()
-    return task.status
+TASK_PER_TYPE = {
+    TaskTypesChoices.PPR_VALIDATION: validate_ppr,
+    TaskTypesChoices.APPLY_AND_DELEGATE: apply_ppr_and_delegate_to_marketplaces,
+    TaskTypesChoices.DELEGATE_TO_L2: delegate_to_l2,
+}
 
 
 async def main_process(deployment_request_id, config):
-    deployment_final_status = DeploymentStatusChoices.PENDING
-    deployment_request_final_status = DeploymentRequestStatusChoices.DONE
 
     with get_db_ctx_manager(config) as db:
         deployment_request = db.query(DeploymentRequest).options(
@@ -55,29 +51,39 @@ async def main_process(deployment_request_id, config):
             deployment_request=deployment_request.id,
         ).order_by(Task.id).all()
 
-        last_task_result = await execute_task(tasks[0], db, validate_ppr)
-        if last_task_result == TasksStatusChoices.ERROR:
-            deployment_request_final_status = DeploymentRequestStatusChoices.ERROR
-        else:
-            db.refresh(tasks[1])
-            last_task_result = await execute_task(
-                tasks[1],
-                db,
-                apply_ppr_and_delegate_to_marketplaces,
-            )
-            if last_task_result == TasksStatusChoices.ERROR:
-                deployment_request_final_status = DeploymentRequestStatusChoices.ERROR
-            elif deployment_request.delegate_l2:
-                db.refresh(tasks[2])
-                last_task_result = await execute_task(tasks[2], db, delegate_to_l2)
-                if last_task_result == TasksStatusChoices.DONE:
-                    deployment_final_status = DeploymentStatusChoices.SYNCED
-                else:
-                    deployment_request_final_status = DeploymentRequestStatusChoices.ERROR
+        deployment_request.status = DeploymentRequestStatusChoices.DONE
+        for task in tasks:
+            db.refresh(task)
+            if task.status == TasksStatusChoices.PENDING:
+                task.started_at = datetime.utcnow()
+                db.add(task)
+                db.commit()
 
-        deployment.status = deployment_final_status
-        deployment_request.status = deployment_request_final_status
+                was_succesfull = await TASK_PER_TYPE.get(task.type)()
+                task.status = TasksStatusChoices.DONE
+                if not was_succesfull:
+                    task.status = TasksStatusChoices.ERROR
+                task.finished_at = datetime.utcnow()
+                db.add(task)
+                db.commit()
+
+                if not was_succesfull:
+                    deployment_request.status = DeploymentRequestStatusChoices.ERROR
+                    break
+
         db.add(deployment_request)
+
+        deployment.status = DeploymentStatusChoices.PENDING
+        deployment_last_ppr = db.query(PPRVersion).filter_by(
+            deployment=deployment.id,
+        ).order_by(PPRVersion.version.desc()).first()
+        if (
+            deployment_last_ppr.version == deployment_request.ppr.version
+            and deployment_request.delegate_l2
+            and deployment_request.status == TasksStatusChoices.DONE
+        ):
+            deployment.status = DeploymentStatusChoices.SYNCED
+
         db.add(deployment)
         db.commit()
     return deployment_request.status

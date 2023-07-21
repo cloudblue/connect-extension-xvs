@@ -33,7 +33,7 @@ class Deployment(Model):
     created_at = db.Column(db.DateTime(), default=datetime.utcnow)
     updated_at = db.Column(db.DateTime(), onupdate=datetime.utcnow, default=datetime.utcnow)
 
-    product = relationship('Product', backref="deployments")
+    product = relationship('Product', foreign_keys="Deployment.product_id")
 
 
 class DeploymentRequest(Model):

@@ -142,16 +142,18 @@ def deployment_factory(product_factory):
 def deployment_request_factory(dbsession):
     def _build_deployment_request(
             deployment=None,
-            ppr_id='PPRFL-12345',
+            ppr=None,
             delegate_l2=False,
     ):
         if not deployment:
             deployment = deployment_factory(dbsession, id='DPLR-123-123-123')
 
-        ppr = PPRVersion(id=ppr_id, product_version=1)
+        if not ppr:
+            ppr = PPRVersion(id=f'PPR-{random.randint(1000, 9999)}', product_version=1)
+
         dep_req = DeploymentRequest(
             deployment_id=deployment.id,
-            ppr_id=ppr_id,
+            ppr_id=ppr.id,
             created_by=deployment.account_id,
             delegate_l2=delegate_l2,
         )
@@ -167,6 +169,7 @@ def task_factory(dbsession, deployment_request_factory):
     def _build_task(
         deployment_request=None,
         task_index='001',
+        type=None,
     ):
         if not deployment_request:
             deployment_request = deployment_request_factory()
@@ -176,11 +179,35 @@ def task_factory(dbsession, deployment_request_factory):
             id=task_id,
             deployment_request=deployment_request.id,
             title=f'Title Task {task_index}',
+            type=type,
         )
         dbsession.add(task)
         dbsession.commit()
         return task
     return _build_task
+
+
+@pytest.fixture
+def ppr_factory(dbsession, deployment_factory):
+    def _build_ppr(
+        id='PPR-123',
+        deployment=None,
+        product_version=1,
+        version=1,
+    ):
+        if not deployment:
+            deployment = deployment_factory()
+
+        ppr = PPRVersion(
+            id=id,
+            deployment=deployment.id,
+            product_version=product_version,
+            version=version,
+        )
+        dbsession.add(ppr)
+        dbsession.commit()
+        return ppr
+    return _build_ppr
 
 
 @pytest.fixture

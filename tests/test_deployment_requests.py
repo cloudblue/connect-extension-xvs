@@ -19,9 +19,9 @@ def test_get_deployments_requests(
     )
     dep2 = deployment_factory(dbsession, account_id='PA-123-456')
 
-    dr1 = deployment_request_factory(deployment=dep1, ppr_id='PPRFL-12345')
-    dr2 = deployment_request_factory(deployment=dep1, ppr_id='PPRFL-12346')
-    deployment_request_factory(deployment=dep2, ppr_id='PPRFL-12347')
+    dr1 = deployment_request_factory(deployment=dep1)
+    dr2 = deployment_request_factory(deployment=dep1)
+    deployment_request_factory(deployment=dep2)
 
     response = api_client.get(
         '/api/deployments/requests',
