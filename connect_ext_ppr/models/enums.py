@@ -2,26 +2,26 @@ import enum
 
 
 class DeploymentStatusChoices(str, enum.Enum):
-    PENDING = 'pending'
-    PROCESSING = 'processing'
-    SYNCED = 'synced'
+    pending = 'pending'
+    processing = 'processing'
+    synced = 'synced'
 
 
 class DeploymentRequestStatusChoices(str, enum.Enum):
-    PENDING = 'pending'
-    PROCESSING = 'processing'
-    DONE = 'done'
-    ERROR = 'error'
-    ABORTING = 'aborting'
-    ABORTED = 'aborted'
+    pending = 'pending'
+    processing = 'processing'
+    done = 'done'
+    error = 'error'
+    aborting = 'aborting'
+    aborted = 'aborted'
 
 
 class TasksStatusChoices(str, enum.Enum):
-    PENDING = 'pending'
-    PROCESSING = 'processing'
-    DONE = 'done'
-    ERROR = 'error'
-    ABORTED = 'aborted'
+    pending = 'pending'
+    processing = 'processing'
+    done = 'done'
+    error = 'error'
+    aborted = 'aborted'
 
 
 class TaskTypesChoices(str, enum.Enum):
@@ -38,13 +38,13 @@ class MimeTypeChoices(str, enum.Enum):
 
 
 class ConfigurationStateChoices(str, enum.Enum):
-    ACTIVE = 'active'
-    INACTIVE = 'inactive'
-    DELETED = 'deleted'
+    active = 'active'
+    inactive = 'inactive'
+    deleted = 'deleted'
 
 
 class PPRStatusChoices(str, enum.Enum):
-    PENDING = 'pending'
-    PROCESSING = 'processing'
-    READY = 'ready'
-    FAILED = 'failed'
+    pending = 'pending'
+    processing = 'processing'
+    ready = 'ready'
+    failed = 'failed'

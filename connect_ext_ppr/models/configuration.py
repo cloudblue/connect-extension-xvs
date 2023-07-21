@@ -12,12 +12,14 @@ class Configuration(Model):
 
     PREFIX = 'CFL'
 
+    STATE = ConfigurationStateChoices
+
     id = db.Column(db.String(20), primary_key=True)
     file = db.Column(db.ForeignKey(File.id))
     deployment = db.Column(db.ForeignKey('deployments.id'))
     state = db.Column(
         db.Enum(ConfigurationStateChoices, validate_strings=True),
-        default=ConfigurationStateChoices.INACTIVE,
+        default=STATE.inactive,
     )
     created_at = db.Column(db.DateTime(), default=datetime.utcnow)
     created_by = db.Column(db.JSON)
@@ -25,7 +27,7 @@ class Configuration(Model):
     updated_by = db.Column(db.JSON)
 
     def activate(self):
-        self.state = ConfigurationStateChoices.ACTIVE
+        self.state = ConfigurationStateChoices.active
 
     def deleted(self):
-        self.state = ConfigurationStateChoices.DELETED
+        self.state = ConfigurationStateChoices.deleted

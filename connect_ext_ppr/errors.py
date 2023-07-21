@@ -73,9 +73,11 @@ class ExtensionHttpError(ExtensionErrorBase):
         0: "{client_message}",  # Placeholder to use when an api call to connect fails
         1: "Object `{obj_id}` not found.",
         2: "Object `{obj_id}` already exists, cannot create a new one.",
-        3: "Database error occurred: {err}.",
+        3: "Database error occurred.",
         4: "Active configuration `{obj_id}` cannot be deleted.",
         5: "Configuration `{obj_id}` cannot be deleted, because related deployment is not synced.",
+        6: "Can not autogenerate a new PPR for deployment {deployment_id}:"
+        " There must be one `active` configuration file.",
     }
 
 

@@ -29,7 +29,7 @@ def test_get_configurations(
         'id': 'MFL-6390-1110-0832',
         'mime_type': 'application/json',
     }
-    assert data['state'] == ConfigurationStateChoices.INACTIVE
+    assert data['state'] == ConfigurationStateChoices.inactive
 
 
 def test_get_configurations_empty(
@@ -68,7 +68,7 @@ def test_get_configuration(
         'id': 'MFL-6390-1110-0832',
         'mime_type': 'application/json',
     }
-    assert data['state'] == ConfigurationStateChoices.INACTIVE
+    assert data['state'] == ConfigurationStateChoices.inactive
 
 
 def test_get_configuration_not_found(
@@ -129,7 +129,7 @@ def test_post_configuration(
         'size': 17,
         'mime_type': 'application/json',
     }
-    assert data['state'] == ConfigurationStateChoices.ACTIVE
+    assert data['state'] == ConfigurationStateChoices.active
     assert data['events']['created']['by'] == {
         'id': 'SU-295-689-628',
         'name': 'Neri',
@@ -176,9 +176,9 @@ def test_post_configuration_deactivate_previous(
     assert dbsession.query(File).count() == 2
 
     prev_conf = dbsession.query(Configuration).get(configuration.id)
-    assert prev_conf.state == ConfigurationStateChoices.INACTIVE
+    assert prev_conf.state == ConfigurationStateChoices.inactive
     new_conf = dbsession.query(Configuration).get(response.json()['id'])
-    assert new_conf.state == ConfigurationStateChoices.ACTIVE
+    assert new_conf.state == ConfigurationStateChoices.active
 
 
 def test_post_configuration_wrong_deployment(
@@ -248,7 +248,7 @@ def test_delete_configuration(
     client_mocker_factory,
     connect_client,
 ):
-    deployment.status = DeploymentStatusChoices.SYNCED
+    deployment.status = DeploymentStatusChoices.synced
     dbsession.commit()
     client_mocker = client_mocker_factory()
     client_mocker.delete(
@@ -295,8 +295,8 @@ def test_delete_configuration_active(
     client_mocker_factory,
     connect_client,
 ):
-    configuration.state = ConfigurationStateChoices.ACTIVE
-    deployment.status = DeploymentStatusChoices.SYNCED
+    configuration.state = ConfigurationStateChoices.active
+    deployment.status = DeploymentStatusChoices.synced
     dbsession.commit()
 
     response = api_client.delete(
@@ -315,10 +315,10 @@ def test_delete_configuration_active(
 @pytest.mark.parametrize(
     ('conf_state', 'dep_status'),
     (
-        (ConfigurationStateChoices.INACTIVE, DeploymentStatusChoices.PENDING),
-        (ConfigurationStateChoices.INACTIVE, DeploymentStatusChoices.PROCESSING),
-        (ConfigurationStateChoices.DELETED, DeploymentStatusChoices.PENDING),
-        (ConfigurationStateChoices.DELETED, DeploymentStatusChoices.PROCESSING),
+        (ConfigurationStateChoices.inactive, DeploymentStatusChoices.pending),
+        (ConfigurationStateChoices.inactive, DeploymentStatusChoices.processing),
+        (ConfigurationStateChoices.deleted, DeploymentStatusChoices.pending),
+        (ConfigurationStateChoices.deleted, DeploymentStatusChoices.processing),
     ),
 )
 def test_delete_configuration_deployment_not_synced(

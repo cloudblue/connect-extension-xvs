@@ -38,22 +38,22 @@ async def test_main_process(
     deployment_factory,
     deployment_request_factory,
     task_factory,
-    ppr_factory,
+    ppr_version_factory,
 ):
-    dep = deployment_factory(dbsession)
-    ppr = ppr_factory(id='PPR-123', product_version=1, deployment=dep)
+    dep = deployment_factory()
+    ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep)
     dr = deployment_request_factory(deployment=dep, delegate_l2=True, ppr=ppr)
     task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.PPR_VALIDATION)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.APPLY_AND_DELEGATE)
     task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.DELEGATE_TO_L2)
-    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.DONE
+    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
 
-    assert dbsession.query(Deployment).filter_by(status=DeploymentStatusChoices.SYNCED).count() == 1
+    assert dbsession.query(Deployment).filter_by(status=DeploymentStatusChoices.synced).count() == 1
     assert dbsession.query(DeploymentRequest).filter_by(
-        status=DeploymentRequestStatusChoices.DONE,
+        status=DeploymentRequestStatusChoices.done,
     ).count() == 1
     assert dbsession.query(Task).filter(
-        Task.status == TasksStatusChoices.DONE,
+        Task.status == TasksStatusChoices.done,
         Task.started_at.is_not(null()),
         Task.finished_at.is_not(null()),
     ).count() == 3
@@ -65,23 +65,23 @@ async def test_main_process_wo_l2_delegation(
     deployment_factory,
     deployment_request_factory,
     task_factory,
-    ppr_factory,
+    ppr_version_factory,
 ):
-    dep = deployment_factory(dbsession)
-    ppr = ppr_factory(id='PPR-123', product_version=1, deployment=dep)
+    dep = deployment_factory()
+    ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep)
     dr = deployment_request_factory(deployment=dep, delegate_l2=False, ppr=ppr)
     task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.PPR_VALIDATION)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.APPLY_AND_DELEGATE)
-    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.DONE
+    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(
-        status=DeploymentStatusChoices.PENDING,
+        status=DeploymentStatusChoices.pending,
     ).count() == 1
     assert dbsession.query(DeploymentRequest).filter_by(
-        status=DeploymentRequestStatusChoices.DONE,
+        status=DeploymentRequestStatusChoices.done,
     ).count() == 1
     assert dbsession.query(Task).filter(
-        Task.status == TasksStatusChoices.DONE,
+        Task.status == TasksStatusChoices.done,
         Task.started_at.is_not(null()),
         Task.finished_at.is_not(null()),
     ).count() == 2
@@ -90,28 +90,31 @@ async def test_main_process_wo_l2_delegation(
 @pytest.mark.asyncio
 async def test_main_process_deployment_w_new_ppr_version(
     dbsession,
+    file_factory,
     deployment_factory,
     deployment_request_factory,
     task_factory,
-    ppr_factory,
+    ppr_version_factory,
 ):
-    dep = deployment_factory(dbsession)
-    dr_ppr = ppr_factory(id='PPR-1234', product_version=1, deployment=dep)
-    ppr_factory(id='PPR-123', product_version=2, deployment=dep)
+    file = file_factory(id='MFL-123')
+    dep = deployment_factory()
+    dr_ppr = ppr_version_factory(
+        id='PPR-1234', file=file.id, product_version=1, deployment=dep)
+    ppr_version_factory(id='PPR-123', product_version=2, deployment=dep)
     dr = deployment_request_factory(deployment=dep, delegate_l2=False, ppr=dr_ppr)
     task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.PPR_VALIDATION)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.APPLY_AND_DELEGATE)
     task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.DELEGATE_TO_L2)
-    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.DONE
+    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(
-        status=DeploymentStatusChoices.PENDING,
+        status=DeploymentStatusChoices.pending,
     ).count() == 1
     assert dbsession.query(DeploymentRequest).filter_by(
-        status=DeploymentRequestStatusChoices.DONE,
+        status=DeploymentRequestStatusChoices.done,
     ).count() == 1
     assert dbsession.query(Task).filter(
-        Task.status == TasksStatusChoices.DONE,
+        Task.status == TasksStatusChoices.done,
         Task.started_at.is_not(null()),
         Task.finished_at.is_not(null()),
     ).count() == 3
@@ -136,10 +139,10 @@ async def test_main_process_ends_w_error(
     type_function_to_mock,
     mocker,
     task_factory,
-    ppr_factory,
+    ppr_version_factory,
 ):
-    dep = deployment_factory(dbsession)
-    ppr = ppr_factory(id='PPR-123', product_version=1, deployment=dep, version=1)
+    dep = deployment_factory()
+    ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep, version=1)
     dr = deployment_request_factory(deployment=dep, delegate_l2=True, ppr=ppr)
     task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.PPR_VALIDATION)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.APPLY_AND_DELEGATE)
@@ -155,27 +158,27 @@ async def test_main_process_ends_w_error(
     import connect_ext_ppr
     connect_ext_ppr.tasks_manager.TASK_PER_TYPE = my_mock
 
-    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.ERROR
+    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.error
 
     assert dbsession.query(Deployment).filter_by(
-        status=DeploymentStatusChoices.PENDING,
+        status=DeploymentStatusChoices.pending,
     ).count() == 1
     assert dbsession.query(DeploymentRequest).filter_by(
-        status=DeploymentRequestStatusChoices.ERROR,
+        status=DeploymentRequestStatusChoices.error,
     ).count() == 1
 
     assert dbsession.query(Task).filter(
-        Task.status == TasksStatusChoices.DONE,
+        Task.status == TasksStatusChoices.done,
         Task.started_at.is_not(null()),
         Task.finished_at.is_not(null()),
     ).count() == done_tasks
     assert dbsession.query(Task).filter(
-        Task.status == TasksStatusChoices.ERROR,
+        Task.status == TasksStatusChoices.error,
         Task.started_at.is_not(null()),
         Task.finished_at.is_not(null()),
     ).count() == tasks_w_errors
     assert dbsession.query(Task).filter(
-        Task.status == TasksStatusChoices.PENDING,
+        Task.status == TasksStatusChoices.pending,
         Task.started_at.is_(null()),
         Task.finished_at.is_(null()),
     ).count() == pending_tasks

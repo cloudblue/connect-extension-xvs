@@ -12,7 +12,10 @@ from connect.eaas.core.decorators import (
     router,
     web_app,
 )
-from connect.eaas.core.inject.synchronous import get_installation, get_installation_client
+from connect.eaas.core.inject.synchronous import (
+    get_installation,
+    get_installation_client,
+)
 from connect.eaas.core.extension import WebApplicationBase
 from fastapi import Depends, Request, Response, status
 from sqlalchemy import exists
@@ -246,18 +249,18 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
                 db.query(Configuration)
                 .filter_by(
                     deployment=deployment_id,
-                    state=ConfigurationStateChoices.ACTIVE,
+                    state=ConfigurationStateChoices.active,
                 )
                 .one_or_none()
             )
             if prev_configuration:
-                prev_configuration.state = ConfigurationStateChoices.INACTIVE
+                prev_configuration.state = ConfigurationStateChoices.inactive
 
             user_data = get_user_data_from_auth_token(request.headers['connect-auth'])
             configuration_instance = Configuration(
                 file=file_data.id,
                 deployment=deployment_id,
-                state=ConfigurationStateChoices.ACTIVE,
+                state=ConfigurationStateChoices.active,
                 created_by=user_data,
                 updated_by=user_data,
             )
@@ -265,11 +268,9 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             db.commit()
             return get_configuration_schema(configuration_instance, file_instance)
 
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             db.rollback()
-            raise ExtensionHttpError.EXT_003(
-                format_kwargs={'err': str(e)},
-            )
+            raise ExtensionHttpError.EXT_003()
 
     @router.delete(
         '/deployments/{deployment_id}/configurations/{configuration_id}',
@@ -287,11 +288,11 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         deployment = get_deployment_by_id(deployment_id, db, installation)
         configuration = get_configuration_by_id(configuration_id, deployment_id, db)
 
-        if configuration.state == ConfigurationStateChoices.ACTIVE:
+        if configuration.state == ConfigurationStateChoices.active:
             raise ExtensionHttpError.EXT_004(
                 format_kwargs={'obj_id': configuration_id},
             )
-        if deployment.status != DeploymentStatusChoices.SYNCED:
+        if deployment.status != DeploymentStatusChoices.synced:
             raise ExtensionHttpError.EXT_005(
                 format_kwargs={'obj_id': configuration_id},
             )

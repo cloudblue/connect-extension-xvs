@@ -41,8 +41,8 @@ async def main_process(deployment_request_id, config):
         ).filter_by(id=deployment_request_id).first()
         deployment = deployment_request.deployment
 
-        deployment.status = DeploymentStatusChoices.PROCESSING
-        deployment_request.status = DeploymentRequestStatusChoices.PROCESSING
+        deployment.status = DeploymentStatusChoices.processing
+        deployment_request.status = DeploymentRequestStatusChoices.processing
         db.add(deployment)
         db.add(deployment_request)
         db.commit()
@@ -51,38 +51,38 @@ async def main_process(deployment_request_id, config):
             deployment_request=deployment_request.id,
         ).order_by(Task.id).all()
 
-        deployment_request.status = DeploymentRequestStatusChoices.DONE
+        deployment_request.status = DeploymentRequestStatusChoices.done
         for task in tasks:
             db.refresh(task)
-            if task.status == TasksStatusChoices.PENDING:
+            if task.status == TasksStatusChoices.pending:
                 task.started_at = datetime.utcnow()
                 db.add(task)
                 db.commit()
 
                 was_succesfull = await TASK_PER_TYPE.get(task.type)()
-                task.status = TasksStatusChoices.DONE
+                task.status = TasksStatusChoices.done
                 if not was_succesfull:
-                    task.status = TasksStatusChoices.ERROR
+                    task.status = TasksStatusChoices.error
                 task.finished_at = datetime.utcnow()
                 db.add(task)
                 db.commit()
 
                 if not was_succesfull:
-                    deployment_request.status = DeploymentRequestStatusChoices.ERROR
+                    deployment_request.status = DeploymentRequestStatusChoices.error
                     break
 
         db.add(deployment_request)
 
-        deployment.status = DeploymentStatusChoices.PENDING
+        deployment.status = DeploymentStatusChoices.pending
         deployment_last_ppr = db.query(PPRVersion).filter_by(
             deployment=deployment.id,
         ).order_by(PPRVersion.version.desc()).first()
         if (
             deployment_last_ppr.version == deployment_request.ppr.version
             and deployment_request.delegate_l2
-            and deployment_request.status == TasksStatusChoices.DONE
+            and deployment_request.status == TasksStatusChoices.done
         ):
-            deployment.status = DeploymentStatusChoices.SYNCED
+            deployment.status = DeploymentStatusChoices.synced
 
         db.add(deployment)
         db.commit()

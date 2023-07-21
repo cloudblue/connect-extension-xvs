@@ -233,7 +233,7 @@ def test_ppr_version_schema_wo_optional_fields(file, configuration):
             size=file.size,
             mime_type=file.mime_type,
         ),
-        status=PPRStatusChoices.PENDING,
+        status=PPRStatusChoices.pending,
         events={
             'created': {'at': now, 'by': 'SU-295-689-628'},
             'updated': {'at': now, 'by': 'SU-295-689-628'},
@@ -259,5 +259,5 @@ def test_ppr_version_schema_wo_optional_fields(file, configuration):
                 "by": "SU-295-689-628",
             },
         },
-        "status": PPRStatusChoices.PENDING,
+        "status": PPRStatusChoices.pending,
     }

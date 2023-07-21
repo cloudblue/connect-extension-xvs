@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 from connect.client import AsyncConnectClient, ConnectClient
 from requests_oauthlib import OAuth1
+from connect.eaas.core.inject.models import Context
 from sqlalchemy.orm import sessionmaker
 
 from connect_ext_ppr.client import CBCClient
@@ -26,9 +27,10 @@ from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
-from connect_ext_ppr.services.cbc_extension import get_hub_credentials
 from connect_ext_ppr.models.replicas import Product
+from connect_ext_ppr.services.cbc_extension import get_hub_credentials
 from connect_ext_ppr.models.task import Task
+from connect_ext_ppr.utils import get_base_workbook
 from connect_ext_ppr.webapp import ConnectExtensionXvsWebApplication
 
 
@@ -88,10 +90,11 @@ def product_factory(dbsession):
         name='Chat GPT',
         logo='/media/VA-000-000/PRD-000-000-000/media/PRD-000-000-000-logo_cLqk6Vm.png',
         owner_id='VA-000-000',
+        version=3,
     ):
         if not id:
             id = 'PR-{0}'.format(random.randint(10000, 99999))
-        product = Product(id=id, name=name, logo=logo, owner_id=owner_id)
+        product = Product(id=id, name=name, logo=logo, owner_id=owner_id, version=version)
         dbsession.add(product)
         dbsession.commit()
         return product
@@ -115,17 +118,15 @@ def deployment(dbsession, product_factory):
 
 
 @pytest.fixture
-def deployment_factory(product_factory):
+def deployment_factory(dbsession, product_factory):
     def _build_deployment(
-            dbsession,
             product_id=None,
             account_id='PA-000-000',
             vendor_id='VA-000-000',
             hub_id='HB-0000-0000',
     ):
-        if not product_id:
-            product = product_factory()
-            product_id = product.id
+        product = product_factory(product_id)
+        product_id = product.id
 
         dep = Deployment(
             product_id=product_id,
@@ -147,7 +148,7 @@ def deployment_request_factory(dbsession):
             delegate_l2=False,
     ):
         if not deployment:
-            deployment = deployment_factory(dbsession, id='DPLR-123-123-123')
+            deployment = deployment_factory(id='DPLR-123-123-123')
 
         if not ppr:
             ppr = PPRVersion(id=f'PPR-{random.randint(1000, 9999)}', product_version=1)
@@ -160,7 +161,6 @@ def deployment_request_factory(dbsession):
         )
         dbsession.add(ppr)
         dbsession.set_verbose(dep_req)
-        dbsession.commit()
         return dep_req
     return _build_deployment_request
 
@@ -189,31 +189,43 @@ def task_factory(dbsession, deployment_request_factory):
 
 
 @pytest.fixture
-def ppr_factory(dbsession, deployment_factory):
+def ppr_version_factory(dbsession, deployment_factory, file_factory):
     def _build_ppr(
-        id='PPR-123',
+        id=None,
+        file=None,
         deployment=None,
-        product_version=1,
-        version=1,
+        summary=None,
+        version=None,
+        product_version=3,
+        description='Some',
+        created_by='SU-295-689-628',
+        status='pending',
     ):
-        if not deployment:
-            deployment = deployment_factory()
-
         ppr = PPRVersion(
-            id=id,
+            file=file or file_factory().id,
             deployment=deployment.id,
+            summary=summary or {},
             product_version=product_version,
-            version=version,
+            created_by=created_by,
+            status=status,
+            description=description,
         )
-        dbsession.add(ppr)
+        if version:
+            ppr.version = version
+        if id:
+            ppr.id = id
+            dbsession.add(ppr)
+        else:
+            dbsession.set_verbose(ppr)
         dbsession.commit()
+        dbsession.refresh(ppr)
         return ppr
     return _build_ppr
 
 
 @pytest.fixture
-def file(dbsession, media_response):
-    file = File(
+def file_factory(dbsession, media_response):
+    def _build_file(
         id=media_response['id'],
         account_id=media_response['owner']['id'],
         location=media_response['file'],
@@ -221,11 +233,26 @@ def file(dbsession, media_response):
         size=media_response['size'],
         mime_type=media_response['mime_type'],
         created_by=media_response['events']['created']['by']['id'],
-    )
-    dbsession.add(file)
-    dbsession.commit()
-    dbsession.refresh(file)
-    return file
+    ):
+        file = File(
+            id=id,
+            account_id=account_id,
+            location=location,
+            name=name,
+            size=size,
+            mime_type=mime_type,
+            created_by=created_by,
+        )
+        dbsession.add(file)
+        dbsession.commit()
+        dbsession.refresh(file)
+        return file
+    return _build_file
+
+
+@pytest.fixture
+def file(file_factory):
+    return file_factory()
 
 
 @pytest.fixture
@@ -247,6 +274,11 @@ def async_connect_client():
 @pytest.fixture
 def logger(mocker):
     return mocker.MagicMock()
+
+
+@pytest.fixture
+def common_context():
+    return Context(call_type='user', user_id='UR-000-000-000')
 
 
 @pytest.fixture
@@ -492,12 +524,77 @@ def media_response():
 
 
 @pytest.fixture
+def item_response():
+    return {
+        "id": "PRD-000-000-000-00001",
+        "name": "New name",
+        "status": "published",
+        "unit": {
+            "id": "licenses",
+            "name": "Licenses",
+            "title": "Licenses",
+            "unit": "unit",
+        },
+        "mpn": "MPN-B",
+        "position": 20000,
+        "type": "reservation",
+        "local_id": "PRD_000_000_000_00001",
+        "display_name": "New name",
+        "period": "monthly",
+        "precision": "integer",
+        "commitment": {
+            "multiplier": "billing_period",
+            "count": 1,
+        },
+        "dynamic": False,
+        "description": "Some",
+        "depth": 0,
+        "ui": {
+            "visibility": True,
+        },
+        "ui_visibility": True,
+        "events": {
+            "created": {
+                "at": "2023-07-11T04:45:41+00:00",
+            },
+            "updated": {
+                "at": "2023-07-17T09:16:20+00:00",
+                "by": {
+                    "id": "UR-000-000-000",
+                    "name": "Jhon Doe",
+                },
+            },
+        },
+    }
+
+
+@pytest.fixture
 def api_client(test_client_factory, dbsession):
     client = test_client_factory(ConnectExtensionXvsWebApplication)
     client.app.dependency_overrides = {
         get_db: lambda: dbsession,
     }
     yield client
+
+
+@pytest.fixture
+def configuration_factory(dbsession, deployment_factory, file_factory, user):
+    def _build_configuration(
+        file=None,
+        deployment=None,
+        state='active',
+    ):
+        conf = Configuration(
+            file=file or file_factory().id,
+            deployment=deployment or deployment_factory().id,
+            state=state,
+            created_by=user,
+            updated_by=user,
+        )
+        dbsession.set_verbose(conf)
+        dbsession.commit()
+        return conf
+    return _build_configuration
 
 
 @pytest.fixture
@@ -516,6 +613,23 @@ def configuration(dbsession, deployment, file, user):
 @pytest.fixture
 def ppr_workbook():
     return pd.ExcelFile('./tests/fixtures/test_PPR_file.xlsx')
+
+
+@pytest.fixture
+def bytes_ppr_workbook_factory():
+    def _bytes_ppr_workbook(with_errors=False):
+        file_name = './tests/fixtures/test_PPR_file.xlsx'
+        if with_errors:
+            file, _, wb = get_base_workbook(None)
+            new_writer = pd.ExcelWriter(file.name)
+            for sheet_name in wb.sheet_names[1:]:
+                df = wb.parse(sheet_name=sheet_name)
+                df.to_excel(new_writer, sheet_name, index=False)
+            new_writer.book.save(file.name)
+            file_name = file.name
+        with open(file_name, 'rb') as rf:
+            return rf.read()
+    return _bytes_ppr_workbook
 
 
 @pytest.fixture
@@ -816,3 +930,9 @@ def user():
         'id': 'SU-295-689-628',
         'name': 'Neri',
     }
+
+
+@pytest.fixture
+def configuration_json():
+    with open('./tests/fixtures/configuration.json') as json_file:
+        return json.load(json_file)
