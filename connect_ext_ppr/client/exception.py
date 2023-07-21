@@ -15,6 +15,6 @@ class ClientError(RuntimeError):
         self.status_code = response.status_code if response else None
         self.cause = cause
         try:
-            self.json = response.json() if response else None
+            self.json = response.json() if response is not None else None
         except JSONDecodeError:
             self.json = None

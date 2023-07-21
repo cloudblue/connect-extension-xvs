@@ -149,3 +149,18 @@ def test_service_discovery_collection_blank_collection_value(
 
     with pytest.raises(ValueError):
         cbc_client(flat_catalog_type).collection('')
+
+
+@responses.activate
+def test_service_action_with_payload_and_file(
+    cbc_client,
+    flat_catalog_type,
+):
+    with pytest.raises(ValueError):
+        cbc_client(flat_catalog_type).action(
+            name='upload',
+            payload={
+                'key': 'value',
+            },
+            file='new file',
+        )

@@ -1,6 +1,6 @@
 from io import FileIO
 from json import JSONDecodeError
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from requests import (
     Request,
@@ -9,6 +9,7 @@ from requests import (
 )
 from requests_oauthlib import OAuth1
 
+from connect_ext_ppr.client.auth import APSTokenAuth
 from connect_ext_ppr.client.exception import ClientError
 from connect_ext_ppr.client.ns import (
     Collection,
@@ -20,35 +21,31 @@ from connect_ext_ppr.client.ns import (
 class CBCClient:
 
     def __init__(
-            self,
-            endpoint: str,
-            oauth_key: str,
-            oauth_secret: str,
-            app_id: str,
-            verify_certificate: bool = True,
-            default_headers: Dict[str, str] = None,
+        self,
+        endpoint: str,
+        auth: Union[OAuth1, APSTokenAuth],
+        app_id: str = None,
+        verify_certificate: bool = True,
+        default_headers: Dict[str, str] = None,
     ):
         super().__init__()
 
         self.endpoint = endpoint
-        self.auth_key = oauth_key
-        self.auth_secret = oauth_secret
         self.app_id = app_id
         self.verify = verify_certificate
         self.default_headers = default_headers
         self.path = self.endpoint
+        self.auth = auth
 
         if not default_headers:
             self.default_headers = {
-                'User-Agent': 'Connect-CBC-Client',
+                'user-agent': 'Connect-CBC-Client',
             }
 
-        self.default_headers['aps-resource-id'] = self.app_id
-
-        self.auth = OAuth1(
-            client_key=oauth_key,
-            client_secret=oauth_secret,
-        )
+        if type(auth) == OAuth1:
+            if not app_id:
+                raise ValueError('Parameter app_id can not be empty in case of OAuth1.')
+            self.default_headers['aps-resource-id'] = self.app_id
 
     def execute_request(
         self,
@@ -148,11 +145,7 @@ class CBCClient:
             f'{self.path}/aps/2/resources/{resource_id}',
         )
 
-    def get(
-            self,
-            resource_id: str,
-            **kwargs,
-    ):
+    def get(self, resource_id: str, **kwargs):
         if not isinstance(resource_id, str):
             raise TypeError('`identifier` must be a string.')
 

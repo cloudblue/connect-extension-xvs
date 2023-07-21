@@ -10,6 +10,7 @@ import random
 import pandas as pd
 import pytest
 from connect.client import AsyncConnectClient, ConnectClient
+from requests_oauthlib import OAuth1
 from sqlalchemy.orm import sessionmaker
 
 from connect_ext_ppr.client import CBCClient
@@ -410,8 +411,7 @@ def cbc_client(
 ):
     return CBCClient(
         endpoint=cbc_endpoint,
-        oauth_key=cbc_oauth_key,
-        oauth_secret=cbc_oauth_secret,
+        auth=OAuth1(cbc_oauth_key, cbc_oauth_secret),
         app_id=cbc_app_id,
     )
 
@@ -724,3 +724,58 @@ def task_logs_response():
             'task_id': 106,
         },
     ]
+
+
+@pytest.fixture
+def parse_price_file_response():
+    return {
+        'status': 'PARSED',
+        'priceListStructure': [
+            'MPN', 'Vendor ID', 'Vendor Name',
+            'Service Template / Product Line', 'Product',
+            'Billing Period', 'Subscription Period',
+            'Billing Model', 'UOM', 'Lower Limit',
+            'Effective Date', 'Cost Billing Period',
+            'Cost Currency', 'Cost', 'Price Currency',
+            'Price', 'MSRP', 'Margin', 'Reseller Margin',
+            'Fee Type', 'Subscriptions', 'Seats',
+            'Active'],
+        'pricingModel': 'FLAT',
+        'feeType': 'RECURRING',
+        'vendorId': 'VA-000-000',
+        'dataId': 1,
+    }
+
+
+@pytest.fixture
+def reseller_accounts():
+    return json.load(open('./tests/fixtures/reseller_accounts.json'))
+
+
+@pytest.fixture
+def reseller_admin_users():
+    return json.load(open('./tests/fixtures/reseller_admin_users.json'))
+
+
+@pytest.fixture
+def aps_token_response():
+    return {
+        'aps_token': 'Fake Token',
+        'controller_uri': 'https://iamcontroller.com/',
+    }
+
+
+@pytest.fixture
+def price_proposal_response():
+    return {
+        'status': 'PREPARED',
+        'dataId': 1,
+        'overridings': {
+            'effectiveDate': [
+                'CFQ7TTC0LF8S:0002', 'CFQ7TTC0LF8R:0001',
+                'CFQ7TTC0LF8S:0002', 'CFQ7TTC0LF8R:0001',
+                'CFQ7TTC0LF8R:0001', 'CFQ7TTC0LF8S:0002',
+            ],
+            'currency': [],
+        },
+    }

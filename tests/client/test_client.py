@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 import responses
 from requests import Session
+from requests_oauthlib import OAuth1
 
 from connect_ext_ppr.client import CBCClient
 from connect_ext_ppr.client.exception import ClientError
@@ -84,8 +85,10 @@ def test_client_with_default_headers(
 
     cbc_client = CBCClient(
         endpoint=cbc_endpoint,
-        oauth_key=cbc_oauth_key,
-        oauth_secret=cbc_oauth_secret,
+        auth=OAuth1(
+            cbc_oauth_key,
+            cbc_oauth_secret,
+        ),
         default_headers=headers,
         app_id=cbc_app_id,
     )
@@ -93,6 +96,24 @@ def test_client_with_default_headers(
     headers['aps-resource-id'] = cbc_app_id
 
     assert cbc_client.default_headers == headers
+
+
+def test_client_with_oauth_without_app_id(
+    cbc_endpoint,
+    cbc_oauth_key,
+    cbc_oauth_secret,
+    cbc_app_id,
+):
+    headers = {'Custom': 'Value'}
+    with pytest.raises(ValueError):
+        CBCClient(
+            endpoint=cbc_endpoint,
+            auth=OAuth1(
+                cbc_oauth_key,
+                cbc_oauth_secret,
+            ),
+            default_headers=headers,
+        )
 
 
 def test_collection_service_discovery_empty_type(cbc_client):

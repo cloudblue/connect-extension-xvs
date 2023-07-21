@@ -1,0 +1,54 @@
+[
+  {
+    "id": 1000001,
+    "type": "RESELLER",
+    "locked": false,
+    "personal": false,
+    "companyName": "IngramMicro US",
+    "techContact": {
+      "email": "us@example.com",
+      "locale": "en_US",
+      "telFax": "####",
+      "telVoice": "1#212#34234#",
+      "givenName": "US",
+      "familyName": "us",
+      "middleName": "",
+      "organizationName": ""
+    },
+    "adminContact": {
+      "email": "us@example.com",
+      "locale": "en_US",
+      "telFax": "####",
+      "telVoice": "1#212#34234#",
+      "givenName": "US",
+      "familyName": "us",
+      "middleName": "",
+      "organizationName": ""
+    },
+    "addressPostal": {
+      "region": "CA",
+      "locality": "CA",
+      "postalCode": "10001",
+      "countryName": "us",
+      "streetAddress": "St 2",
+      "extendedAddress": ""
+    },
+    "billingContact": {
+      "email": "us@example.com",
+      "locale": "en_US",
+      "telFax": "####",
+      "telVoice": "1#212#34234#",
+      "givenName": "US",
+      "familyName": "us",
+      "middleName": "",
+      "organizationName": ""
+    },
+    "aps": {
+      "modified": "2023-07-13T13:22:15Z",
+      "id": "927b0062-4aac-468d-88b2-bfdea9b42fa3",
+      "type": "http://parallels.com/aps/types/pa/account/1.2",
+      "status": "aps:ready",
+      "revision": 8
+    }
+  }
+]

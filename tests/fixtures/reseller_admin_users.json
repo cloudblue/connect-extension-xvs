@@ -1,0 +1,36 @@
+[
+  {
+    "email": "us@example.com",
+    "login": "reseller_us",
+    "roles": [
+      2
+    ],
+    "locale": "en_US",
+    "locked": false,
+    "telFax": "",
+    "userId": 4,
+    "telWork": "1#212#34234#",
+    "disabled": false,
+    "fullName": "US us",
+    "memberId": 1000001,
+    "givenName": "US",
+    "familyName": "us",
+    "displayName": "US us",
+    "servicesMode": "NONE",
+    "addressPostal": {
+      "region": "CA",
+      "locality": "CA",
+      "postalCode": "10001",
+      "countryName": "us",
+      "streetAddress": "St 2"
+    },
+    "isAccountAdmin": true,
+    "aps": {
+      "modified": "2023-07-13T12:54:28Z",
+      "id": "787dceb3-ad48-4be0-adb8-5d069e9576ca",
+      "type": "http://parallels.com/aps/types/pa/admin-user/1.2",
+      "status": "aps:ready",
+      "revision": 2
+    }
+  }
+]

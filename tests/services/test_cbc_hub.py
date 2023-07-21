@@ -1,10 +1,12 @@
 from copy import deepcopy
 from unittest import TestCase
+from unittest.mock import patch, PropertyMock
 
 import pytest
 import responses
 
 from connect_ext_ppr.client.exception import ClientError
+from connect_ext_ppr.client.ns import Service
 from connect_ext_ppr.services.cbc_hub import CBCService
 
 
@@ -436,3 +438,245 @@ def test_search_task_logs_by_name_positive(
     task_logs = cbc_service.search_task_logs_by_name(tracking_id)
 
     TestCase().assertListEqual(task_logs, task_logs_response)
+
+
+def __mock_for_price_operations(
+    account_id,
+    service_id,
+    cbc_endpoint,
+    aps_controller_details,
+    reseller_accounts,
+    reseller_admin_users,
+    aps_token_response,
+):
+    responses.add(
+        method='GET',
+        url=f'{cbc_endpoint}/aps',
+        json=aps_controller_details,
+    )
+    responses.add(
+        method='GET',
+        url=f'{cbc_endpoint}/aps/2/resources/?'
+            f'implementing({CBCService.ACCOUNT_TYPE})&id={account_id}',
+        json=reseller_accounts,
+    )
+    responses.add(
+        method='GET',
+        url=f'{cbc_endpoint}/aps/2/collections/admin-users?organization.id={account_id}',
+        json=reseller_admin_users,
+    )
+    responses.add(
+        method='GET',
+        url=f'{cbc_endpoint}/aps/2/resources/{service_id}/getToken?'
+            f"user_id={reseller_admin_users[0]['userId']}",
+        json=aps_token_response,
+    )
+
+
+@responses.activate
+@patch.object(Service, 'service_path', new_callable=PropertyMock)
+def test_parse_price_file(
+    mock_service_path,
+    hub_credentials,
+    cbc_endpoint,
+    aps_controller_details,
+    services,
+    reseller_accounts,
+    reseller_admin_users,
+    aps_token_response,
+    parse_price_file_response,
+):
+    service_id = services[0]['aps']['id']
+    account_id = 1000001
+    vendor_id = 'VA-000-000'
+
+    mock_service_path.return_value = f'{cbc_endpoint}/aps/2/resources/{service_id}'
+    __mock_for_price_operations(
+        account_id,
+        service_id,
+        cbc_endpoint,
+        aps_controller_details,
+        reseller_accounts,
+        reseller_admin_users,
+        aps_token_response,
+    )
+
+    responses.add(
+        method='POST',
+        url=f'{cbc_endpoint}/aps/2/resources/{service_id}/flat-catalog/'
+            f'price-import-wizard/upload?vendorId={vendor_id}',
+        json=parse_price_file_response,
+    )
+
+    with open('./tests/fixtures/Sweet_Pies_Price_List_USD.xlsx', 'rb') as file:
+        cbc_service = CBCService(hub_credentials)
+        response = cbc_service.parse_price_file(
+            account_id, vendor_id, file,
+        )
+
+        TestCase().assertDictEqual(response, parse_price_file_response)
+
+
+@responses.activate
+@patch.object(Service, 'service_path', new_callable=PropertyMock)
+def test_prepare_price_proposal(
+    mock_service_path,
+    hub_credentials,
+    cbc_endpoint,
+    aps_controller_details,
+    services,
+    reseller_accounts,
+    reseller_admin_users,
+    aps_token_response,
+    parse_price_file_response,
+    price_proposal_response,
+):
+    service_id = services[0]['aps']['id']
+    account_id = 1000001
+
+    mock_service_path.return_value = f'{cbc_endpoint}/aps/2/resources/{service_id}'
+    __mock_for_price_operations(
+        account_id,
+        service_id,
+        cbc_endpoint,
+        aps_controller_details,
+        reseller_accounts,
+        reseller_admin_users,
+        aps_token_response,
+    )
+
+    responses.add(
+        method='POST',
+        url=f'{cbc_endpoint}/aps/2/resources/{service_id}/flat-catalog/'
+            f"price-import-wizard/{parse_price_file_response['dataId']}/prepare-proposals",
+        json=price_proposal_response,
+    )
+
+    cbc_service = CBCService(hub_credentials)
+    response = cbc_service.prepare_price_proposal(
+        account_id,
+        parse_price_file_response,
+        True,
+        True,
+        True,
+        '07/20/2023',
+    )
+    TestCase().assertDictEqual(response, price_proposal_response)
+
+
+@responses.activate
+@patch.object(Service, 'service_path', new_callable=PropertyMock)
+def test_apply_prices(
+    mock_service_path,
+    hub_credentials,
+    cbc_endpoint,
+    aps_controller_details,
+    services,
+    reseller_accounts,
+    reseller_admin_users,
+    aps_token_response,
+    parse_price_file_response,
+    price_proposal_response,
+):
+    service_id = services[0]['aps']['id']
+    account_id = 1000001
+    file_name = 'Sweet_Pies_Price_List_USD.xlsx'
+
+    mock_service_path.return_value = f'{cbc_endpoint}/aps/2/resources/{service_id}'
+    __mock_for_price_operations(
+        account_id,
+        service_id,
+        cbc_endpoint,
+        aps_controller_details,
+        reseller_accounts,
+        reseller_admin_users,
+        aps_token_response,
+    )
+
+    responses.add(
+        method='POST',
+        url=f'{cbc_endpoint}/aps/2/resources/{service_id}/flat-catalog/'
+            f"price-import-wizard/{parse_price_file_response['dataId']}/set-prices",
+        headers={
+            'APS-Info': f'Update prices by {file_name}',
+        },
+    )
+
+    cbc_service = CBCService(hub_credentials)
+    response = cbc_service.apply_prices(
+        account_id,
+        parse_price_file_response,
+        True,
+        True,
+        True,
+        '07/20/2023',
+        file_name,
+    )
+
+    assert response == f'Update prices by {file_name}'
+
+
+@responses.activate
+@patch.object(Service, 'service_path', new_callable=PropertyMock)
+def test_get_aps_token_auth_reseller_account_not_found(
+    mock_service_path,
+    hub_credentials,
+    cbc_endpoint,
+    services,
+    aps_controller_details,
+):
+    service_id = services[0]['aps']['id']
+    account_id = 1000001
+    mock_service_path.return_value = f'{cbc_endpoint}/aps/2/resources/{service_id}'
+
+    responses.add(
+        method='GET',
+        url=f'{cbc_endpoint}/aps',
+        json=aps_controller_details,
+    )
+    responses.add(
+        method='GET',
+        url=f'{cbc_endpoint}/aps/2/resources/?'
+            f'implementing({CBCService.ACCOUNT_TYPE})&id={account_id}',
+        json=[],
+    )
+
+    with pytest.raises(ValueError):
+        cbc_service = CBCService(hub_credentials)
+        cbc_service.get_aps_token_auth(account_id)
+
+
+@responses.activate
+@patch.object(Service, 'service_path', new_callable=PropertyMock)
+def test_get_aps_token_auth_reseller_admin_not_found(
+    mock_service_path,
+    hub_credentials,
+    cbc_endpoint,
+    services,
+    aps_controller_details,
+    reseller_accounts,
+):
+    service_id = services[0]['aps']['id']
+    account_id = 1000001
+    mock_service_path.return_value = f'{cbc_endpoint}/aps/2/resources/{service_id}'
+
+    responses.add(
+        method='GET',
+        url=f'{cbc_endpoint}/aps',
+        json=aps_controller_details,
+    )
+    responses.add(
+        method='GET',
+        url=f'{cbc_endpoint}/aps/2/resources/?'
+            f'implementing({CBCService.ACCOUNT_TYPE})&id={account_id}',
+        json=reseller_accounts,
+    )
+    responses.add(
+        method='GET',
+        url=f'{cbc_endpoint}/aps/2/collections/admin-users?organization.id={account_id}',
+        json=[],
+    )
+
+    with pytest.raises(ValueError):
+        cbc_service = CBCService(hub_credentials)
+        cbc_service.get_aps_token_auth(account_id)
