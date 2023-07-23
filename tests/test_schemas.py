@@ -120,8 +120,8 @@ def test_configuration_schema(state, file):
         ),
         state=state,
         events={
-            'created': {'at': now, 'by': 'SU-295-689-628'},
-            'updated': {'at': now, 'by': 'SU-295-689-628'},
+            'created': {'at': now, 'by': {'id': 'SU-295-689-628', 'name': 'Neri'}},
+            'updated': {'at': now, 'by': {'id': 'SU-295-689-628', 'name': 'Neri'}},
         },
     )
     assert serializer.dict() == {
@@ -137,11 +137,17 @@ def test_configuration_schema(state, file):
         "events": {
             "created": {
                 "at": now,
-                "by": "SU-295-689-628",
+                "by": {
+                    'id': 'SU-295-689-628',
+                    'name': 'Neri',
+                },
             },
             "updated": {
                 "at": now,
-                "by": "SU-295-689-628",
+                "by": {
+                    'id': 'SU-295-689-628',
+                    'name': 'Neri',
+                },
             },
         },
     }

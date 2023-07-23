@@ -474,10 +474,12 @@ def api_client(test_client_factory, dbsession):
 
 
 @pytest.fixture
-def configuration(dbsession, deployment, file):
+def configuration(dbsession, deployment, file, user):
     conf = Configuration(
         file=file.id,
         deployment=deployment.id,
+        created_by=user,
+        updated_by=user,
     )
     dbsession.set_verbose(conf)
     dbsession.commit()
@@ -778,4 +780,12 @@ def price_proposal_response():
             ],
             'currency': [],
         },
+    }
+
+
+@pytest.fixture
+def user():
+    return {
+        'id': 'SU-295-689-628',
+        'name': 'Neri',
     }

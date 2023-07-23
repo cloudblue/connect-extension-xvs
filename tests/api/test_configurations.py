@@ -108,6 +108,12 @@ def test_post_configuration(
                 'mime_type': media_response['mime_type'],
             },
         },
+        headers={
+            "connect-auth": (
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1Ijp7Im9pZCI6IlNVLTI5NS02ODktN"
+                "jI4IiwibmFtZSI6Ik5lcmkifX0.U_T6vuXnD293hcWNTJZ9QBViteNv8JXUL2gM0BezQ-k"
+            ),
+        },
     )
     assert response.status_code == 200
     data = response.json()
@@ -123,8 +129,15 @@ def test_post_configuration(
         'size': 17,
         'mime_type': 'application/json',
     }
-
     assert data['state'] == ConfigurationStateChoices.ACTIVE
+    assert data['events']['created']['by'] == {
+        'id': 'SU-295-689-628',
+        'name': 'Neri',
+    }
+    assert data['events']['updated']['by'] == {
+        'id': 'SU-295-689-628',
+        'name': 'Neri',
+    }
 
     assert dbsession.query(Configuration).count() == 1
     assert dbsession.query(File).count() == 1
@@ -149,6 +162,12 @@ def test_post_configuration_deactivate_previous(
                 'size': file.size,
                 'mime_type': file.mime_type,
             },
+        },
+        headers={
+            "connect-auth": (
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1Ijp7Im9pZCI6IlNVLTI5NS02ODktN"
+                "jI4IiwibmFtZSI6Ik5lcmkifX0.U_T6vuXnD293hcWNTJZ9QBViteNv8JXUL2gM0BezQ-k"
+            ),
         },
     )
     assert response.status_code == 200
