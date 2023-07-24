@@ -3,6 +3,7 @@
 ## Create CBCClient instance
 
 ```python
+from requests_oauthlib import OAuth1
 from connect_ext_ppr.client import CBCClient
 
 
@@ -17,8 +18,7 @@ app_id = '*****'
 
 client = CBCClient(
     endpoint=endpoint,
-    oauth_key=client_id,
-    oauth_secret=client_secret,
+    auth=OAuth1(client_id, client_secret),
     app_id=app_id,
 )
 
