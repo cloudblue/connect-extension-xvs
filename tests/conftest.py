@@ -146,6 +146,7 @@ def deployment_request_factory(dbsession):
             deployment=None,
             ppr=None,
             delegate_l2=False,
+            status=None,
     ):
         if not deployment:
             deployment = deployment_factory(id='DPLR-123-123-123')
@@ -158,6 +159,7 @@ def deployment_request_factory(dbsession):
             ppr_id=ppr.id,
             created_by=deployment.account_id,
             delegate_l2=delegate_l2,
+            status=status,
         )
         dbsession.add(ppr)
         dbsession.set_verbose(dep_req)
@@ -171,6 +173,7 @@ def task_factory(dbsession, deployment_request_factory):
         deployment_request=None,
         task_index='001',
         type=None,
+        status=Task.STATUSES.pending,
     ):
         if not deployment_request:
             deployment_request = deployment_request_factory()
@@ -181,6 +184,7 @@ def task_factory(dbsession, deployment_request_factory):
             deployment_request=deployment_request.id,
             title=f'Title Task {task_index}',
             type=type,
+            status=status,
         )
         dbsession.add(task)
         dbsession.commit()
@@ -189,7 +193,7 @@ def task_factory(dbsession, deployment_request_factory):
 
 
 @pytest.fixture
-def ppr_version_factory(dbsession, deployment_factory, file_factory):
+def ppr_version_factory(dbsession, file_factory):
     def _build_ppr(
         id=None,
         file=None,

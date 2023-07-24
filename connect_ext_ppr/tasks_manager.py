@@ -27,9 +27,9 @@ async def delegate_to_l2():
 
 
 TASK_PER_TYPE = {
-    TaskTypesChoices.PPR_VALIDATION: validate_ppr,
-    TaskTypesChoices.APPLY_AND_DELEGATE: apply_ppr_and_delegate_to_marketplaces,
-    TaskTypesChoices.DELEGATE_TO_L2: delegate_to_l2,
+    TaskTypesChoices.ppr_validation: validate_ppr,
+    TaskTypesChoices.apply_and_delegate: apply_ppr_and_delegate_to_marketplaces,
+    TaskTypesChoices.delegate_to_l2: delegate_to_l2,
 }
 
 
@@ -39,10 +39,14 @@ async def main_process(deployment_request_id, config):
         deployment_request = db.query(DeploymentRequest).options(
             joinedload(DeploymentRequest.deployment),
         ).filter_by(id=deployment_request_id).first()
-        deployment = deployment_request.deployment
 
+        if deployment_request.status != DeploymentRequestStatusChoices.pending:
+            return deployment_request.status
+
+        deployment = deployment_request.deployment
         deployment.status = DeploymentStatusChoices.processing
         deployment_request.status = DeploymentRequestStatusChoices.processing
+
         db.add(deployment)
         db.add(deployment_request)
         db.commit()
@@ -51,10 +55,11 @@ async def main_process(deployment_request_id, config):
             deployment_request=deployment_request.id,
         ).order_by(Task.id).all()
 
-        deployment_request.status = DeploymentRequestStatusChoices.done
+        deployment_request_status = DeploymentRequestStatusChoices.done
         for task in tasks:
-            db.refresh(task)
+            db.refresh(task, with_for_update=True)
             if task.status == TasksStatusChoices.pending:
+                task.status = TasksStatusChoices.processing
                 task.started_at = datetime.utcnow()
                 db.add(task)
                 db.commit()
@@ -68,10 +73,16 @@ async def main_process(deployment_request_id, config):
                 db.commit()
 
                 if not was_succesfull:
-                    deployment_request.status = DeploymentRequestStatusChoices.error
+                    deployment_request_status = DeploymentRequestStatusChoices.error
                     break
 
+        db.refresh(deployment_request, with_for_update=True)
+        if deployment_request.status == DeploymentRequestStatusChoices.aborting:
+            deployment_request.status = DeploymentRequestStatusChoices.aborted
+        else:
+            deployment_request.status = deployment_request_status
         db.add(deployment_request)
+        db.commit()
 
         deployment.status = DeploymentStatusChoices.pending
         deployment_last_ppr = db.query(PPRVersion).filter_by(
