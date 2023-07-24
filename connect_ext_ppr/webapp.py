@@ -35,6 +35,7 @@ from connect_ext_ppr.schemas import (
     ConfigurationSchema,
     DeploymentRequestSchema,
     DeploymentSchema,
+    HubSchema,
     ProductSchema,
 )
 from connect_ext_ppr.utils import (
@@ -329,6 +330,29 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         for product in db.query(Product).filter(Product.id.in_(products_ids)):
             response_list.append(ProductSchema(id=product.id, name=product.name, icon=product.logo))
         return response_list
+
+    @router.get(
+        '/products/{product_id}/hubs',
+        summary="List all product's hub",
+        response_model=List[HubSchema],
+    )
+    def list_hubs_by_product(
+        self,
+        product_id: str,
+        client: ConnectClient = Depends(get_installation_client),
+        db: VerboseBaseSession = Depends(get_db),
+        installation: dict = Depends(get_installation),
+    ):
+        hubs_ids = [
+            h[0] for h in db.query(Deployment.hub_id).filter_by(
+                account_id=installation['owner']['id'],
+                product_id=product_id,
+            ).distinct()
+        ]
+        reponse_list = []
+        for hub in get_hubs(client, hubs_ids):
+            reponse_list.append(HubSchema(id=hub['id'], name=hub['name']))
+        return reponse_list
 
     @classmethod
     def on_startup(cls, logger, config):
