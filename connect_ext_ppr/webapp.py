@@ -14,7 +14,7 @@ from connect.eaas.core.decorators import (
 )
 from connect.eaas.core.inject.synchronous import get_installation, get_installation_client
 from connect.eaas.core.extension import WebApplicationBase
-from fastapi import Depends, Response, status
+from fastapi import Depends, Request, Response, status
 from sqlalchemy import exists
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
@@ -44,6 +44,7 @@ from connect_ext_ppr.utils import (
     get_deployment_request_schema,
     get_deployment_schema,
     get_hubs,
+    get_user_data_from_auth_token,
 )
 
 
@@ -61,7 +62,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
 
     @router.get(
         '/deployments/requests',
-        summary='List all request accross deployments',
+        summary='List all requests across deployments',
         response_model=List[DeploymentRequestSchema],
     )
     def list_deployment_requests(
@@ -220,6 +221,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         deployment_id: str,
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
+        request: Request = None,
     ):
         get_deployment_by_id(deployment_id, db, installation)
         file_data = configuration.file
@@ -238,7 +240,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
                 mime_type=file_data.mime_type,
             )
             db.add(file_instance)
-            db.commit()
+            db.flush()
 
             prev_configuration = (
                 db.query(Configuration)
@@ -251,10 +253,13 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             if prev_configuration:
                 prev_configuration.state = ConfigurationStateChoices.INACTIVE
 
+            user_data = get_user_data_from_auth_token(request.headers['connect-auth'])
             configuration_instance = Configuration(
                 file=file_data.id,
                 deployment=deployment_id,
                 state=ConfigurationStateChoices.ACTIVE,
+                created_by=user_data,
+                updated_by=user_data,
             )
             db.set_verbose(configuration_instance)
             db.commit()

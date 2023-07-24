@@ -72,7 +72,7 @@ class ConfigurationSchema(NonNullSchema):
     id: str
     file: FileSchema
     state: ConfigurationStateChoices
-    events: Dict[str, Dict[str, Union[datetime, str]]]
+    events: Dict[str, Dict[str, Union[datetime, Dict[str, str]]]]
 
 
 class ConfigurationReferenceSchema(NonNullSchema):

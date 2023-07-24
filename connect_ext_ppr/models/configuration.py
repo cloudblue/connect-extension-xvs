@@ -20,9 +20,9 @@ class Configuration(Model):
         default=ConfigurationStateChoices.INACTIVE,
     )
     created_at = db.Column(db.DateTime(), default=datetime.utcnow)
-    created_by = db.Column(db.String(20))
+    created_by = db.Column(db.JSON)
     updated_at = db.Column(db.DateTime(), default=datetime.utcnow)
-    updated_by = db.Column(db.String(20))
+    updated_by = db.Column(db.JSON)
 
     def activate(self):
         self.state = ConfigurationStateChoices.ACTIVE

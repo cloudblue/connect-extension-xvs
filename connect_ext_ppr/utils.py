@@ -5,6 +5,7 @@ from connect.client.rql import R
 from connect.eaas.core.logging import RequestLogger
 from fastapi import status
 from jsonschema.exceptions import _Error
+import jwt
 import pandas as pd
 
 from connect_ext_ppr.errors import ExtensionHttpError
@@ -224,8 +225,14 @@ def get_configuration_schema(configuration, file):
         file=file_schema,
         state=configuration.state,
         events={
-            'created': {'at': configuration.created_at},
-            'updated': {'at': configuration.updated_at},
+            'created': {
+                'at': configuration.created_at,
+                'by': configuration.created_by,
+            },
+            'updated': {
+                'at': configuration.updated_at,
+                'by': configuration.updated_by,
+            },
         },
     )
 
@@ -279,3 +286,12 @@ def _parse_json_schema_error(ex: _Error):
             sub_list = _parse_json_schema_error(sub_ex)
             error_list.extend(sub_list)
     return error_list
+
+
+def get_user_data_from_auth_token(token):
+    payload = jwt.decode(token, options={"verify_signature": False})
+
+    return {
+        'id': payload['u']['oid'],
+        'name': payload['u']['name'],
+    }
