@@ -28,9 +28,9 @@ def test_create_ppr(dbsession, file, deployment, status):
     assert ppr.id.startswith(PPRVersion.PREFIX)
 
 
-def test_multiple_versions(dbsession, file, deployment_factory, product_factory):
-    dep_1 = deployment_factory(dbsession, product_id=product_factory(id='PRD-111-222-333').id)
-    dep_2 = deployment_factory(dbsession, product_id=product_factory(id='PRD-111-222-444').id)
+def test_multiple_versions(dbsession, file, deployment_factory):
+    dep_1 = deployment_factory(product_id='PRD-111-222-333')
+    dep_2 = deployment_factory(product_id='PRD-111-222-444')
 
     for version in range(1, 4):
         for dep in (dep_1, dep_2):

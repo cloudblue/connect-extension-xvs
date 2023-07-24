@@ -12,10 +12,12 @@ class Task(Model):
 
     PREFIX = 'TSK'
 
+    STATUS = TasksStatusChoices
+
     id = db.Column(db.String(30), primary_key=True)
     status = db.Column(
         db.Enum(TasksStatusChoices, validate_strings=True),
-        default=TasksStatusChoices.PENDING,
+        default=STATUS.pending,
     )
     deployment_request = db.Column(db.ForeignKey(DeploymentRequest.id))
     title = db.Column(db.String(100))

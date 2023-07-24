@@ -14,10 +14,8 @@ def test_get_deployments_requests(
         'connect_ext_ppr.webapp.get_hubs',
         side_effect=[[hub_data]],
     )
-    dep1 = deployment_factory(
-        dbsession, account_id=installation['owner']['id'], hub_id=hub_data['id'],
-    )
-    dep2 = deployment_factory(dbsession, account_id='PA-123-456')
+    dep1 = deployment_factory(account_id=installation['owner']['id'], hub_id=hub_data['id'])
+    dep2 = deployment_factory(account_id='PA-123-456')
 
     dr1 = deployment_request_factory(deployment=dep1)
     dr2 = deployment_request_factory(deployment=dep1)

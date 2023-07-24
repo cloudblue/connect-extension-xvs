@@ -1,0 +1,74 @@
+ {
+	 "business_model": "indirect",
+	 "hierarchical_files_data": {
+    "PRD-XXX-XXX-XXX": {
+      "product_level": {
+        "SalesCategories": {
+          "Name_en": "Chat GPT",
+          "Description_en": "test",
+        "Description_de": "test",
+        "Description_es": "test",
+        "Description_fr": "test",
+        "Description_it": "test",
+        "Description_nl": "test",
+        "Description_pt": "test",
+        "Description_tr": "test"
+        },
+        "ResourceCategories": {
+        "Name_en": "Chat bot",
+        "Description_en": "A Chat bot",
+        "Description_de": "A Chat bot",
+        "Description_es": "A Chat bot",
+        "Description_fr": "A Chat bot",
+        "Description_it": "A Chat bot",
+        "Description_nl": "A Chat bot",
+        "Description_pt": "A Chat bot",
+        "Description_tr": "A Chat bot"
+        },
+        "NotificationTemplates": {
+         "TemplateName": "",
+        "Language": "",
+        "MessageType": "",
+        "MessageCategory": "",
+        "Subject": "",
+        "ToAddr": "",
+        "ToName": "",
+        "BccAddr": "",
+        "FromAddr": "",
+        "FromName": "",
+        "PDFFileName": "",
+        "Active": "",
+        "Condition": "",
+        "VisibleToReseller": "",
+        "Security": "",
+        "HTML": "",
+        "PlainText": ""
+        },
+        "ServicePlans": {
+          "PlanCategory": "Chat bot",
+          "ServiceTerms": "0/0 Service Terms",
+          "AutoRenew": "Before Expiration",
+          "RenewOrderInterval": "2",
+					"WelcomeNotificationTemplate":"Welcome Email - Chat GPT",                                              
+					"ExpirationNotificationTemplate":"Subscription Expiration",
+					"SubscriptionStartDateAfterUpgrade":"Start Date of Current Subscription Period"
+        },
+        "PlanPeriods": {
+          "FullRefundPeriod": "",
+          "AfterRefundPeriod": "",
+          "CancellationType": ""
+        },
+        "ResourceRates": {
+          "IncUnits": ""
+        }
+      },
+      "MP-00000": {
+        "TermsConditions": {
+          "Acceptance": "",
+          "Active": "",
+          "Content": ""
+        }
+      }
+    }
+  }
+}

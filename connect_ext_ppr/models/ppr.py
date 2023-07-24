@@ -25,8 +25,16 @@ def make_version(context):
 
 class PPRVersion(Model):
     __tablename__ = 'ppr_version'
+    __table_args__ = (
+        db.UniqueConstraint(
+            "deployment", "version",
+            name="dpl_version_key",
+        ),
+    )
 
     PREFIX = 'PPRFL'
+
+    STATUS = PPRStatusChoices
 
     id = db.Column(db.String(20), primary_key=True)
     file = db.Column(db.ForeignKey(File.id))
@@ -38,7 +46,7 @@ class PPRVersion(Model):
     summary = db.Column(db.JSON)
     status = db.Column(
         db.Enum(PPRStatusChoices, validate_strings=True),
-        default=PPRStatusChoices.PENDING,
+        default=PPRStatusChoices.pending,
     )
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.String(20))

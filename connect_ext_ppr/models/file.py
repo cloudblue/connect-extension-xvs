@@ -9,6 +9,8 @@ from connect_ext_ppr.models.enums import MimeTypeChoices
 class File(Model):
     __tablename__ = 'files'
 
+    MIME_TYPE = MimeTypeChoices
+
     id = db.Column(db.String(20), primary_key=True)
     account_id = db.Column(db.String(20))
     location = db.Column(db.String(1024))

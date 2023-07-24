@@ -1,14 +1,23 @@
+from collections import defaultdict
+from functools import partial
+from io import BytesIO
 import os
+import json
+from tempfile import NamedTemporaryFile
+from typing import Any, Dict, Optional
 
 from connect.client import ClientError, ConnectClient
 from connect.client.rql import R
 from connect.eaas.core.logging import RequestLogger
 from fastapi import status
+import jsonschema
 from jsonschema.exceptions import _Error
 import jwt
 import pandas as pd
 
+from connect_ext_ppr.constants import BASE_SCHEMA, PPR_SCHEMA
 from connect_ext_ppr.errors import ExtensionHttpError
+from connect_ext_ppr.models.enums import MimeTypeChoices
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import Deployment
 from connect_ext_ppr.schemas import (
@@ -42,6 +51,24 @@ def clean_empties_from_dict(data):
         if not value:
             del data[key]
     return data
+
+
+class FileColletion:
+    PPR = 'pprs'
+    CONFIFURATION = 'configurations'
+
+
+def connect_error(f):
+    def inner(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except ClientError as ex:
+            raise ExtensionHttpError.EXT_000(
+                format_kwargs={"client_message": ex.message or ''},
+                status_code=ex.status_code,
+                errors=ex.errors,
+            )
+    return inner
 
 
 def _get_extension_client(logger):
@@ -80,25 +107,77 @@ def get_products(client, prod_ids):
     return client.products.filter(rql)
 
 
+@connect_error
+def get_product_items(client, prd_id):
+    return client.products[prd_id].items.all()
+
+
+def namespaced_media_client(client, account_id, deployment_id, file_collection):
+    return (
+        client
+        .ns('media')
+        .ns('folders')
+        .ns('accounts')
+        .collection(f'{account_id}/{deployment_id}/{file_collection}/files')
+    )
+
+
+@connect_error
+def create_media_file(
+        client, account_id, deployment_id, file_collection,
+        filename, content, file_type, file_size,
+):
+    headers = {
+        'Content-Type': file_type,
+        'Content-Disposition': f'attachment; filename="{filename}"',
+    }
+    if file_size:
+        headers.update({'Content-Length': str(file_size)})
+    return namespaced_media_client(
+        client, account_id, deployment_id, file_collection,
+    ).create(headers=headers, data=content)
+
+
+def create_ppr_to_media(client, account_id, deployment_id, filename, content, file_size=None):
+    file_collection = FileColletion.PPR
+    file_type = MimeTypeChoices.application_vnd_ms_xslx
+    media_file = create_media_file(
+        client, account_id, deployment_id, file_collection,
+        filename, content, file_type, file_size,
+    )
+    return json.loads(media_file)
+
+
+@connect_error
+def get_file_from_media(client, account_id, deployment_id, media_id, file_collection):
+    return namespaced_media_client(
+        client, account_id, deployment_id, file_collection,
+    )[media_id].get()
+
+
+def get_ppr_from_media(client, account_id, deployment_id, media_id):
+    file_collection = FileColletion.PPR
+    return get_file_from_media(client, account_id, deployment_id, media_id, file_collection)
+
+
+def get_configuration_from_media(client, account_id, deployment_id, media_id):
+    file_collection = FileColletion.CONFIFURATION
+    return get_file_from_media(client, account_id, deployment_id, media_id, file_collection)
+
+
+@connect_error
 def get_all_info(client):
-    try:
-        listings = get_listings(client)
-        mkp_ids = list({li['contract']['marketplace']['id'] for li in listings})
-        prod_ids = list({li['product']['id'] for li in listings})
-        marketplaces = get_marketplaces(client, mkp_ids)
-        products = get_products(client, prod_ids)
-        for list_ in listings:
-            mkp_id = list_['contract']['marketplace']['id']
-            prd_id = list_['product']['id']
-            list_['contract']['marketplace'] = filter_object_list_by_id(marketplaces, mkp_id)
-            list_['product'] = filter_object_list_by_id(products, prd_id)
-        return listings
-    except ClientError as exc:
-        raise ExtensionHttpError.EXT_000(
-            format_kwargs={"client_message": exc.message or ''},
-            status_code=exc.status_code,
-            errors=exc.errors,
-        )
+    listings = get_listings(client)
+    mkp_ids = list({li['contract']['marketplace']['id'] for li in listings})
+    prod_ids = list({li['product']['id'] for li in listings})
+    marketplaces = get_marketplaces(client, mkp_ids)
+    products = get_products(client, prod_ids)
+    for list_ in listings:
+        mkp_id = list_['contract']['marketplace']['id']
+        prd_id = list_['product']['id']
+        list_['contract']['marketplace'] = filter_object_list_by_id(marketplaces, mkp_id)
+        list_['product'] = filter_object_list_by_id(products, prd_id)
+    return listings
 
 
 def filter_object_list_by_id(object_list, key):
@@ -295,3 +374,121 @@ def get_user_data_from_auth_token(token):
         'id': payload['u']['oid'],
         'name': payload['u']['name'],
     }
+
+
+def validate_ppr_schema(dict_file: Dict[str, Any]):
+    try:
+        jsonschema.validate(dict_file, PPR_SCHEMA)
+    except jsonschema.ValidationError as ex:
+        return _parse_json_schema_error(ex)
+
+
+def get_base_workbook(data: Optional[bytes]):
+    file = NamedTemporaryFile(suffix='.xlsx')
+    writer = pd.ExcelWriter(file.name, engine='openpyxl')
+    wb = pd.ExcelFile(BytesIO(data)) if data else generate_base_workbook(file, writer)
+    return file, writer, wb
+
+
+def generate_base_workbook(file: NamedTemporaryFile, writer: pd.ExcelWriter):
+    for sheet_name, colum_names in BASE_SCHEMA.items():
+        df = pd.DataFrame(columns=colum_names)
+        df.to_excel(writer, sheet_name, index=False)
+    writer.book.save(file)
+    file.seek(0)
+    return pd.ExcelFile(file.read())
+
+
+def process_resources(resources, items, config_json, product):
+    summary = defaultdict(list)
+    resource_category = (
+        config_json
+        .get('product_level', {})
+        .get('ResourceCategories', {})
+        .get('Name_EN')
+    ) or product.name
+    items_for_ppr = [
+        (
+            item['id'], item['name'], item['description'], resource_category,
+            item['mpn'], item['unit']['name'], item['type'] == 'ppu',
+        )
+        for item in items
+    ]
+    columns = ['id']
+    columns.extend(resources.columns)
+    items_df = pd.DataFrame(columns=columns, data=items_for_ppr)
+    to_update = resources.loc[resources.MPN.isin(items_df.MPN)]
+    to_add = items_df.loc[~items_df.MPN.isin(resources.MPN)]
+    to_remove = resources.loc[~resources.MPN.isin(items_df.MPN)]
+    idxs = to_update.index
+    for idx in idxs:
+        mask = items_df.MPN == to_update.loc[idx, :].MPN
+        update_df = pd.DataFrame(
+            columns=resources.columns,
+            data=items_df.loc[mask, resources.columns].values,
+            index=[idx],
+        )
+        resources.update(update_df)
+        summary['updated'].append(items_df.loc[mask].iloc[0].id)
+
+    for _, value in to_add.iterrows():
+        resources = pd.concat(
+            [
+                resources,
+                pd.Series(value[1:], index=resources.columns).to_frame().T,
+            ], ignore_index=True)
+        summary['created'].append(value.id)
+
+    for _, value in to_remove.iterrows():
+        summary['removed'].append(value.Name_EN)
+    return resources, summary
+
+
+def process_resource_categories(resource_categories, config_json):
+    columns = resource_categories.columns.to_list()
+    json_data = {}
+    map_columns = (
+        config_json
+        .get('product_level', {})
+        .get('ResourceCategories', {})
+    )
+    for key, value in map_columns.items():
+        name, suffix = key.split('_')
+        new_name = '{0}_{1}'.format(name, suffix.upper())
+        json_data[new_name] = [value]
+        if new_name in columns:
+            continue
+        columns.append(new_name)
+    df_res_cat = pd.DataFrame(columns=columns, data=json_data)
+    return df_res_cat, {}
+
+
+def process_ppr(wb, product, config_json, items):
+    summary = {}
+    ws_list = []
+    scoped_product_info = (
+        config_json
+        .get('hierarchical_files_data', {})
+        .get(product.id, {})
+    )
+    process_sheet_mapping = {
+        'Resources': partial(
+            process_resources,
+            items=items,
+            config_json=scoped_product_info,
+            product=product,
+        ),
+        'ResourceCategories': partial(
+            process_resource_categories,
+            config_json=scoped_product_info,
+        ),
+    }
+    for sheet_name in wb.sheet_names:
+        ws = wb.parse(sheet_name)
+        if sheet_name in process_sheet_mapping:
+            ws, inner_summary = process_sheet_mapping[sheet_name](ws)
+            summary.update({sheet_name: inner_summary})
+        ws.name = sheet_name
+        ws_list.append(ws)
+
+    return ws_list, summary

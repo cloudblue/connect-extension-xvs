@@ -68,7 +68,11 @@ class ConfigurationCreateSchema(NonNullSchema):
     file: FileSchema
 
 
-class ConfigurationSchema(NonNullSchema):
+class PPRCreateSchema(NonNullSchema):
+    file: Optional[FileSchema]
+
+
+class ConfigurationSchema(ConfigurationCreateSchema):
     id: str
     file: FileSchema
     state: ConfigurationStateChoices
