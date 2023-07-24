@@ -94,9 +94,11 @@ def product_factory(dbsession):
     ):
         if not id:
             id = 'PR-{0}'.format(random.randint(10000, 99999))
-        product = Product(id=id, name=name, logo=logo, owner_id=owner_id, version=version)
-        dbsession.add(product)
-        dbsession.commit()
+        product = dbsession.query(Product).filter_by(id=id).first()
+        if not product:
+            product = Product(id=id, name=name, logo=logo, owner_id=owner_id, version=version)
+            dbsession.add(product)
+            dbsession.commit()
         return product
     return _build_product
 
@@ -125,7 +127,7 @@ def deployment_factory(dbsession, product_factory):
             vendor_id='VA-000-000',
             hub_id='HB-0000-0000',
     ):
-        product = product_factory(product_id)
+        product = product_factory(id=product_id)
         product_id = product.id
 
         dep = Deployment(
