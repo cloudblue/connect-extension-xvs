@@ -28,12 +28,14 @@ from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
 from connect_ext_ppr.models.enums import ConfigurationStateChoices, DeploymentStatusChoices
 from connect_ext_ppr.models.file import File
+from connect_ext_ppr.models.replicas import Product
 from connect_ext_ppr.service import add_deployments
 from connect_ext_ppr.schemas import (
     ConfigurationCreateSchema,
     ConfigurationSchema,
     DeploymentRequestSchema,
     DeploymentSchema,
+    ProductSchema,
 )
 from connect_ext_ppr.utils import (
     _get_extension_client,
@@ -308,6 +310,25 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         client.delete(path)
 
         return Response(status_code=204)
+
+    @router.get(
+        '/products',
+        summary='List all products availables for account',
+        response_model=List[ProductSchema],
+    )
+    def list_products(
+        self,
+        db: VerboseBaseSession = Depends(get_db),
+        installation: dict = Depends(get_installation),
+    ):
+        products_ids = db.query(Deployment.product_id).filter_by(
+            account_id=installation['owner']['id'],
+        ).distinct()
+
+        response_list = []
+        for product in db.query(Product).filter(Product.id.in_(products_ids)):
+            response_list.append(ProductSchema(id=product.id, name=product.name, icon=product.logo))
+        return response_list
 
     @classmethod
     def on_startup(cls, logger, config):
