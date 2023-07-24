@@ -25,9 +25,9 @@ class TasksStatusChoices(str, enum.Enum):
 
 
 class TaskTypesChoices(str, enum.Enum):
-    PPR_VALIDATION = 'ppr_validation'
-    APPLY_AND_DELEGATE = 'apply_ppr_and_delegate_to_marketplace'
-    DELEGATE_TO_L2 = 'delegate_to_l2'
+    ppr_validation = 'ppr_validation'
+    apply_and_delegate = 'apply_ppr_and_delegate_to_marketplace'
+    delegate_to_l2 = 'delegate_to_l2'
 
 
 class MimeTypeChoices(str, enum.Enum):
