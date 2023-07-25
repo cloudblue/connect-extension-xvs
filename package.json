@@ -20,6 +20,7 @@
     "@cloudblueconnect/material-svg": "^1.0.32",
     "color-convert": "^2.0.1",
     "css-minimizer-webpack-plugin": "^4.2.2",
+    "filesize": "^10.0.7",
     "moment-timezone": "^0.5.43",
     "portal-vue": "^2.1.7",
     "ramda": "^0.29.0",
