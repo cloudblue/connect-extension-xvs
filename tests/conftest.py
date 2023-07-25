@@ -94,9 +94,11 @@ def product_factory(dbsession):
     ):
         if not id:
             id = 'PR-{0}'.format(random.randint(10000, 99999))
-        product = Product(id=id, name=name, logo=logo, owner_id=owner_id, version=version)
-        dbsession.add(product)
-        dbsession.commit()
+        product = dbsession.query(Product).filter_by(id=id).first()
+        if not product:
+            product = Product(id=id, name=name, logo=logo, owner_id=owner_id, version=version)
+            dbsession.add(product)
+            dbsession.commit()
         return product
     return _build_product
 
@@ -125,7 +127,7 @@ def deployment_factory(dbsession, product_factory):
             vendor_id='VA-000-000',
             hub_id='HB-0000-0000',
     ):
-        product = product_factory(product_id)
+        product = product_factory(id=product_id)
         product_id = product.id
 
         dep = Deployment(
@@ -146,6 +148,7 @@ def deployment_request_factory(dbsession):
             deployment=None,
             ppr=None,
             delegate_l2=False,
+            status=None,
     ):
         if not deployment:
             deployment = deployment_factory(id='DPLR-123-123-123')
@@ -158,6 +161,7 @@ def deployment_request_factory(dbsession):
             ppr_id=ppr.id,
             created_by=deployment.account_id,
             delegate_l2=delegate_l2,
+            status=status,
         )
         dbsession.add(ppr)
         dbsession.set_verbose(dep_req)
@@ -171,6 +175,7 @@ def task_factory(dbsession, deployment_request_factory):
         deployment_request=None,
         task_index='001',
         type=None,
+        status=Task.STATUSES.pending,
     ):
         if not deployment_request:
             deployment_request = deployment_request_factory()
@@ -181,6 +186,7 @@ def task_factory(dbsession, deployment_request_factory):
             deployment_request=deployment_request.id,
             title=f'Title Task {task_index}',
             type=type,
+            status=status,
         )
         dbsession.add(task)
         dbsession.commit()
@@ -189,7 +195,7 @@ def task_factory(dbsession, deployment_request_factory):
 
 
 @pytest.fixture
-def ppr_version_factory(dbsession, deployment_factory, file_factory):
+def ppr_version_factory(dbsession, file_factory):
     def _build_ppr(
         id=None,
         file=None,

@@ -43,9 +43,9 @@ async def test_main_process(
     dep = deployment_factory()
     ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep)
     dr = deployment_request_factory(deployment=dep, delegate_l2=True, ppr=ppr)
-    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.PPR_VALIDATION)
-    task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.APPLY_AND_DELEGATE)
-    task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.DELEGATE_TO_L2)
+    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
+    task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
+    task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
     assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(status=DeploymentStatusChoices.synced).count() == 1
@@ -70,8 +70,8 @@ async def test_main_process_wo_l2_delegation(
     dep = deployment_factory()
     ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep)
     dr = deployment_request_factory(deployment=dep, delegate_l2=False, ppr=ppr)
-    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.PPR_VALIDATION)
-    task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.APPLY_AND_DELEGATE)
+    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
+    task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
     assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(
@@ -102,9 +102,9 @@ async def test_main_process_deployment_w_new_ppr_version(
         id='PPR-1234', file=file.id, product_version=1, deployment=dep)
     ppr_version_factory(id='PPR-123', product_version=2, deployment=dep)
     dr = deployment_request_factory(deployment=dep, delegate_l2=False, ppr=dr_ppr)
-    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.PPR_VALIDATION)
-    task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.APPLY_AND_DELEGATE)
-    task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.DELEGATE_TO_L2)
+    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
+    task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
+    task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
     assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(
@@ -124,9 +124,9 @@ async def test_main_process_deployment_w_new_ppr_version(
 @pytest.mark.parametrize(
     ('type_function_to_mock', 'done_tasks', 'tasks_w_errors', 'pending_tasks'),
     (
-        (TaskTypesChoices.PPR_VALIDATION, 0, 1, 2),
-        (TaskTypesChoices.APPLY_AND_DELEGATE, 1, 1, 1),
-        (TaskTypesChoices.DELEGATE_TO_L2, 2, 1, 0),
+        (TaskTypesChoices.ppr_validation, 0, 1, 2),
+        (TaskTypesChoices.apply_and_delegate, 1, 1, 1),
+        (TaskTypesChoices.delegate_to_l2, 2, 1, 0),
     ),
 )
 async def test_main_process_ends_w_error(
@@ -144,9 +144,9 @@ async def test_main_process_ends_w_error(
     dep = deployment_factory()
     ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep, version=1)
     dr = deployment_request_factory(deployment=dep, delegate_l2=True, ppr=ppr)
-    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.PPR_VALIDATION)
-    task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.APPLY_AND_DELEGATE)
-    task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.DELEGATE_TO_L2)
+    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
+    task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
+    task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
 
     def mock_dict_get(key):
         if key == type_function_to_mock:
@@ -182,3 +182,144 @@ async def test_main_process_ends_w_error(
         Task.started_at.is_(null()),
         Task.finished_at.is_(null()),
     ).count() == pending_tasks
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('task_statuses', 'done_tasks', 'aborted_tasks'),
+    (
+        (
+            [TasksStatusChoices.aborted, TasksStatusChoices.aborted, TasksStatusChoices.aborted],
+            0,
+            3,
+        ),
+        (
+            [TasksStatusChoices.done, TasksStatusChoices.aborted, TasksStatusChoices.aborted],
+            1,
+            2,
+        ),
+        (
+            [TasksStatusChoices.done, TasksStatusChoices.pending, TasksStatusChoices.aborted],
+            2,
+            1,
+        ),
+    ),
+)
+async def test_main_process_w_aborted_tasks(
+    dbsession,
+    deployment_factory,
+    deployment_request_factory,
+    task_factory,
+    ppr_version_factory,
+    task_statuses,
+    done_tasks,
+    aborted_tasks,
+):
+    """
+        We only process DeploymentRequest that are in Pending status. So in this case we asume that
+        the DR is in Pending status at the begining, but changes it's
+    """
+    dep = deployment_factory()
+    ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep, version=1)
+    dr = deployment_request_factory(
+        deployment=dep,
+        delegate_l2=True,
+        ppr=ppr,
+        status=DeploymentRequestStatusChoices.pending,
+    )
+    task_factory(
+        deployment_request=dr,
+        task_index='0001',
+        type=TaskTypesChoices.ppr_validation,
+        status=task_statuses.pop(),
+    )
+
+    task_factory(
+        deployment_request=dr,
+        task_index='0002',
+        type=TaskTypesChoices.apply_and_delegate,
+        status=task_statuses.pop(),
+    )
+    task_factory(
+        deployment_request=dr,
+        task_index='0003',
+        type=TaskTypesChoices.delegate_to_l2,
+        status=task_statuses.pop(),
+    )
+
+    def change_dr_status(instance, attribute_names=None, with_for_update=None):
+        if isinstance(instance, DeploymentRequest):
+            instance.status = DeploymentRequestStatusChoices.aborting
+        return instance
+
+    dbsession.refresh = change_dr_status
+
+    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.aborted
+
+    assert dbsession.query(Deployment).filter_by(
+        status=DeploymentStatusChoices.pending,
+    ).count() == 1
+    assert dbsession.query(DeploymentRequest).filter_by(
+        status=DeploymentRequestStatusChoices.aborted,
+    ).count() == 1
+
+    assert dbsession.query(Task).filter(
+        Task.status == TasksStatusChoices.done,
+    ).count() == done_tasks
+    assert dbsession.query(Task).filter(
+        Task.status == TasksStatusChoices.aborted,
+    ).count() == aborted_tasks
+
+
+@pytest.mark.asyncio
+async def test_main_process_w_aborted_deployment_request(
+    dbsession,
+    deployment_factory,
+    deployment_request_factory,
+    task_factory,
+    ppr_version_factory,
+):
+    """
+        We only process DeploymentRequest that are in Pending status. So in this case we asume that
+        the DR is in Pending status at the begining, but changes it's
+    """
+    dep = deployment_factory()
+    ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep, version=1)
+    dr = deployment_request_factory(
+        deployment=dep,
+        delegate_l2=True,
+        ppr=ppr,
+        status=DeploymentRequestStatusChoices.aborted,
+    )
+    task_factory(
+        deployment_request=dr,
+        task_index='0001',
+        type=TaskTypesChoices.ppr_validation,
+        status=TasksStatusChoices.aborted,
+    )
+
+    task_factory(
+        deployment_request=dr,
+        task_index='0002',
+        type=TaskTypesChoices.apply_and_delegate,
+        status=TasksStatusChoices.aborted,
+    )
+    task_factory(
+        deployment_request=dr,
+        task_index='0003',
+        type=TaskTypesChoices.delegate_to_l2,
+        status=TasksStatusChoices.aborted,
+    )
+
+    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.aborted
+
+    assert dbsession.query(Deployment).filter_by(
+        status=DeploymentStatusChoices.pending,
+    ).count() == 1
+    assert dbsession.query(DeploymentRequest).filter_by(
+        status=DeploymentRequestStatusChoices.aborted,
+    ).count() == 1
+
+    assert dbsession.query(Task).filter(
+        Task.status == TasksStatusChoices.aborted,
+    ).count() == 3

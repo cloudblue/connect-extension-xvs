@@ -141,7 +141,6 @@ export default {
 
       downloader({ url: downloadUrl });
     },
-    downloader,
   },
 
   async created() {

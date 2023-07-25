@@ -20,7 +20,7 @@ class Deployment(Model):
 
     PREFIX = 'DPL'
 
-    STATUS = DeploymentStatusChoices
+    STATUSES = DeploymentStatusChoices
 
     id = db.Column(db.String(20), primary_key=True)
     product_id = db.Column(db.String, db.ForeignKey(Product.id))
@@ -29,7 +29,7 @@ class Deployment(Model):
     vendor_id = db.Column(db.String(20))
     status = db.Column(
         db.Enum(DeploymentStatusChoices, validate_strings=True),
-        default=STATUS.pending,
+        default=STATUSES.pending,
     )
     last_sync_at = db.Column(db.DateTime(), default=datetime.utcnow)
     created_at = db.Column(db.DateTime(), default=datetime.utcnow)
@@ -43,14 +43,14 @@ class DeploymentRequest(Model):
 
     PREFIX = 'DPLR'
 
-    STATUS = DeploymentRequestStatusChoices
+    STATUSES = DeploymentRequestStatusChoices
 
     id = db.Column(db.String(20), primary_key=True)
     deployment_id = db.Column(db.ForeignKey(Deployment.id))
     ppr_id = db.Column(db.String, db.ForeignKey(PPRVersion.id))
     status = db.Column(
         db.Enum(DeploymentRequestStatusChoices, validate_strings=True),
-        default=STATUS.pending,
+        default=STATUSES.pending,
     )
     manually = db.Column(db.Boolean(), default=False)
     delegate_l2 = db.Column(db.Boolean(), default=False)
