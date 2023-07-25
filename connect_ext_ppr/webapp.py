@@ -3,26 +3,36 @@
 # Copyright (c) 2023, Ingram Micro
 # All rights reserved.
 #
+from logging import LoggerAdapter
 from typing import List
 
 from connect.client import ConnectClient
+from connect.client.rql import R
 from connect.eaas.core.decorators import (
     module_pages,
     proxied_connect_api,
     router,
     web_app,
 )
+from connect.eaas.core.inject.common import get_logger
 from connect.eaas.core.inject.synchronous import (
     get_installation,
     get_installation_client,
 )
 from connect.eaas.core.extension import WebApplicationBase
+from fastapi.responses import JSONResponse
 from fastapi import Depends, Request, Response, status
 from sqlalchemy import exists
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, Session
 
-from connect_ext_ppr.db import create_db, get_db, VerboseBaseSession
+from connect_ext_ppr.client.exception import ClientError
+from connect_ext_ppr.db import (
+    create_db,
+    get_cbc_extension_db,
+    get_db,
+    VerboseBaseSession,
+)
 from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
@@ -31,12 +41,21 @@ from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.replicas import Product
 from connect_ext_ppr.service import add_deployments
 from connect_ext_ppr.schemas import (
+    BatchProcessResponseSchema,
+    BatchSchema,
     ConfigurationCreateSchema,
     ConfigurationSchema,
     DeploymentRequestSchema,
     DeploymentSchema,
     HubSchema,
     ProductSchema,
+)
+from connect_ext_ppr.services.pricing import (
+    fetch_and_validate_batch,
+    identify_marketplaces,
+    identify_reseller_id,
+    prepare_file,
+    process_batch,
 )
 from connect_ext_ppr.utils import (
     _get_extension_client,
@@ -353,6 +372,74 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         for hub in get_hubs(client, hubs_ids):
             reponse_list.append(HubSchema(id=hub['id'], name=hub['name']))
         return reponse_list
+
+    @router.get(
+        '/deployments/{deployment_id}/pricing/batches',
+        summary='List Pricing Batch for Deployment',
+        response_model=List[BatchSchema],
+    )
+    def get_deployment_batches(
+        self,
+        deployment_id: str,
+        db: VerboseBaseSession = Depends(get_db),
+        client: ConnectClient = Depends(get_installation_client),
+        installation: dict = Depends(get_installation),
+    ):
+        deployment = get_deployment_by_id(deployment_id, db, installation)
+        marketplace_ids = identify_marketplaces(
+            client,
+            deployment.hub_id,
+        )
+
+        batches = list(client('pricing').batches.filter(
+            R().stream.owner.id.eq(deployment.account_id),
+            R().stream.context.product.id.eq(deployment.product_id),
+            R().stream.context.marketplace.id.in_(marketplace_ids),
+            R().test.ne(True),
+            R().status.eq('published'),
+        ))
+
+        return [BatchSchema(**b) for b in batches]
+
+    @router.post(
+        '/deployments/{deployment_id}/pricing/batches/{batch_id}/process',
+        summary='Process Pricing Batch for Deployment',
+        response_model=BatchProcessResponseSchema,
+    )
+    def process_pricing_batch(
+        self,
+        deployment_id: str,
+        batch_id: str,
+        client: ConnectClient = Depends(get_installation_client),
+        db: VerboseBaseSession = Depends(get_db),
+        cbc_db: Session = Depends(get_cbc_extension_db),
+        installation: dict = Depends(get_installation),
+        logger: LoggerAdapter = Depends(get_logger),
+    ):
+        try:
+            deployment = get_deployment_by_id(deployment_id, db, installation)
+            batch = fetch_and_validate_batch(client, batch_id, deployment)
+            reseller_id = identify_reseller_id(client, batch, deployment)
+            file_name, dataset = prepare_file(client, batch_id)
+
+            data_id = process_batch(
+                cbc_db,
+                file_name,
+                reseller_id,
+                deployment,
+                dataset,
+            )
+
+            response = BatchProcessResponseSchema(
+                task_info=f'/flat-catalog/price-import-wizard/{data_id}/set-prices',
+            )
+            return JSONResponse(
+                status_code=202,
+                content=response.dict(),
+            )
+        except ClientError as e:
+            logger.exception(f'Error while uploading price file for {batch_id}')
+            return JSONResponse(status_code=400, content=e.json if e.json else {})
 
     @classmethod
     def on_startup(cls, logger, config):

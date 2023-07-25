@@ -437,6 +437,51 @@ def marketplace():
 
 
 @pytest.fixture
+def hub():
+    return {
+        "id": "HB-0000-0000",
+        "name": "Extension Test Hub",
+        "description": "",
+        "company": {
+            "id": "PA-000-000",
+            "name": "Extension Test Account",
+            "icon": "/media/PA-000-000/media/icon.png",
+        },
+        "events": {
+            "created": {
+                "at": "2019-11-08T10:37:28+00:00",
+                "by": {
+                    "id": "UR-000-000-000",
+                    "name": "Some User",
+                },
+            },
+            "updated": {
+                "at": "2019-11-11T18:21:58+00:00",
+                "by": {
+                    "id": "UR-000-000-000",
+                    "name": "Some User",
+                },
+            },
+        },
+        "stats": {
+            "connections": 1,
+            "marketplaces": 0,
+        },
+        "instance": {
+            "id": "00000000-0000-0000-0000-000000000000",
+            "type": "OA",
+        },
+        "version": "",
+        "extension_version": "",
+        "creds": {
+            "key": "HB-0000-0000-v1-0000000000000000",
+            "secret": "0000000000000000000000000000000000",
+            "url": "https://aps.connect.cloudblue.com/hub",
+        },
+    }
+
+
+@pytest.fixture
 def product():
     return {
         'id': 'PRD-000-000-000',
@@ -681,7 +726,7 @@ def cbc_db_session():
             " 'e4608f13-0582-4780-876f-224add5fa4fd'"
             ")",
             "INSERT INTO hub_instances values ("
-            " 'HB-000-000',"
+            " 'HB-0000-0000',"
             " '39deb31d-d6ad-48bb-ba0f-82e99a88a7e9',"
             " 'e4608f13-0582-4780-876f-224add5fa4fd',"
             " 'https://example.com/api/v1'"
@@ -698,7 +743,7 @@ def cbc_db_session():
 @pytest.fixture
 def hub_credentials(cbc_db_session):
     return get_hub_credentials(
-        'HB-000-000',
+        'HB-0000-0000',
         cbc_db_session,
     )
 
@@ -927,6 +972,83 @@ def price_proposal_response():
             ],
             'currency': [],
         },
+    }
+
+
+@pytest.fixture
+def batch():
+    return {
+        'id': 'BAT-0000-0000-0000',
+        'name': 'Pricing Batch (PLV-000-000-000-0001)',
+        'status': 'published',
+        'stream': {
+            'id': 'STR-0000-0000-0000',
+            'name': 'Pricing Stream',
+            'status': 'active',
+            'context': {
+                "account": {
+                    "id": "VA-000-000",
+                    "name": "Front Street Inc.",
+                },
+                "product": {
+                    "id": "PRD-000-000-000",
+                    "name": "Sweet Pies",
+                    "icon": "/media/VA-000-000/PRD-000-000-000/media/PRD-000-000-000-logo.png",
+                },
+                "marketplace": {
+                    "id": "MP-00000",
+                    "name": "US Marketplace",
+                    "currency": "USD",
+                },
+                "listing": {
+                    "id": "LST-000-000-000",
+                },
+                "pricelist": {
+                    "id": "PL-000-000-000",
+                    "name": "New Price",
+                    "status": "active",
+                },
+            },
+        },
+        'test': False,
+        'stream_updated': True,
+    }
+
+
+@pytest.fixture
+def batch_file():
+    return {
+        'type': 'output',
+        'position': 1,
+        'id': 'MFL-0000-0000-0000',
+        'name': '/public/v1/media/folders/streams_batches/BAT-0000-0000-0000/'
+                'files/MFL-0000-0000-0000/BAT-0000-0000-0000-out.xlsx',
+    }
+
+
+@pytest.fixture
+def batch_output_file():
+    return open('./tests/fixtures/MFL-0000-0000-0000.xlsx', 'rb')
+
+
+@pytest.fixture
+def no_db_deployment(batch):
+    return Deployment(
+        id='DP-000-000-000',
+        product_id=batch['stream']['context']['product']['id'],
+        account_id='PA-000-000',
+        vendor_id='VA-000-000',
+        hub_id='HB-0000-0000',
+    )
+
+
+@pytest.fixture
+def batch_dataset():
+    return {
+        'cost': True,
+        'price': True,
+        'msrp': True,
+        'effective_date': '07/26/2023',
     }
 
 
