@@ -24,7 +24,11 @@ from connect_ext_ppr.db import (
     VerboseBaseSession,
 )
 from connect_ext_ppr.models.configuration import Configuration
-from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
+from connect_ext_ppr.models.deployment import (
+    Deployment,
+    DeploymentRequest,
+    MarketplaceConfiguration,
+)
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.replicas import Product
@@ -254,6 +258,21 @@ def file_factory(dbsession, media_response):
         dbsession.refresh(file)
         return file
     return _build_file
+
+
+@pytest.fixture
+def marketplace_config_factory(dbsession, ppr_version_factory):
+    def _build_mc(deployment, marketplace_id, ppr_id=None):
+        mp = MarketplaceConfiguration(
+            deployment=deployment.id,
+            marketplace=marketplace_id,
+            ppr_id=ppr_id,
+        )
+        dbsession.add(mp)
+        dbsession.commit()
+        dbsession.refresh(mp)
+        return mp
+    return _build_mc
 
 
 @pytest.fixture

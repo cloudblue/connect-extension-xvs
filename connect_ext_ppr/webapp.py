@@ -20,12 +20,16 @@ from connect.eaas.core.extension import WebApplicationBase
 from fastapi import Depends, Request, Response, status
 from sqlalchemy import exists
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from connect_ext_ppr.db import create_db, get_db, VerboseBaseSession
 from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.configuration import Configuration
-from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
+from connect_ext_ppr.models.deployment import (
+    Deployment,
+    DeploymentRequest,
+    MarketplaceConfiguration,
+)
 from connect_ext_ppr.models.enums import ConfigurationStateChoices, DeploymentStatusChoices
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.replicas import Product
@@ -36,6 +40,7 @@ from connect_ext_ppr.schemas import (
     DeploymentRequestSchema,
     DeploymentSchema,
     HubSchema,
+    MarketplaceSchema,
     ProductSchema,
 )
 from connect_ext_ppr.utils import (
@@ -50,6 +55,8 @@ from connect_ext_ppr.utils import (
     get_deployment_request_schema,
     get_deployment_schema,
     get_hubs,
+    get_marketplace_schema,
+    get_marketplaces,
     get_user_data_from_auth_token,
 )
 
@@ -311,6 +318,33 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         client.delete(path)
 
         return Response(status_code=204)
+
+    @router.get(
+        '/deployments/{deployment_id}/marketplaces',
+        summary="Deployment's marketplaces",
+        response_model=List[MarketplaceSchema],
+    )
+    def get_marketplaces_by_deployment(
+        self,
+        deployment_id: str,
+        client: ConnectClient = Depends(get_installation_client),
+        db: VerboseBaseSession = Depends(get_db),
+        installation: dict = Depends(get_installation),
+    ):
+        get_deployment_by_id(deployment_id, db, installation)
+
+        mkplc_configs = db.query(MarketplaceConfiguration).options(
+            selectinload(MarketplaceConfiguration.ppr),
+        ).filter_by(deployment=deployment_id)
+
+        mkplc_ids = [m.marketplace for m in mkplc_configs]
+
+        marketplaces = get_marketplaces(client, mkplc_ids)
+        response_list = []
+        for mkplc_config in mkplc_configs:
+            m_data = filter_object_list_by_id(marketplaces, mkplc_config.marketplace)
+            response_list.append(get_marketplace_schema(m_data, mkplc_config.ppr))
+        return response_list
 
     @router.get(
         '/products',

@@ -27,6 +27,7 @@ from connect_ext_ppr.schemas import (
     DeploymentSchema,
     FileSchema,
     HubSchema,
+    MarketplaceSchema,
     PPRVersionReferenceSchema,
     ProductSchema,
 )
@@ -492,3 +493,16 @@ def process_ppr(wb, product, config_json, items):
         ws_list.append(ws)
 
     return ws_list, summary
+
+
+def get_marketplace_schema(marketplace, ppr):
+    mp_schema = MarketplaceSchema(
+        id=marketplace['id'],
+        name=marketplace['name'],
+        icon=marketplace['icon'],
+        external_id=marketplace.get('external_id'),
+    )
+    if ppr:
+        mp_schema.ppr = PPRVersionReferenceSchema(id=ppr.id, version=ppr.version)
+
+    return mp_schema
