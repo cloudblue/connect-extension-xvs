@@ -1,3 +1,5 @@
+import convert from 'color-convert';
+
 import {
   T,
   __,
@@ -909,3 +911,60 @@ export const rhx = pipe(times(() => Math.floor(Math.random() * 16).toString(16))
  * toFixed(2, 2) //=> 2.00
  */
 export const toFixed = curry((precision, v) => v.toFixed(precision));
+
+/**
+ * Add delta value to each RGB components and returns hex value with `#` at start.
+ * If value out of range, round to nearest.
+ *
+ * @function
+ * @param {number} delta Delta value
+ * @param {string} color Color in hex format
+ * @returns {string} Color in hex with `#` at start.
+ *
+ * @example
+ * hexBrightness(10)('00ffff') //=> '#0AFFFF'
+ */
+export const hexBrightness = curry((delta, color) => pipe(
+  convert.hex.rgb,
+  map((v) => {
+    const val = v + delta;
+
+    if (val < 0) {
+      return 0;
+    }
+
+    if (val > 255) {
+      return 255;
+    }
+
+    return val;
+  }),
+  convert.rgb.hex,
+  concat('#'),
+)(color));
+
+/**
+ * Convert HEX to RGB.
+ *
+ * @function
+ * @param {string} hex Hex string
+ * @returns {array} Color in RGB color space
+ *
+ * @example
+ * hexToRGB('ffffff') //=> [255, 255, 255]
+ */
+export const hexToRGB = hex => convert.hex.rgb(hex);
+
+/**
+ * Check is color bright or not.
+ * https://www.w3.org/TR/AERT/#color-contrast
+ *
+ * @function
+ * @param {string} color Color in hex (supports `#` at start)
+ * @returns {boolean} Is color bright or not
+ */
+export const isBright = pipe(
+  replace('#', ''),
+  convert.hex.rgb,
+  ([r, g, b]) => r * 0.299 + g * 0.587 + b * 0.114 > 180,
+);
