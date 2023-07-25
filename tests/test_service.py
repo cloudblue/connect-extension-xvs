@@ -133,7 +133,7 @@ def test_create_ppr_base_on_user_uploaded_file_with_errors(
     assert new_ppr.status == 'failed'
 
 
-def test_create_ppr_base_on_another_ppr_version(
+def test_create_ppr_base_on_another_ppr_version_w_config(
     dbsession, common_context, connect_client, logger, deployment_factory,
     client_mocker_factory, file_factory, bytes_ppr_workbook_factory, ppr_version_factory,
     configuration_json, item_response, configuration_factory, media_response,
@@ -148,7 +148,7 @@ def test_create_ppr_base_on_another_ppr_version(
         mime_type='application/json',
     )
     ppr_version = ppr_version_factory(file=ppr_file.id, status='ready', deployment=deployment)
-    configuration_factory(file=config_file.id, deployment=deployment.id)
+    conf = configuration_factory(file=config_file.id, deployment=deployment.id)
     ppr_data = PPRCreateSchema(file=None)
 
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
@@ -190,12 +190,65 @@ def test_create_ppr_base_on_another_ppr_version(
     file_name = dbsession.query(File.name).filter_by(id='MFL-ZZZ').limit(1).scalar()
     assert new_ppr.file == media_response['id']
     assert new_ppr.version == ppr_version.version + 1
+    assert new_ppr.configuration == conf.id
     assert new_ppr.status == 'ready'
     assert file_name.startswith(f"PPR_{deployment.product_id}_v{new_ppr.version}_")
     assert file_name.endswith(".xlsx")
 
 
-def test_create_ppr_wo_ppr_version(
+def test_create_ppr_base_on_another_ppr_version_wo_config(
+    dbsession, common_context, connect_client, logger, deployment_factory,
+    client_mocker_factory, file_factory, bytes_ppr_workbook_factory, ppr_version_factory,
+    item_response, media_response,
+):
+    deployment = deployment_factory()
+    ppr_file = file_factory(
+        id='MFL-XXX',
+        mime_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    ppr_version = ppr_version_factory(file=ppr_file.id, status='ready', deployment=deployment)
+    ppr_data = PPRCreateSchema(file=None)
+
+    client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
+
+    bytes_ppr_workbook = bytes_ppr_workbook_factory()
+
+    client_mocker.ns('media').ns('folders').ns('accounts').collection(
+        f'{deployment.account_id}/{deployment.id}/pprs/files',
+    )[ppr_file.id].get(
+        return_value=bytes_ppr_workbook,
+    )
+
+    client_mocker.products[deployment.product_id].items.all().mock(
+        return_value=[item_response],
+    )
+
+    media_response['id'] = 'MFL-ZZZ'
+    client_mocker.ns('media').ns('folders').ns('accounts').collection(
+        f'{deployment.account_id}/{deployment.id}/pprs/files',
+    ).create(
+        return_value=json.dumps(media_response),
+    )
+
+    new_ppr = create_ppr(ppr_data, common_context, deployment, dbsession, connect_client, logger)
+
+    assert new_ppr.id
+    assert new_ppr.summary == {
+        'ResourceCategories': {},
+        'Resources': {
+            'created': ['PRD-000-000-000-00001'],
+        },
+    }
+    file_name = dbsession.query(File.name).filter_by(id='MFL-ZZZ').limit(1).scalar()
+    assert new_ppr.file == media_response['id']
+    assert new_ppr.version == ppr_version.version + 1
+    assert new_ppr.configuration is None
+    assert new_ppr.status == 'ready'
+    assert file_name.startswith(f"PPR_{deployment.product_id}_v{new_ppr.version}_")
+    assert file_name.endswith(".xlsx")
+
+
+def test_create_ppr_wo_ppr_version_w_config(
     dbsession, common_context, connect_client, logger,
     client_mocker_factory, file_factory, ppr_version_factory, deployment_factory,
     configuration_json, item_response, configuration_factory, media_response,
@@ -210,7 +263,7 @@ def test_create_ppr_wo_ppr_version(
         mime_type='application/json',
     )
     ppr_version = ppr_version_factory(file=ppr_file.id, deployment=deployment)
-    configuration_factory(file=config_file.id, deployment=deployment.id)
+    conf = configuration_factory(file=config_file.id, deployment=deployment.id)
     ppr_data = PPRCreateSchema(file=None)
 
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
@@ -242,31 +295,9 @@ def test_create_ppr_wo_ppr_version(
         },
     }
     assert new_ppr.file == media_response['id']
+    assert new_ppr.configuration == conf.id
     assert new_ppr.version == ppr_version.version + 1
     assert new_ppr.status == 'ready'
-
-
-def test_no_active_configuration_available(
-    dbsession, common_context, connect_client, logger,
-    file_factory, ppr_version_factory, deployment_factory,
-):
-    deployment = deployment_factory()
-    ppr_file = file_factory(
-        id='MFL-XXX',
-        mime_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    )
-    ppr_version_factory(file=ppr_file.id, deployment=deployment)
-    ppr_data = PPRCreateSchema(file=None)
-
-    with pytest.raises(ClientError) as ex:
-        create_ppr(
-            ppr_data, common_context, deployment,
-            dbsession, connect_client, logger,
-        )
-    assert ex.value.message == (
-        f"Can not autogenerate a new PPR for deployment {deployment.id}:"
-        f" There must be one `active` configuration file."
-    )
 
 
 def test_create_ppr_db_error(

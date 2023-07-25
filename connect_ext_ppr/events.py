@@ -12,7 +12,7 @@ from connect.eaas.core.extension import EventsApplicationBase
 from connect.eaas.core.responses import BackgroundResponse
 from sqlalchemy.exc import DBAPIError
 
-from connect_ext_ppr.service import add_deployments, update_product
+from connect_ext_ppr.service import add_deployments, process_ppr_from_product_update
 from connect_ext_ppr.utils import get_all_info, get_marketplaces, get_products
 
 
@@ -74,7 +74,14 @@ class ConnectExtensionXvsEventsApplication(EventsApplicationBase):
         db, create a new one.
         '''
         self.logger.info(f"Product {request['id']} changed.")
-        update_product(request, self.config, self.logger)
+        self.context.account_id = self.installation['owner']['id']
+        self.context.user_id = self.installation['events']['installed']['by']['id']
+        try:
+            process_ppr_from_product_update(
+                request, self.config, self.context, self.installation_client, self.logger,
+            )
+        except (ClientError, DBAPIError):
+            return BackgroundResponse.reschedule()
         return BackgroundResponse.done()
 
     @event(
