@@ -10,7 +10,7 @@ from connect.client.rql import R
 from connect_ext_ppr.utils import (
     _parse_json_schema_error,
     filter_object_list_by_id,
-    get_all_info,
+    get_all_listing_info,
     get_hubs,
     get_marketplaces,
     process_ppr,
@@ -28,7 +28,7 @@ def test_fail_get_all_info_exc(mocker, connect_client):
         side_effect=ClientError(),
     )
     with pytest.raises(ClientError) as ex:
-        get_all_info(connect_client)
+        get_all_listing_info(connect_client)
     assert '400 Bad Request: EXT_000 - Unexpected error.' in str(ex.value)
 
 
@@ -53,7 +53,7 @@ def test_get_all_info_success(
     client_mocker.products.filter(rql).mock(
         return_value=[product],
     )
-    all_info = get_all_info(connect_client)
+    all_info = get_all_listing_info(connect_client)
     listing['contract']['marketplace'] = marketplace
     listing['product'] = product
     assert all_info[0] == listing
@@ -88,7 +88,7 @@ def test_get_all_info_marketplace_wo_hubs(
     client_mocker.products.filter(rql).mock(
         return_value=[product, product_wo_hubs],
     )
-    all_info = get_all_info(connect_client)
+    all_info = get_all_listing_info(connect_client)
     listing['contract']['marketplace'] = marketplace
     listing['product'] = product
     assert len(all_info) == 1

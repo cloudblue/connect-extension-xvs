@@ -50,6 +50,7 @@ from connect_ext_ppr.service import (
     add_deployments,
     add_new_deployment_request,
     create_ppr,
+    deactivate_marketplaces,
     validate_configuration,
 )
 from connect_ext_ppr.schemas import (
@@ -79,7 +80,7 @@ from connect_ext_ppr.utils import (
     _get_extension_client,
     _get_installation,
     filter_object_list_by_id,
-    get_all_info,
+    get_all_listing_info,
     get_client_object,
     get_configuration_schema,
     get_deployment_by_id,
@@ -148,12 +149,17 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         ppr = db.query(PPRVersion).filter_by(id=deployment_request.ppr.id).first()
         validate_ppr_version_belongs_to_deployment(ppr, deployment)
 
+        dep_marketplaces = db.query(MarketplaceConfiguration).filter_by(
+            active=True,
+            deployment_id=deployment.id,
+        )
         dr_marketplaces = [m.id for m in deployment_request.marketplaces.choices]
         validate_dr_marketplaces(
             dr_marketplaces,
-            [m.marketplace for m in deployment.marketplaces],
+            [m.marketplace for m in dep_marketplaces],
         )
-        validate_marketplaces_ppr(ppr, dr_marketplaces, deployment.marketplaces)
+
+        validate_marketplaces_ppr(ppr, dr_marketplaces, dep_marketplaces)
 
         instance = add_new_deployment_request(
             db, deployment_request, deployment, account_id, logger,
@@ -384,7 +390,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         installation: dict = Depends(get_installation),
     ):
         deployments = db.query(Deployment).filter_by(account_id=installation['owner']['id'])
-        listings = get_all_info(client)
+        listings = get_all_listing_info(client)
         vendors = [li['vendor'] for li in listings]
         hubs = [hub['hub'] for li in listings for hub in li['contract']['marketplace']['hubs']]
         response_list = []
@@ -632,7 +638,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
 
         mkplc_configs = db.query(MarketplaceConfiguration).options(
             selectinload(MarketplaceConfiguration.ppr),
-        ).filter_by(deployment_id=deployment_id)
+        ).filter_by(deployment_id=deployment_id, active=True)
 
         mkplc_ids = [m.marketplace for m in mkplc_configs]
 
@@ -762,8 +768,11 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         client = _get_extension_client(logger)
         installation = _get_installation(client)
         if installation['owner']['id'] == installation['environment']['extension']['owner']['id']:
-            listings = get_all_info(client)
+            listings = get_all_listing_info(client)
             # For extension owner we do not have available the installation
             # event to handle populate Deployment table, so for this particular case
             # we make use of `on_startup` webapplication event function.
             add_deployments(installation, listings, config, logger)
+
+            listings = get_all_listing_info(client, status='unlisted')
+            deactivate_marketplaces(installation, listings, config, logger)

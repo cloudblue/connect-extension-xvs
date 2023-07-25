@@ -12,8 +12,12 @@ from connect.eaas.core.extension import EventsApplicationBase
 from connect.eaas.core.responses import BackgroundResponse
 from sqlalchemy.exc import DBAPIError
 
-from connect_ext_ppr.service import add_deployments, process_ppr_from_product_update
-from connect_ext_ppr.utils import get_all_info, get_marketplaces, get_products
+from connect_ext_ppr.service import (
+    add_deployments,
+    deactivate_marketplaces,
+    process_ppr_from_product_update,
+)
+from connect_ext_ppr.utils import get_all_listing_info, get_marketplaces, get_products
 
 
 @variables([
@@ -46,17 +50,18 @@ class ConnectExtensionXvsEventsApplication(EventsApplicationBase):
         product contained in the listing.
         '''
         self.logger.info(f"Received listing {request['id']} status={request['status']}")
+        mp = get_marketplaces(
+            self.installation_client,
+            [request['contract']['marketplace']['id']],
+        ).first()
+
+        request['contract']['marketplace'] = mp
         if request['status'] == 'listed':
-            mp = get_marketplaces(
-                self.installation_client,
-                [request['contract']['marketplace']['id']],
-            ).first()
             prod = get_products(self.installation_client, [request['product']['id']]).first()
-            request['contract']['marketplace'] = mp
             request['product'] = prod
             add_deployments(self.installation, [request], self.config, self.logger)
         else:
-            self.logger.info(f"Skipping event for listing {request['id']}.")
+            deactivate_marketplaces(self.installation, [request], self.config, self.logger)
         return BackgroundResponse.done()
 
     @event(
@@ -102,8 +107,11 @@ class ConnectExtensionXvsEventsApplication(EventsApplicationBase):
                 f"id={request['id']}, environment={request['environment']['id']}",
             )
             try:
-                listings = get_all_info(self.installation_client)
+                listings = get_all_listing_info(self.installation_client)
                 add_deployments(self.installation, listings, self.config, self.logger)
+
+                listings = get_all_listing_info(self.installation_client, status='unlisted')
+                deactivate_marketplaces(self.installation, listings, self.config, self.logger)
             except (ClientError, DBAPIError):
                 return BackgroundResponse.reschedule()
         else:

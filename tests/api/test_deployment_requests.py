@@ -531,6 +531,7 @@ def test_create_deployment_invalid_marketplace(
     other_dep = deployment_factory(hub_id=hub_data['id'])
 
     marketplace_config_factory(deployment=dep, marketplace_id='MP-124')
+    marketplace_config_factory(deployment=dep, marketplace_id='MP-127', active=False)
     marketplace_config_factory(deployment=dep, marketplace_id='MP-123', ppr_id=ppr.id)
     marketplace_config_factory(deployment=other_dep, marketplace_id='MP-126', ppr_id=ppr.id)
 
@@ -540,7 +541,7 @@ def test_create_deployment_invalid_marketplace(
         'manually': True,
         'delegate_l2': True,
         'marketplaces': {
-            'choices': [{'id': 'MP-125'}, {'id': 'MP-123'}, {'id': 'MP-126'}],
+            'choices': [{'id': 'MP-125'}, {'id': 'MP-123'}, {'id': 'MP-126'}, {'id': 'MP-127'}],
             'all': False,
         },
     }
@@ -553,7 +554,7 @@ def test_create_deployment_invalid_marketplace(
     assert response.status_code == 400
     assert response.json()['error_code'] == 'VAL_002', response.json()
     assert response.json()['errors'] == [
-        'marketplaces: This values [\'MP-125\', \'MP-126\'] are invalid.',
+        'marketplaces: This values [\'MP-125\', \'MP-126\', \'MP-127\'] are invalid.',
     ]
 
 
@@ -740,7 +741,6 @@ def test_create_deployment_request_w_open_request(
 
 
 def test_list_deployment_request_marketplaces(
-    dbsession,
     mocker,
     deployment_factory,
     deployment_request_factory,
@@ -766,6 +766,7 @@ def test_list_deployment_request_marketplaces(
 
     marketplace_config_factory(deployment_request=dr1, marketplace_id=m1['id'])
     marketplace_config_factory(deployment_request=dr1, marketplace_id=m2['id'], ppr_id=ppr.id)
+    marketplace_config_factory(deployment_request=dr1, marketplace_id='MP-12345')
 
     marketplace_config_factory(deployment=dep1, marketplace_id=m1['id'])
     marketplace_config_factory(deployment=dep1, marketplace_id=m2['id'])
@@ -815,7 +816,6 @@ def test_list_deployment_request_marketplaces_not_found(
 
 
 def test_abort_deployment_request_aborted(
-    dbsession,
     mocker,
     deployment_factory,
     deployment_request_factory,
@@ -889,7 +889,6 @@ def test_abort_deployment_request_aborted(
 
 
 def test_abort_deployment_request_aborting(
-    dbsession,
     mocker,
     deployment_factory,
     deployment_request_factory,
@@ -970,8 +969,6 @@ def test_abort_deployment_request_aborting(
 
 
 def test_abort_deployment_request_not_allow(
-    dbsession,
-    mocker,
     deployment_factory,
     deployment_request_factory,
     installation,
