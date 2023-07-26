@@ -1,3 +1,5 @@
+import copy
+
 from connect.eaas.core.constants import PROXIED_CONNECT_API_ATTR_NAME
 
 
@@ -155,3 +157,67 @@ def test_get_deployment_not_found(
             'Object `DPL-YYY-YYY` not found.',
         ],
     }
+
+
+def test_get_deployments_marketplaces(
+    mocker,
+    installation,
+    api_client,
+    marketplace,
+    deployment_factory,
+    marketplace_config_factory,
+    ppr_version_factory,
+):
+    m1 = marketplace
+    m2 = copy.deepcopy(marketplace)
+    m2['id'] = 'MP-123-123'
+    m3 = copy.deepcopy(marketplace)
+    m3['id'] = 'MP-123-123'
+    marketplaces = [m1, m2]
+
+    mocker.patch(
+        'connect_ext_ppr.webapp.get_marketplaces',
+        return_value=marketplaces,
+    )
+    deployment = deployment_factory(account_id=installation['owner']['id'])
+    another_dep = deployment_factory(account_id='PA-123-123')
+    ppr = ppr_version_factory(deployment=deployment)
+    marketplace_config_factory(deployment=deployment, marketplace_id=m1['id'], ppr_id=ppr.id)
+    marketplace_config_factory(deployment=deployment, marketplace_id=m2['id'])
+    marketplace_config_factory(deployment=another_dep, marketplace_id=m3['id'])
+
+    response = api_client.get(
+        f'/api/deployments/{deployment.id}/marketplaces',
+        installation=installation,
+    )
+
+    assert response.status_code == 200
+
+    expected_response = [
+        {
+            'id': m['id'],
+            'name': m['name'],
+            'icon': m['icon'],
+        } for m in marketplaces
+    ]
+
+    expected_response[0].update({'ppr': {'id': ppr.id, 'version': ppr.version}})
+    assert response.json() == expected_response
+
+
+def test_get_deployments_marketplaces_not_accounts_deployment(
+    installation,
+    api_client,
+    marketplace,
+    deployment_factory,
+    marketplace_config_factory,
+):
+    deployment = deployment_factory(account_id="INVALID")
+    marketplace_config_factory(deployment=deployment, marketplace_id=marketplace['id'])
+
+    response = api_client.get(
+        f'/api/deployments/{deployment.id}/marketplaces',
+        installation=installation,
+    )
+
+    assert response.status_code == 404

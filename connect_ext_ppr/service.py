@@ -7,7 +7,7 @@ from connect_ext_ppr.constants import PPR_FILE_NAME
 from connect_ext_ppr.db import get_db_ctx_manager
 from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.configuration import Configuration
-from connect_ext_ppr.models.deployment import Deployment
+from connect_ext_ppr.models.deployment import Deployment, MarketplaceConfiguration
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.replicas import Product
@@ -43,31 +43,50 @@ def insert_product_from_listing(db, listing_data, logger):
         db.commit()
 
 
+def add_marketplaces_to_deployment(db, deployment, marketplaces):
+    """
+    Asociates all the marketplaces to deployment
+    :param db: dbsession
+    :param deployment: Deployment instance
+    :param marketplaces: list of marketplaces' ids
+    """
+    configs = []
+    for marketplace in marketplaces:
+        mc = MarketplaceConfiguration(
+            deployment=deployment.id,
+            marketplace=marketplace,
+        )
+        configs.append(mc)
+    db.add_all(configs)
+
+
 def add_deployments(installation, listings, config, logger):
     with get_db_ctx_manager(config) as db:
         deployments = []
+        deployments_marketplaces = {}
         seen = set()
         for li in listings:
             insert_product_from_listing(db, li, logger)
             product_id = li['product']['id']
 
             for hub in li['contract']['marketplace']['hubs']:
-                comb = (product_id, installation['owner']['id'], hub['hub']['id'])
+                hub_id = hub['hub']['id']
+                comb = (product_id, installation['owner']['id'], hub_id)
                 q = db.query(Deployment).filter_by(
                     product_id=product_id,
                     account_id=installation['owner']['id'],
-                    hub_id=hub['hub']['id'],
+                    hub_id=hub_id,
                 )
                 if db.query(q.exists()).scalar():
                     dep = q.first()
                     logger.info(
-                        f"Deployment {dep.id} for hub {hub['hub']['id']} already exists.",
+                        f"Deployment {dep.id} for hub {hub_id} already exists.",
                     )
                     continue
                 if comb not in seen:
                     dep = Deployment(
                         product_id=product_id,
-                        hub_id=hub['hub']['id'],
+                        hub_id=hub_id,
                         vendor_id=li['vendor']['id'],
                         account_id=installation['owner']['id'],
                     )
@@ -77,8 +96,20 @@ def add_deployments(installation, listings, config, logger):
                     )
                     deployments.append(dep)
                     seen.add(comb)
+                key = f"{product_id}#{hub_id}"
+                deployments_marketplaces.setdefault(
+                    key,
+                    {'deployment': dep, 'marketplaces': []},
+                )
+                deployments_marketplaces[key]['marketplaces'].append(
+                    li['contract']['marketplace']['id'],
+                )
         db.set_verbose_all(deployments)
         db.commit()
+
+        for data in deployments_marketplaces.values():
+            add_marketplaces_to_deployment(db, data['deployment'], data['marketplaces'])
+
         if deployments:
             db.expire_all()
             dep_ids = ', '.join([d.id for d in deployments])

@@ -1,15 +1,17 @@
+import copy
 import json
 
+from sqlalchemy import null
 from connect.client import ClientError
 import pytest
 
-from connect_ext_ppr.models.deployment import Deployment
+from connect_ext_ppr.models.deployment import Deployment, MarketplaceConfiguration
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.schemas import FileSchema, PPRCreateSchema
 from connect_ext_ppr.service import add_deployments, create_ppr, get_ppr_new_version
 
 
-def test_add_deployments(
+def test_add_one_deployments(
     dbsession,
     listing,
     marketplace,
@@ -27,6 +29,43 @@ def test_add_deployments(
     new_dep = dbsession.query(Deployment).filter_by(hub_id=hub_id).first()
 
     assert new_dep is not None
+
+
+def test_add_mutiples_deployments(
+    dbsession,
+    listing,
+    marketplace,
+    product,
+    installation,
+    logger,
+):
+    mkplc_husb = []
+    hub_id = 'HB-1111-2222'
+    listing['contract']['marketplace'] = marketplace
+    listing['contract']['marketplace']['hubs'][0]['hub']['id'] = hub_id
+    listing['product'] = product
+
+    for hub in marketplace['hubs']:
+        mkplc_husb.append((marketplace['id'], hub['hub']['id']))
+
+    listing2 = copy.deepcopy(listing)
+    listing2['contract']['marketplace']['id'] = 'MP-1234'
+    listing2['contract']['marketplace']['hubs'][0]['hub']['id'] = 'HB-1234-1234'
+
+    for hub in listing2['contract']['marketplace']['hubs']:
+        mkplc_husb.append((listing2['contract']['marketplace']['id'], hub['hub']['id']))
+
+    add_deployments(installation, [listing, listing2], {}, logger)
+    assert dbsession.query(Deployment).count() == 3
+    assert dbsession.query(MarketplaceConfiguration).count() == 4
+
+    for marketplace_id, hub_id in mkplc_husb:
+        new_dep = dbsession.query(Deployment).filter_by(hub_id=hub_id).first()
+        assert new_dep is not None
+        assert dbsession.query(MarketplaceConfiguration).filter_by(
+            deployment=new_dep.id,
+            marketplace=marketplace_id,
+        ).filter(MarketplaceConfiguration.id.is_not(null())).count() == 1
 
 
 def test_nothing_to_create(

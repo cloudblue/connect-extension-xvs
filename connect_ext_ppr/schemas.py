@@ -118,3 +118,12 @@ class DeploymentRequestSchema(NonNullSchema):
 
     class Config:
         orm_mode = True
+
+
+class MarketplaceSchema(NonNullSchema):
+    id: str
+    name: str
+    icon: str
+    external_id: Optional[str]
+
+    ppr: Optional[PPRVersionReferenceSchema]
