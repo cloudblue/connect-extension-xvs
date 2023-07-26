@@ -7,7 +7,7 @@ import pytest
 
 from connect_ext_ppr.models.deployment import Deployment, MarketplaceConfiguration
 from connect_ext_ppr.models.file import File
-from connect_ext_ppr.schemas import FileSchema, PPRCreateSchema
+from connect_ext_ppr.schemas import FileSchema, PPRVersionCreateSchema
 from connect_ext_ppr.service import add_deployments, create_ppr, get_ppr_new_version
 
 
@@ -119,7 +119,7 @@ def test_create_ppr_base_on_user_uploaded_file(
         mime_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         size=file.size,
     )
-    ppr_data = PPRCreateSchema(file=file_data)
+    ppr_data = PPRVersionCreateSchema(file=file_data)
 
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
 
@@ -130,7 +130,9 @@ def test_create_ppr_base_on_user_uploaded_file(
         return_value=bytes_ppr_workbook,
     )
 
-    new_ppr = create_ppr(ppr_data, common_context, deployment, dbsession, connect_client, logger)
+    new_ppr, _, _ = create_ppr(
+        ppr_data, common_context, deployment, dbsession, connect_client, logger,
+    )
 
     assert new_ppr.id
     assert new_ppr.summary == {}
@@ -152,7 +154,7 @@ def test_create_ppr_base_on_user_uploaded_file_with_errors(
         mime_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         size=file.size,
     )
-    ppr_data = PPRCreateSchema(file=file_data)
+    ppr_data = PPRVersionCreateSchema(file=file_data)
 
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
 
@@ -163,7 +165,9 @@ def test_create_ppr_base_on_user_uploaded_file_with_errors(
         return_value=error_bytes_ppr_workbook,
     )
 
-    new_ppr = create_ppr(ppr_data, common_context, deployment, dbsession, connect_client, logger)
+    new_ppr, _, _ = create_ppr(
+        ppr_data, common_context, deployment, dbsession, connect_client, logger,
+    )
 
     assert new_ppr.id
     assert 'errors' in new_ppr.summary
@@ -188,7 +192,7 @@ def test_create_ppr_base_on_another_ppr_version_w_config(
     )
     ppr_version = ppr_version_factory(file=ppr_file.id, status='ready', deployment=deployment)
     conf = configuration_factory(file=config_file.id, deployment=deployment.id)
-    ppr_data = PPRCreateSchema(file=None)
+    ppr_data = PPRVersionCreateSchema(file=None)
 
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
 
@@ -217,7 +221,9 @@ def test_create_ppr_base_on_another_ppr_version_w_config(
         return_value=json.dumps(media_response),
     )
 
-    new_ppr = create_ppr(ppr_data, common_context, deployment, dbsession, connect_client, logger)
+    new_ppr, _, _ = create_ppr(
+        ppr_data, common_context, deployment, dbsession, connect_client, logger,
+    )
 
     assert new_ppr.id
     assert new_ppr.summary == {
@@ -246,7 +252,7 @@ def test_create_ppr_base_on_another_ppr_version_wo_config(
         mime_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     )
     ppr_version = ppr_version_factory(file=ppr_file.id, status='ready', deployment=deployment)
-    ppr_data = PPRCreateSchema(file=None)
+    ppr_data = PPRVersionCreateSchema(file=None)
 
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
 
@@ -269,7 +275,9 @@ def test_create_ppr_base_on_another_ppr_version_wo_config(
         return_value=json.dumps(media_response),
     )
 
-    new_ppr = create_ppr(ppr_data, common_context, deployment, dbsession, connect_client, logger)
+    new_ppr, _, _ = create_ppr(
+        ppr_data, common_context, deployment, dbsession, connect_client, logger,
+    )
 
     assert new_ppr.id
     assert new_ppr.summary == {
@@ -303,7 +311,7 @@ def test_create_ppr_wo_ppr_version_w_config(
     )
     ppr_version = ppr_version_factory(file=ppr_file.id, deployment=deployment)
     conf = configuration_factory(file=config_file.id, deployment=deployment.id)
-    ppr_data = PPRCreateSchema(file=None)
+    ppr_data = PPRVersionCreateSchema(file=None)
 
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
 
@@ -324,7 +332,9 @@ def test_create_ppr_wo_ppr_version_w_config(
         return_value=json.dumps(media_response),
     )
 
-    new_ppr = create_ppr(ppr_data, common_context, deployment, dbsession, connect_client, logger)
+    new_ppr, _, _ = create_ppr(
+        ppr_data, common_context, deployment, dbsession, connect_client, logger,
+    )
 
     assert new_ppr.id
     assert new_ppr.summary == {
@@ -352,7 +362,7 @@ def test_create_ppr_db_error(
         mime_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         size=file.size,
     )
-    ppr_data = PPRCreateSchema(file=file_data)
+    ppr_data = PPRVersionCreateSchema(file=file_data)
 
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
 
@@ -368,4 +378,6 @@ def test_create_ppr_db_error(
             ppr_data, common_context, deployment,
             dbsession, connect_client, logger,
         )
-    assert ex.value.message == "Database error occurred."
+    assert ex.value.message == (
+        "Object `MFL-6390-1110-0832` already exists, cannot create a new one."
+    )

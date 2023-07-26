@@ -199,10 +199,6 @@ def test_ppr_version_schema(status, file, configuration):
         },
         "configuration": {
             "id": configuration.id,
-            "file": {
-                "id": file.id,
-                "name": file.name,
-            },
             "state": configuration.state,
         },
         "description": 'It was morning, and the new sun sparkled gold across the ripples of a '

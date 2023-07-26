@@ -18,9 +18,9 @@ import pandas as pd
 from connect_ext_ppr.constants import BASE_SCHEMA, PPR_SCHEMA
 from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.enums import MimeTypeChoices
-from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import Deployment
 from connect_ext_ppr.schemas import (
+    ConfigurationReferenceSchema,
     ConfigurationSchema,
     DeploymentReferenceSchema,
     DeploymentRequestSchema,
@@ -29,6 +29,7 @@ from connect_ext_ppr.schemas import (
     HubSchema,
     MarketplaceSchema,
     PPRVersionReferenceSchema,
+    PPRVersionSchema,
     ProductSchema,
 )
 
@@ -125,8 +126,8 @@ def namespaced_media_client(client, account_id, deployment_id, file_collection):
 
 @connect_error
 def create_media_file(
-        client, account_id, deployment_id, file_collection,
-        filename, content, file_type, file_size,
+    client, account_id, deployment_id, file_collection,
+    filename, content, file_type, file_size,
 ):
     headers = {
         'Content-Type': file_type,
@@ -317,6 +318,53 @@ def get_configuration_schema(configuration, file):
     )
 
 
+def get_ppr_version_schema(ppr, file, conf):
+    """
+    Returns PPRVersionSchema for the PPR
+    :param ppr: PPRVersion model
+    :param file: File model
+    :param conf: Related Configuration model
+    :rtype: PPRVersionSchema
+    """
+    file_schema = FileSchema(
+        id=file.id,
+        name=file.name,
+        location=file.location,
+        size=file.size,
+        mime_type=file.mime_type,
+    )
+
+    conf_schema = None
+    if conf:
+        conf_schema = ConfigurationReferenceSchema(
+            id=conf.id,
+            state=conf.state,
+        )
+
+    description_items = []
+    if ppr.description:
+        description_items.append(ppr.description)
+    if ppr.summary:
+        description_items.append(str(ppr.summary))
+    description = '\n'.join(description_items)
+
+    return PPRVersionSchema(
+        id=ppr.id,
+        version=ppr.version,
+        product_version=ppr.product_version,
+        file=file_schema,
+        configuration=conf_schema,
+        description=description if description else None,
+        events={
+            'created': {
+                'at': ppr.created_at,
+                'by': ppr.created_by,
+            },
+        },
+        status=ppr.status,
+    )
+
+
 def get_deployment_by_id(deployment_id, db, installation):
     """Return deployment or raise an error that it is not found"""
     dep = (
@@ -332,19 +380,22 @@ def get_deployment_by_id(deployment_id, db, installation):
     return dep
 
 
-def get_configuration_by_id(configuration_id, deployment_id, db):
-    """Return configuration or raise an error that it is not found"""
-    conf = (
-        db.query(Configuration)
-        .filter_by(id=configuration_id, deployment=deployment_id)
+def get_instance_by_id(model, instance_id, deployment_id, db):
+    """
+    Return configuration or ppr_version or raise an error that it is not found
+    :param model: Type of model to get - Configuration or PPRVersion
+    """
+    instance = (
+        db.query(model)
+        .filter_by(id=instance_id, deployment=deployment_id)
         .one_or_none()
     )
-    if conf is None:
+    if instance is None:
         raise ExtensionHttpError.EXT_001(
-            format_kwargs={'obj_id': configuration_id},
+            format_kwargs={'obj_id': instance_id},
             status_code=status.HTTP_404_NOT_FOUND,
         )
-    return conf
+    return instance
 
 
 def workbook_to_dict(wb: pd.ExcelFile, row_data=False):
