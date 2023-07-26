@@ -14,7 +14,6 @@ from connect.eaas.core.decorators import (
     router,
     web_app,
 )
-
 from connect.eaas.core.inject.common import get_call_context, get_logger
 from connect.eaas.core.inject.models import Context
 from connect.eaas.core.inject.synchronous import (
@@ -26,7 +25,7 @@ from fastapi.responses import JSONResponse
 from fastapi import Depends, Request, Response, status
 from sqlalchemy import exists
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import joinedload, Session, selectinload
+from sqlalchemy.orm import joinedload, selectinload, Session
 
 from connect_ext_ppr.client.exception import ClientError
 from connect_ext_ppr.db import (

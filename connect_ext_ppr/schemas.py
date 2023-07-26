@@ -120,7 +120,7 @@ class DeploymentRequestSchema(NonNullSchema):
         orm_mode = True
 
 
- class StreamSchema(NonNullSchema):
+class StreamSchema(NonNullSchema):
     id: str
     name: str
     status: str
