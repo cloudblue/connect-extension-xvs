@@ -1,0 +1,115 @@
+/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/GridItem.vue?vue&type=style&index=0&id=292fb55a&lang=stylus& ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.item-row {
+  display: grid;
+  grid-template-columns: var(--grid-item-first-col, 60px) 1fr;
+  grid-column-gap: 16px;
+  align-items: start;
+}
+.item-row + .item-row {
+  margin-top: var(--grid-item-row-offset, 12px);
+}
+.item-label {
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  color: #212121;
+}
+
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cChip.vue?vue&type=style&index=0&id=cf32a144&lang=stylus& ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.c-chip {
+  --c-chip-color: 66, 66, 66;
+  --c-chip-text-color: var(--c-chip-color);
+  --c-chip-icon-color: var(--c-chip-color);
+  display: inline-flex;
+  overflow: hidden;
+  align-items: center;
+  box-sizing: border-box;
+  height: 24px;
+  padding-right: 4px;
+  padding-left: 8px;
+  border-radius: 12px;
+  vertical-align: middle;
+}
+.c-chip__text {
+  overflow: hidden;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: normal;
+  color: rgb(var(--c-chip-text-color));
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  margin-left: 4px;
+  margin-right: 8px;
+}
+.c-chip__icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+.c-chip__icon.c-icon,
+.c-chip__icon.v-icon {
+  color: rgb(var(--c-chip-icon-color));
+}
+.c-chip__close-icon {
+  margin: 0;
+  color: rgb(var(--c-chip-text-color)) !important;
+  width: 14px;
+  height: 14px;
+}
+.c-chip__close-icon:hover {
+  background-color: rgba(var(--c-chip-icon-color),0.15);
+  border-radius: 50%;
+}
+.c-chip_small {
+  height: 16px;
+  padding-left: 4px;
+  padding-right: 4px;
+  border-radius: 8px;
+}
+.c-chip_small .c-chip__text {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 12px;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+.c-chip_small .c-chip__icon {
+  width: 12px;
+  height: 12px;
+  font-size: 12px;
+}
+.c-chip_small .c-chip__close-icon {
+  width: 10px;
+  height: 10px;
+}
+.c-chip_solid {
+  background-color: rgb(var(--c-chip-color));
+  --c-chip-text-color: 255, 255, 255;
+  --c-chip-icon-color: 255, 255, 255;
+}
+.c-chip_outline {
+  border: 1px solid rgb(var(--c-chip-color));
+}
+.c-chip_pale {
+  background-color: rgba(var(--c-chip-color),0.1);
+}
+.c-chip_non-rounded {
+  border-radius: 2px;
+}
+
+/*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/pages/DeploymentDetails.vue?vue&type=style&index=0&id=2ceadcfa&lang=stylus& ***!
+  \*********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.deployment-details .info-container {
+  display: grid;
+  grid-template-columns: minmax(auto, 376px) minmax(auto, 376px) minmax(auto, 376px);
+  grid-column-gap: 48px;
+  margin-bottom: 32px;
+}
+

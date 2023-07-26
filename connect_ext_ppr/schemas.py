@@ -64,24 +64,19 @@ class FileReferenceSchema(NonNullSchema):
     name: str
 
 
-class ConfigurationCreateSchema(NonNullSchema):
-    file: FileSchema
-
-
-class PPRCreateSchema(NonNullSchema):
-    file: Optional[FileSchema]
-
-
-class ConfigurationSchema(ConfigurationCreateSchema):
+class ConfigurationSchema(NonNullSchema):
     id: str
     file: FileSchema
     state: ConfigurationStateChoices
     events: Dict[str, Dict[str, Union[datetime, Dict[str, str]]]]
 
 
+class ConfigurationCreateSchema(NonNullSchema):
+    file: FileSchema
+
+
 class ConfigurationReferenceSchema(NonNullSchema):
     id: str
-    file: FileReferenceSchema
     state: ConfigurationStateChoices
 
 
@@ -94,6 +89,11 @@ class PPRVersionSchema(NonNullSchema):
     description: Optional[str] = Field(None, max_length=512)
     events: Dict[str, Dict[str, Union[datetime, str]]]
     status: PPRStatusChoices
+
+
+class PPRVersionCreateSchema(NonNullSchema):
+    file: Optional[FileSchema]
+    description: Optional[str] = Field(None, max_length=512)
 
 
 class PPRVersionReferenceSchema(NonNullSchema):
@@ -120,7 +120,7 @@ class DeploymentRequestSchema(NonNullSchema):
         orm_mode = True
 
 
-class StreamSchema(NonNullSchema):
+ class StreamSchema(NonNullSchema):
     id: str
     name: str
     status: str
@@ -137,3 +137,12 @@ class BatchSchema(NonNullSchema):
 
 class BatchProcessResponseSchema(NonNullSchema):
     task_info: str
+
+
+class MarketplaceSchema(NonNullSchema):
+    id: str
+    name: str
+    icon: str
+    external_id: Optional[str]
+
+    ppr: Optional[PPRVersionReferenceSchema]

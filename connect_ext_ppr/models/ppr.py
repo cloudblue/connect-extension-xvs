@@ -41,8 +41,8 @@ class PPRVersion(Model):
     deployment = db.Column(db.ForeignKey('deployments.id'))
     configuration = db.Column(db.ForeignKey(Configuration.id), nullable=True)
     version = db.Column(db.Integer, default=make_version)
-    product_version = db.Column(db.Integer, nullable=False)
-    description = db.Column(db.Text)
+    product_version = db.Column(db.Integer, nullable=True)
+    description = db.Column(db.Text, nullable=True)
     summary = db.Column(db.JSON)
     status = db.Column(
         db.Enum(PPRStatusChoices, validate_strings=True),

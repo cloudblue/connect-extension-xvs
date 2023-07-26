@@ -5,8 +5,10 @@ import {
 import {
   T,
   __,
+  allPass,
   anyPass,
   both,
+  complement,
   concat,
   cond,
   converge,
@@ -24,6 +26,7 @@ import {
   objOf,
   path,
   pipe,
+  prop,
   propEq,
   reject,
   replace,
@@ -40,6 +43,7 @@ import {
   biarg,
   ensureArray,
   ensureString,
+  isNotNilOrEmpty,
   isObjectStrict,
 } from '~utils';
 
@@ -49,6 +53,10 @@ import {
   colorVars,
   colorsValues as predefinedColors,
 } from '~constants';
+
+import {
+  filesize,
+} from 'filesize';
 
 
 /**
@@ -290,3 +298,49 @@ export const isNilOrEmpty = anyPass([isEmpty, isNil]);
  * altIcon('abc') //=> ''
  */
 export const altIcon = v => (isNilOrEmpty(v) ? googleLanguageBaseline : '');
+
+/**
+ * Returns human-readable filesize from bytes count
+ *
+ * @function
+ * @param {number} bytes
+ * @param {object} options - See https://github.com/avoidwork/filesize.js#optional-settings
+ * @returns {string}
+ */
+export const getFileSize = (bytes = 0, options = {}) => filesize(
+  bytes,
+  {
+    base: 2,
+    locale: 'en',
+    standard: 'jedec',
+    ...options,
+  },
+);
+
+export const isNotEmptyString = allPass([complement(isEmpty), is(String)]);
+
+export const downloader = options => {
+  // eslint-disable-next-line no-console
+  console.log('options', options);
+  const link = document.createElement('a');
+  document.body.appendChild(link);
+
+  const name = prop('name', options);
+  const url = prop('url', options);
+
+  if (isNotEmptyString(name)) link.download = name;
+  else link.rel = 'noopener noreferrer';
+
+  if (isNotNilOrEmpty(url)) {
+    link.href = url;
+  }
+
+  link.click();
+  document.body.removeChild(link);
+};
+
+export default {
+  isNotEmptyString,
+  downloader,
+};
+

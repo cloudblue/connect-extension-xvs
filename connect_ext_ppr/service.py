@@ -2,16 +2,17 @@ import os
 from datetime import datetime
 
 import pandas as pd
+from sqlalchemy import exists
 
 from connect_ext_ppr.constants import PPR_FILE_NAME
 from connect_ext_ppr.db import get_db_ctx_manager
 from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.configuration import Configuration
-from connect_ext_ppr.models.deployment import Deployment
+from connect_ext_ppr.models.deployment import Deployment, MarketplaceConfiguration
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.replicas import Product
-from connect_ext_ppr.schemas import FileSchema
+from connect_ext_ppr.schemas import FileSchema, PPRVersionCreateSchema
 from connect_ext_ppr.utils import (
     create_ppr_to_media,
     get_base_workbook,
@@ -43,31 +44,50 @@ def insert_product_from_listing(db, listing_data, logger):
         db.commit()
 
 
+def add_marketplaces_to_deployment(db, deployment, marketplaces):
+    """
+    Asociates all the marketplaces to deployment
+    :param db: dbsession
+    :param deployment: Deployment instance
+    :param marketplaces: list of marketplaces' ids
+    """
+    configs = []
+    for marketplace in marketplaces:
+        mc = MarketplaceConfiguration(
+            deployment=deployment.id,
+            marketplace=marketplace,
+        )
+        configs.append(mc)
+    db.add_all(configs)
+
+
 def add_deployments(installation, listings, config, logger):
     with get_db_ctx_manager(config) as db:
         deployments = []
+        deployments_marketplaces = {}
         seen = set()
         for li in listings:
             insert_product_from_listing(db, li, logger)
             product_id = li['product']['id']
 
             for hub in li['contract']['marketplace']['hubs']:
-                comb = (product_id, installation['owner']['id'], hub['hub']['id'])
+                hub_id = hub['hub']['id']
+                comb = (product_id, installation['owner']['id'], hub_id)
                 q = db.query(Deployment).filter_by(
                     product_id=product_id,
                     account_id=installation['owner']['id'],
-                    hub_id=hub['hub']['id'],
+                    hub_id=hub_id,
                 )
                 if db.query(q.exists()).scalar():
                     dep = q.first()
                     logger.info(
-                        f"Deployment {dep.id} for hub {hub['hub']['id']} already exists.",
+                        f"Deployment {dep.id} for hub {hub_id} already exists.",
                     )
                     continue
                 if comb not in seen:
                     dep = Deployment(
                         product_id=product_id,
-                        hub_id=hub['hub']['id'],
+                        hub_id=hub_id,
                         vendor_id=li['vendor']['id'],
                         account_id=installation['owner']['id'],
                     )
@@ -77,26 +97,48 @@ def add_deployments(installation, listings, config, logger):
                     )
                     deployments.append(dep)
                     seen.add(comb)
+                key = f"{product_id}#{hub_id}"
+                deployments_marketplaces.setdefault(
+                    key,
+                    {'deployment': dep, 'marketplaces': []},
+                )
+                deployments_marketplaces[key]['marketplaces'].append(
+                    li['contract']['marketplace']['id'],
+                )
         db.set_verbose_all(deployments)
         db.commit()
+
+        for data in deployments_marketplaces.values():
+            add_marketplaces_to_deployment(db, data['deployment'], data['marketplaces'])
+
         if deployments:
             db.expire_all()
             dep_ids = ', '.join([d.id for d in deployments])
             logger.info(f"The following Deployments have been created: {dep_ids}.")
 
 
-def update_product(data, config, logger):
-    product_id = data['id']
+def process_ppr_from_product_update(data, config, context, client, logger):
     with get_db_ctx_manager(config) as db:
-        q = db.query(Product).filter_by(id=product_id)
+        q = db.query(Product).filter_by(id=data['id'])
         if db.query(q.exists()).scalar():
-            logger.info(f"Updating product: {product_id}.")
             product = q.first()
-            product.name = data['name']
-            product.logo = data.get('icon')
-            product.version = data['version']
-            db.add(product)
-            db.commit()
+            older_version = product.version
+            update_product(data, db, product, logger)
+            if data['version'] > older_version:
+                ppr = PPRVersionCreateSchema()
+                dep_qs = product.deployment.filter_by(account_id=context.account_id)
+                logger.info(f"Product version changed: {older_version} -> {data['version']}.")
+                for dep in dep_qs:
+                    create_ppr(ppr, context, dep, db, client, logger)
+
+
+def update_product(data, db, product, logger):
+    logger.info(f"Updating product: {product.id}.")
+    product.name = data['name']
+    product.logo = data.get('icon')
+    product.version = data['version']
+    db.add(product)
+    db.commit()
 
 
 def get_ppr_new_version(db, deployment):
@@ -116,7 +158,10 @@ def create_ppr(ppr, context, deployment, db, client, logger):
     file_data = ppr.file
     new_version = get_ppr_new_version(db, deployment)
     config_kwargs = {}
+    config_json = {}
     status = PPRVersion.STATUS.ready
+    active_configuration = None
+    product_version = None
     if not file_data:
         active_configuration = (
             db.query(Configuration)
@@ -125,11 +170,11 @@ def create_ppr(ppr, context, deployment, db, client, logger):
                 state=Configuration.STATE.active,
             ).one_or_none()
         )
-        if not active_configuration:
-            raise ExtensionHttpError.EXT_006(
-                format_kwargs={'deployment_id': deployment.id},
+        if active_configuration:
+            config_kwargs.update({'configuration': active_configuration.id})
+            config_json = get_configuration_from_media(
+                client, deployment.account_id, deployment.id, active_configuration.file,
             )
-        config_kwargs.update({'configuration': active_configuration.id})
         previous_ppr = (
             db.query(PPRVersion)
             .filter_by(
@@ -140,9 +185,7 @@ def create_ppr(ppr, context, deployment, db, client, logger):
             .first()
         )
         data = None
-        config_json = get_configuration_from_media(
-            client, deployment.account_id, deployment.id, active_configuration.file,
-        )
+        product_version = deployment.product.version
         product_info = (
             f"(product_id={deployment.product_id}, "
             f"product_version={deployment.product.version})"
@@ -158,7 +201,7 @@ def create_ppr(ppr, context, deployment, db, client, logger):
         else:
             logger.info(
                 f"Start creation of PPR version {product_info}"
-                f" based on previous product information.",
+                f" based on product information.",
             )
         items = list(get_product_items(client, deployment.product.id))
 
@@ -199,6 +242,10 @@ def create_ppr(ppr, context, deployment, db, client, logger):
             summary.update({'errors': errors})
             status = PPRVersion.STATUS.failed
     try:
+        if db.query(exists().where(File.id == file_data.id)).scalar():
+            raise ExtensionHttpError.EXT_002(
+                format_kwargs={'obj_id': file_data.id},
+            )
         file_instance = File(
             id=file_data.id,
             account_id=deployment.account_id,
@@ -209,13 +256,14 @@ def create_ppr(ppr, context, deployment, db, client, logger):
             created_by=context.user_id,
         )
         db.add(file_instance)
-        db.commit()
+        db.flush()
 
         new_ppr = PPRVersion(
             file=file_instance.id,
             deployment=deployment.id,
             version=new_version,
-            product_version=deployment.product.version,
+            product_version=product_version,
+            description=ppr.description,
             summary=summary,
             status=status,
             created_by=context.user_id,
@@ -223,7 +271,12 @@ def create_ppr(ppr, context, deployment, db, client, logger):
         )
         db.set_verbose(new_ppr)
         db.commit()
-        return new_ppr
+
+        logger.info(
+            f"New PPR version created: (id={new_ppr.id}, version={new_ppr.version}"
+            f", product_version={new_ppr.product_version}, file={new_ppr.file}).",
+        )
+        return new_ppr, file_instance, active_configuration
 
     except DBAPIError as ex:
         logger.error(ex)

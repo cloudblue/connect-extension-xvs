@@ -24,7 +24,11 @@ from connect_ext_ppr.db import (
     VerboseBaseSession,
 )
 from connect_ext_ppr.models.configuration import Configuration
-from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
+from connect_ext_ppr.models.deployment import (
+    Deployment,
+    DeploymentRequest,
+    MarketplaceConfiguration,
+)
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.replicas import Product
@@ -127,7 +131,7 @@ def deployment_factory(dbsession, product_factory):
             vendor_id='VA-000-000',
             hub_id='HB-0000-0000',
     ):
-        product = product_factory(id=product_id)
+        product = product_factory(id=product_id, owner_id=vendor_id)
         product_id = product.id
 
         dep = Deployment(
@@ -200,6 +204,7 @@ def ppr_version_factory(dbsession, file_factory):
         id=None,
         file=None,
         deployment=None,
+        configuration=None,  # configuration id
         summary=None,
         version=None,
         product_version=3,
@@ -210,6 +215,7 @@ def ppr_version_factory(dbsession, file_factory):
         ppr = PPRVersion(
             file=file or file_factory().id,
             deployment=deployment.id,
+            configuration=configuration,
             summary=summary or {},
             product_version=product_version,
             created_by=created_by,
@@ -257,6 +263,21 @@ def file_factory(dbsession, media_response):
 
 
 @pytest.fixture
+def marketplace_config_factory(dbsession, ppr_version_factory):
+    def _build_mc(deployment, marketplace_id, ppr_id=None):
+        mp = MarketplaceConfiguration(
+            deployment=deployment.id,
+            marketplace=marketplace_id,
+            ppr_id=ppr_id,
+        )
+        dbsession.add(mp)
+        dbsession.commit()
+        dbsession.refresh(mp)
+        return mp
+    return _build_mc
+
+
+@pytest.fixture
 def file(file_factory):
     return file_factory()
 
@@ -284,7 +305,7 @@ def logger(mocker):
 
 @pytest.fixture
 def common_context():
-    return Context(call_type='user', user_id='UR-000-000-000')
+    return Context(call_type='user', user_id='UR-000-000-000', account_id='PA-000-000')
 
 
 @pytest.fixture

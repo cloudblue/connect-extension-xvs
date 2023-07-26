@@ -35,7 +35,7 @@ class Deployment(Model):
     created_at = db.Column(db.DateTime(), default=datetime.utcnow)
     updated_at = db.Column(db.DateTime(), onupdate=datetime.utcnow, default=datetime.utcnow)
 
-    product = relationship('Product', foreign_keys="Deployment.product_id")
+    product = relationship("Product", back_populates="deployment")
 
 
 class DeploymentRequest(Model):
@@ -73,3 +73,6 @@ class MarketplaceConfiguration(Model):
     marketplace = db.Column(db.String(16))
     deployment = db.Column(db.ForeignKey(Deployment.id), nullable=True)
     deployment_request = db.Column(db.ForeignKey(DeploymentRequest.id), nullable=True)
+    ppr_id = db.Column(db.String, db.ForeignKey(PPRVersion.id))
+
+    ppr = relationship('PPRVersion', foreign_keys='MarketplaceConfiguration.ppr_id')

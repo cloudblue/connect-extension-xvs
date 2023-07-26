@@ -1,78 +1,81 @@
 <template lang="pug">
-  c-view.deployment-details(
-    :title="deploymentId",
-    assistive-title="Deployment Details",
-    :back-route="{ name: 'Dashboard', params: { tab: 'deployments' } }",
-    :current-tab.sync="currentTab",
-    :loading="loading"
-  )
-    template(#actions="")
-      c-button(
-        :icon="icons.googleSyncBaseline",
-        label="sync",
-        color="accent",
-        mode="solid",
-      )
-
-    .info-container
-      .info-column
-        grid-item(label="Status")
-          template(#value="")
-            c-status(:status="deployment.status")
-
-        grid-item(label="Product")
-          template(#value="")
-            detail-item(
-              :body-text="deployment.product.name",
-              dense,
-            )
-              template(#image="")
-                pic(
-                  :src="deployment.product.icon",
-                  :width="16",
-                  :height="16",
-                )
-
-        grid-item(label="Vendor")
-          template(#value="")
-            detail-item(
-              :body-text="deployment.owner.name",
-              dense,
-            )
-              template(#image="")
-                pic(
-                  :src="deployment.owner.icon",
-                  :width="16",
-                  :height="16",
-                )
-
-
-      .info-column
-        grid-item(
-          :column-width="78",
-          label="Hub",
-        )
-          template(#value="")
-            span {{ deployment.hub.name }}
-
-        grid-item(
-          :column-width="78",
-          label="Last Sync",
-        )
-          template(#value="")
-            span {{ deployment.last_sync_at | utcToLocal }}
-
-
-    c-tabs(
-      :current-tab.sync="currentTab",
-      :tabs="tabs",
+c-view.deployment-details(
+  :title="deploymentId",
+  assistive-title="Deployment Details",
+  :back-route="{ name: 'Dashboard', params: { tab: 'deployments' } }",
+  :current-tab.sync="currentTab",
+  :loading="loading"
+)
+  template(#actions="")
+    c-button(
+      :icon="icons.googleSyncBaseline",
+      label="sync",
+      color="accent",
+      mode="solid",
     )
-      template(#marketplaces="")
-        .marketplaces-tab Marketplaces
-      template(#ppr="")
-        .ppr-tab PPR
-      template(#configuration="")
-        .configuration-tab Configuration
+
+  .info-container
+    .info-column
+      grid-item(label="Status")
+        template(#value="")
+          c-status(:status="deployment.status")
+
+      grid-item(label="Product")
+        template(#value="")
+          detail-item(
+            :body-text="deployment.product.name",
+            dense,
+          )
+            template(#image="")
+              pic(
+                :src="deployment.product.icon",
+                :width="16",
+                :height="16",
+              )
+
+      grid-item(label="Vendor")
+        template(#value="")
+          detail-item(
+            :body-text="deployment.owner.name",
+            dense,
+          )
+            template(#image="")
+              pic(
+                :src="deployment.owner.icon",
+                :width="16",
+                :height="16",
+              )
+
+
+    .info-column
+      grid-item(
+        :column-width="78",
+        label="Hub",
+      )
+        template(#value="")
+          span {{ deployment.hub.name }}
+
+      grid-item(
+        :column-width="78",
+        label="Last Sync",
+      )
+        template(#value="")
+          span {{ deployment.last_sync_at | utcToLocal }}
+
+  c-tabs(
+    :current-tab.sync="currentTab",
+    :tabs="tabs",
+  )
+    template(#marketplaces="")
+      .marketplaces-tab Marketplaces
+    template(#ppr="")
+      .ppr-tab PPR
+    template(#configuration="")
+      .configuration-tab Configuration
+        deployment-configuration-tab(
+          :deployment-id="deployment.id",
+          :account-id="deployment.account_id",
+        )
 
 </template>
 
@@ -89,6 +92,8 @@ import DetailItem from '~components/DetailItem.vue';
 import GridItem from '~components/GridItem.vue';
 import Pic from '~components/Pic.vue';
 
+import DeploymentConfigurationTab from '~components/DeploymentConfigurationTab.vue';
+
 import {
   getDeployment,
 } from '@/utils';
@@ -100,6 +105,7 @@ export default {
     cStatus,
     cTabs,
     cView,
+    DeploymentConfigurationTab,
     DetailItem,
     GridItem,
     Pic,
@@ -136,7 +142,6 @@ export default {
 
 <style lang="stylus">
 .deployment-details {
-
   .info-container {
     display: grid;
     grid-template-columns: minmax(auto, 376px) minmax(auto, 376px) minmax(auto, 376px);

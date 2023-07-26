@@ -3,7 +3,7 @@
 # Copyright (c) 2023, Ingram Micro
 # All rights reserved.
 #
-from logging import LoggerAdapter
+from logging import Logger, LoggerAdapter
 from typing import List
 
 from connect.client import ConnectClient
@@ -14,7 +14,9 @@ from connect.eaas.core.decorators import (
     router,
     web_app,
 )
-from connect.eaas.core.inject.common import get_logger
+
+from connect.eaas.core.inject.common import get_call_context, get_logger
+from connect.eaas.core.inject.models import Context
 from connect.eaas.core.inject.synchronous import (
     get_installation,
     get_installation_client,
@@ -24,7 +26,7 @@ from fastapi.responses import JSONResponse
 from fastapi import Depends, Request, Response, status
 from sqlalchemy import exists
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import joinedload, Session
+from sqlalchemy.orm import joinedload, Session, selectinload
 
 from connect_ext_ppr.client.exception import ClientError
 from connect_ext_ppr.db import (
@@ -35,11 +37,16 @@ from connect_ext_ppr.db import (
 )
 from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.configuration import Configuration
-from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
+from connect_ext_ppr.models.deployment import (
+    Deployment,
+    DeploymentRequest,
+    MarketplaceConfiguration,
+)
 from connect_ext_ppr.models.enums import ConfigurationStateChoices, DeploymentStatusChoices
 from connect_ext_ppr.models.file import File
+from connect_ext_ppr.models.ppr import PPRVersion
+from connect_ext_ppr.service import add_deployments, create_ppr
 from connect_ext_ppr.models.replicas import Product
-from connect_ext_ppr.service import add_deployments
 from connect_ext_ppr.schemas import (
     BatchProcessResponseSchema,
     BatchSchema,
@@ -48,6 +55,9 @@ from connect_ext_ppr.schemas import (
     DeploymentRequestSchema,
     DeploymentSchema,
     HubSchema,
+    MarketplaceSchema,
+    PPRVersionCreateSchema,
+    PPRVersionSchema,
     ProductSchema,
 )
 from connect_ext_ppr.services.pricing import (
@@ -63,12 +73,15 @@ from connect_ext_ppr.utils import (
     filter_object_list_by_id,
     get_all_info,
     get_client_object,
-    get_configuration_by_id,
     get_configuration_schema,
     get_deployment_by_id,
     get_deployment_request_schema,
     get_deployment_schema,
     get_hubs,
+    get_instance_by_id,
+    get_marketplace_schema,
+    get_marketplaces,
+    get_ppr_version_schema,
     get_user_data_from_auth_token,
 )
 
@@ -230,7 +243,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         installation: dict = Depends(get_installation),
     ):
         get_deployment_by_id(deployment_id, db, installation)
-        configuration = get_configuration_by_id(configuration_id, deployment_id, db)
+        configuration = get_instance_by_id(Configuration, configuration_id, deployment_id, db)
 
         file = db.query(File).get(configuration.file)
         return get_configuration_schema(configuration, file)
@@ -308,7 +321,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         installation: dict = Depends(get_installation),
     ):
         deployment = get_deployment_by_id(deployment_id, db, installation)
-        configuration = get_configuration_by_id(configuration_id, deployment_id, db)
+        configuration = get_instance_by_id(Configuration, configuration_id, deployment_id, db)
 
         if configuration.state == ConfigurationStateChoices.active:
             raise ExtensionHttpError.EXT_004(
@@ -330,6 +343,103 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         client.delete(path)
 
         return Response(status_code=204)
+
+    @router.get(
+        '/deployments/{deployment_id}/pprs',
+        summary='List all PPRs available for the deployment',
+        response_model=List[PPRVersionSchema],
+    )
+    def get_pprs(
+        self,
+        deployment_id: str,
+        db: VerboseBaseSession = Depends(get_db),
+        installation: dict = Depends(get_installation),
+    ):
+        get_deployment_by_id(deployment_id, db, installation)
+
+        ppr_file_conf_list = (
+            db.query(PPRVersion, File, Configuration)
+            .filter_by(deployment=deployment_id)
+            .join(File, PPRVersion.file == File.id)
+            .outerjoin(Configuration, PPRVersion.configuration == Configuration.id)
+            .all()
+        )
+
+        response_list = []
+        for ppr, file, conf in ppr_file_conf_list:
+            response_list.append(
+                get_ppr_version_schema(ppr, file, conf),
+            )
+
+        return response_list
+
+    @router.get(
+        '/deployments/{deployment_id}/pprs/{ppr_version_id}',
+        summary='PPR details',
+        response_model=PPRVersionSchema,
+    )
+    def get_ppr(
+        self,
+        deployment_id: str,
+        ppr_version_id: str,
+        db: VerboseBaseSession = Depends(get_db),
+        installation: dict = Depends(get_installation),
+    ):
+        get_deployment_by_id(deployment_id, db, installation)
+        ppr_version = get_instance_by_id(PPRVersion, ppr_version_id, deployment_id, db)
+
+        file = db.query(File).get(ppr_version.file)
+        configuration = db.query(Configuration).get(ppr_version.configuration)
+
+        return get_ppr_version_schema(ppr_version, file, configuration)
+
+    @router.post(
+        '/deployments/{deployment_id}/pprs',
+        summary='Create a new PPR for the deployment',
+        response_model=PPRVersionSchema,
+    )
+    def add_ppr(
+        self,
+        ppr_version: PPRVersionCreateSchema,
+        deployment_id: str,
+        client: ConnectClient = Depends(get_installation_client),
+        db: VerboseBaseSession = Depends(get_db),
+        installation: dict = Depends(get_installation),
+        logger: Logger = Depends(get_logger),
+        context: Context = Depends(get_call_context),
+    ):
+        deployment = get_deployment_by_id(deployment_id, db, installation)
+        ppr_version_instance, file_instance, configuration = create_ppr(
+            ppr_version, context, deployment, db, client, logger,
+        )
+        return get_ppr_version_schema(ppr_version_instance, file_instance, configuration)
+
+    @router.get(
+        '/deployments/{deployment_id}/marketplaces',
+        summary="Deployment's marketplaces",
+        response_model=List[MarketplaceSchema],
+    )
+    def get_marketplaces_by_deployment(
+        self,
+        deployment_id: str,
+        client: ConnectClient = Depends(get_installation_client),
+        db: VerboseBaseSession = Depends(get_db),
+        installation: dict = Depends(get_installation),
+    ):
+        get_deployment_by_id(deployment_id, db, installation)
+
+        mkplc_configs = db.query(MarketplaceConfiguration).options(
+            selectinload(MarketplaceConfiguration.ppr),
+        ).filter_by(deployment=deployment_id)
+
+        mkplc_ids = [m.marketplace for m in mkplc_configs]
+
+        marketplaces = get_marketplaces(client, mkplc_ids)
+        response_list = []
+        for mkplc_config in mkplc_configs:
+            m_data = filter_object_list_by_id(marketplaces, mkplc_config.marketplace)
+            response_list.append(get_marketplace_schema(m_data, mkplc_config.ppr))
+        return response_list
 
     @router.get(
         '/products',
