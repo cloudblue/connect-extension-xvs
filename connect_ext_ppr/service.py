@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 
 import pandas as pd
+from sqlalchemy import exists
 
 from connect_ext_ppr.constants import PPR_FILE_NAME
 from connect_ext_ppr.db import get_db_ctx_manager
@@ -11,7 +12,7 @@ from connect_ext_ppr.models.deployment import Deployment, MarketplaceConfigurati
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.replicas import Product
-from connect_ext_ppr.schemas import FileSchema, PPRCreateSchema
+from connect_ext_ppr.schemas import FileSchema, PPRVersionCreateSchema
 from connect_ext_ppr.utils import (
     create_ppr_to_media,
     get_base_workbook,
@@ -124,7 +125,7 @@ def process_ppr_from_product_update(data, config, context, client, logger):
             older_version = product.version
             update_product(data, db, product, logger)
             if data['version'] > older_version:
-                ppr = PPRCreateSchema()
+                ppr = PPRVersionCreateSchema()
                 dep_qs = product.deployment.filter_by(account_id=context.account_id)
                 logger.info(f"Product version changed: {older_version} -> {data['version']}.")
                 for dep in dep_qs:
@@ -159,6 +160,8 @@ def create_ppr(ppr, context, deployment, db, client, logger):
     config_kwargs = {}
     config_json = {}
     status = PPRVersion.STATUS.ready
+    active_configuration = None
+    product_version = None
     if not file_data:
         active_configuration = (
             db.query(Configuration)
@@ -182,6 +185,7 @@ def create_ppr(ppr, context, deployment, db, client, logger):
             .first()
         )
         data = None
+        product_version = deployment.product.version
         product_info = (
             f"(product_id={deployment.product_id}, "
             f"product_version={deployment.product.version})"
@@ -238,6 +242,10 @@ def create_ppr(ppr, context, deployment, db, client, logger):
             summary.update({'errors': errors})
             status = PPRVersion.STATUS.failed
     try:
+        if db.query(exists().where(File.id == file_data.id)).scalar():
+            raise ExtensionHttpError.EXT_002(
+                format_kwargs={'obj_id': file_data.id},
+            )
         file_instance = File(
             id=file_data.id,
             account_id=deployment.account_id,
@@ -248,13 +256,14 @@ def create_ppr(ppr, context, deployment, db, client, logger):
             created_by=context.user_id,
         )
         db.add(file_instance)
-        db.commit()
+        db.flush()
 
         new_ppr = PPRVersion(
             file=file_instance.id,
             deployment=deployment.id,
             version=new_version,
-            product_version=deployment.product.version,
+            product_version=product_version,
+            description=ppr.description,
             summary=summary,
             status=status,
             created_by=context.user_id,
@@ -267,7 +276,7 @@ def create_ppr(ppr, context, deployment, db, client, logger):
             f"New PPR version created: (id={new_ppr.id}, version={new_ppr.version}"
             f", product_version={new_ppr.product_version}, file={new_ppr.file}).",
         )
-        return new_ppr
+        return new_ppr, file_instance, active_configuration
 
     except DBAPIError as ex:
         logger.error(ex)

@@ -204,6 +204,7 @@ def ppr_version_factory(dbsession, file_factory):
         id=None,
         file=None,
         deployment=None,
+        configuration=None,  # configuration id
         summary=None,
         version=None,
         product_version=3,
@@ -214,6 +215,7 @@ def ppr_version_factory(dbsession, file_factory):
         ppr = PPRVersion(
             file=file or file_factory().id,
             deployment=deployment.id,
+            configuration=configuration,
             summary=summary or {},
             product_version=product_version,
             created_by=created_by,
