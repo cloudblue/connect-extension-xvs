@@ -127,7 +127,7 @@ def deployment_factory(dbsession, product_factory):
             vendor_id='VA-000-000',
             hub_id='HB-0000-0000',
     ):
-        product = product_factory(id=product_id)
+        product = product_factory(id=product_id, owner_id=vendor_id)
         product_id = product.id
 
         dep = Deployment(
@@ -284,7 +284,7 @@ def logger(mocker):
 
 @pytest.fixture
 def common_context():
-    return Context(call_type='user', user_id='UR-000-000-000')
+    return Context(call_type='user', user_id='UR-000-000-000', account_id='PA-000-000')
 
 
 @pytest.fixture

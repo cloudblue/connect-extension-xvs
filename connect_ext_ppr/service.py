@@ -11,7 +11,7 @@ from connect_ext_ppr.models.deployment import Deployment
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.replicas import Product
-from connect_ext_ppr.schemas import FileSchema
+from connect_ext_ppr.schemas import FileSchema, PPRCreateSchema
 from connect_ext_ppr.utils import (
     create_ppr_to_media,
     get_base_workbook,
@@ -85,18 +85,28 @@ def add_deployments(installation, listings, config, logger):
             logger.info(f"The following Deployments have been created: {dep_ids}.")
 
 
-def update_product(data, config, logger):
-    product_id = data['id']
+def process_ppr_from_product_update(data, config, context, client, logger):
     with get_db_ctx_manager(config) as db:
-        q = db.query(Product).filter_by(id=product_id)
+        q = db.query(Product).filter_by(id=data['id'])
         if db.query(q.exists()).scalar():
-            logger.info(f"Updating product: {product_id}.")
             product = q.first()
-            product.name = data['name']
-            product.logo = data.get('icon')
-            product.version = data['version']
-            db.add(product)
-            db.commit()
+            older_version = product.version
+            update_product(data, db, product, logger)
+            if data['version'] > older_version:
+                ppr = PPRCreateSchema()
+                dep_qs = product.deployment.filter_by(account_id=context.account_id)
+                logger.info(f"Product version changed: {older_version} -> {data['version']}.")
+                for dep in dep_qs:
+                    create_ppr(ppr, context, dep, db, client, logger)
+
+
+def update_product(data, db, product, logger):
+    logger.info(f"Updating product: {product.id}.")
+    product.name = data['name']
+    product.logo = data.get('icon')
+    product.version = data['version']
+    db.add(product)
+    db.commit()
 
 
 def get_ppr_new_version(db, deployment):
@@ -116,6 +126,7 @@ def create_ppr(ppr, context, deployment, db, client, logger):
     file_data = ppr.file
     new_version = get_ppr_new_version(db, deployment)
     config_kwargs = {}
+    config_json = {}
     status = PPRVersion.STATUS.ready
     if not file_data:
         active_configuration = (
@@ -125,11 +136,11 @@ def create_ppr(ppr, context, deployment, db, client, logger):
                 state=Configuration.STATE.active,
             ).one_or_none()
         )
-        if not active_configuration:
-            raise ExtensionHttpError.EXT_006(
-                format_kwargs={'deployment_id': deployment.id},
+        if active_configuration:
+            config_kwargs.update({'configuration': active_configuration.id})
+            config_json = get_configuration_from_media(
+                client, deployment.account_id, deployment.id, active_configuration.file,
             )
-        config_kwargs.update({'configuration': active_configuration.id})
         previous_ppr = (
             db.query(PPRVersion)
             .filter_by(
@@ -140,9 +151,6 @@ def create_ppr(ppr, context, deployment, db, client, logger):
             .first()
         )
         data = None
-        config_json = get_configuration_from_media(
-            client, deployment.account_id, deployment.id, active_configuration.file,
-        )
         product_info = (
             f"(product_id={deployment.product_id}, "
             f"product_version={deployment.product.version})"
@@ -158,7 +166,7 @@ def create_ppr(ppr, context, deployment, db, client, logger):
         else:
             logger.info(
                 f"Start creation of PPR version {product_info}"
-                f" based on previous product information.",
+                f" based on product information.",
             )
         items = list(get_product_items(client, deployment.product.id))
 
@@ -223,6 +231,11 @@ def create_ppr(ppr, context, deployment, db, client, logger):
         )
         db.set_verbose(new_ppr)
         db.commit()
+
+        logger.info(
+            f"New PPR version created: (id={new_ppr.id}, version={new_ppr.version}"
+            f", product_version={new_ppr.product_version}, file={new_ppr.file}).",
+        )
         return new_ppr
 
     except DBAPIError as ex:
