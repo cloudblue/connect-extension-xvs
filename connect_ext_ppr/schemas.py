@@ -120,6 +120,25 @@ class DeploymentRequestSchema(NonNullSchema):
         orm_mode = True
 
 
+class StreamSchema(NonNullSchema):
+    id: str
+    name: str
+    status: str
+
+
+class BatchSchema(NonNullSchema):
+    id: str
+    name: str
+    status: str
+    stream: StreamSchema
+    test: Optional[bool]
+    stream_updated: Optional[bool]
+
+
+class BatchProcessResponseSchema(NonNullSchema):
+    task_info: str
+
+
 class MarketplaceSchema(NonNullSchema):
     id: str
     name: str
