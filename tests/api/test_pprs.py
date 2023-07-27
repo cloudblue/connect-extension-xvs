@@ -51,23 +51,6 @@ def test_get_pprs(
     data = response.json()[0]
     events = data.pop('events')
     assert data == {
-        'id': ppr_version.id,
-        'version': 1,
-        'file': {
-            'id': ppr_file.id,
-            'name': ppr_file.name,
-            'location': ppr_file.location,
-            'size': ppr_file.size,
-            'mime_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        },
-        'status': 'pending',
-    }
-    assert isinstance(events['created']['at'], str)
-    assert events['created']['by'] == ppr_version.created_by
-
-    data = response.json()[1]
-    events = data.pop('events')
-    assert data == {
         'id': ppr_version2.id,
         'file': {
             'id': ppr_file2.id,
@@ -85,6 +68,23 @@ def test_get_pprs(
         'description': "{'Resources': {'created': ['PRD-000-068-001-00001', "
                        "'PRD-000-068-001-00002']}, 'ResourceCategories': {}}",
         'status': 'ready',
+    }
+    assert isinstance(events['created']['at'], str)
+    assert events['created']['by'] == ppr_version.created_by
+
+    data = response.json()[1]
+    events = data.pop('events')
+    assert data == {
+        'id': ppr_version.id,
+        'version': 1,
+        'file': {
+            'id': ppr_file.id,
+            'name': ppr_file.name,
+            'location': ppr_file.location,
+            'size': ppr_file.size,
+            'mime_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        },
+        'status': 'pending',
     }
     assert isinstance(events['created']['at'], str)
     assert events['created']['by'] == ppr_version.created_by

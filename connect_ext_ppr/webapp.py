@@ -23,7 +23,7 @@ from connect.eaas.core.inject.synchronous import (
 from connect.eaas.core.extension import WebApplicationBase
 from fastapi.responses import JSONResponse
 from fastapi import Depends, Request, Response, status
-from sqlalchemy import exists
+from sqlalchemy import desc, exists
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload, selectinload, Session
 
@@ -361,6 +361,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             .filter_by(deployment=deployment_id)
             .join(File, PPRVersion.file == File.id)
             .outerjoin(Configuration, PPRVersion.configuration == Configuration.id)
+            .order_by(desc(PPRVersion.version))
             .all()
         )
 
