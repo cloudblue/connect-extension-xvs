@@ -172,11 +172,11 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             )
         return response_list
 
-    # example route for creation of deployment request
     @router.post(
         '/deployments/requests',
         summary='Create a new deployment request',
         response_model=DeploymentRequestSchema,
+        status_code=status.HTTP_201_CREATED,
     )
     def add_dep_request(self, db: VerboseBaseSession = Depends(get_db)):
         deployment = db.query(Deployment).first()
@@ -234,6 +234,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         '/deployments/{deployment_id}/configurations',
         summary='Create a new configuration for the deployment',
         response_model=ConfigurationSchema,
+        status_code=status.HTTP_201_CREATED,
     )
     def add_configuration(
         self,
@@ -379,6 +380,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         '/deployments/{deployment_id}/pprs',
         summary='Create a new PPR for the deployment',
         response_model=PPRVersionSchema,
+        status_code=status.HTTP_201_CREATED,
     )
     def add_ppr(
         self,

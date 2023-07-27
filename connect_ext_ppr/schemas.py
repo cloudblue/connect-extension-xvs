@@ -86,7 +86,7 @@ class PPRVersionSchema(NonNullSchema):
     product_version: Optional[int]
     file: FileSchema
     configuration: Optional[ConfigurationReferenceSchema]
-    description: Optional[str] = Field(None, max_length=512)
+    description: Optional[str]
     events: Dict[str, Dict[str, Union[datetime, str]]]
     status: PPRStatusChoices
 

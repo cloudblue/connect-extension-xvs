@@ -15,7 +15,7 @@ from jsonschema.exceptions import _Error
 import jwt
 import pandas as pd
 
-from connect_ext_ppr.constants import BASE_SCHEMA, PPR_SCHEMA
+from connect_ext_ppr.constants import BASE_SCHEMA, PPR_SCHEMA, SUMMARY_TEMPLATE
 from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.enums import MimeTypeChoices
 from connect_ext_ppr.models.deployment import Deployment
@@ -341,20 +341,13 @@ def get_ppr_version_schema(ppr, file, conf):
             state=conf.state,
         )
 
-    description_items = []
-    if ppr.description:
-        description_items.append(ppr.description)
-    if ppr.summary:
-        description_items.append(str(ppr.summary))
-    description = '\n'.join(description_items)
-
     return PPRVersionSchema(
         id=ppr.id,
         version=ppr.version,
         product_version=ppr.product_version,
         file=file_schema,
         configuration=conf_schema,
-        description=description if description else None,
+        description=ppr.description,
         events={
             'created': {
                 'at': ppr.created_at,
@@ -557,3 +550,21 @@ def get_marketplace_schema(marketplace, ppr):
         mp_schema.ppr = PPRVersionReferenceSchema(id=ppr.id, version=ppr.version)
 
     return mp_schema
+
+
+def _build_summary(summary: dict, indent: int = 0):
+    acum = ''
+    SEP = ' ' * 4
+    for key, value in summary.items():
+        key = key.capitalize()
+        acum += "{0}{1}".format(SEP * indent, f'* {key}\n')
+        if isinstance(value, dict):
+            acum += _build_summary(value, indent + 1)
+        else:
+            spaces = SEP * (indent + 1)
+            acum += "".join(f'{spaces}* {v}\n' for v in value)
+    return acum
+
+
+def build_summary(summary: dict):
+    return SUMMARY_TEMPLATE.format(summary=_build_summary(summary))
