@@ -2,13 +2,18 @@
 extends:
   - airbnb-base
   - plugin:import/warnings
+  - plugin:vue/essential
+  - plugin:vue-pug/essential
+  - plugin:jest-formatting/strict
 
 env:
   browser: true
   jest: true
 
 plugins:
+  - vue
   - import
+  - jest-formatting
 
 settings:
   import/resolver:
@@ -57,10 +62,44 @@ rules:
         minProperties: 3
   require-await:
     - error
+  vue/multi-word-component-names: 0
+  vue/padding-line-between-blocks: 2
+  vue/no-potential-component-option-typo: 2
+  vue/new-line-between-multi-line-property:
+    - error
+    - minLineOfMultilineProperty: 2
+  vue/prop-name-casing:
+    - error
+    - camelCase
+  vue/order-in-components:
+    - error
+    - order:
+        - el
+        - name
+        - delimiters
+        - extends
+        - mixins
+        - directives
+        - components
+        - inheritAttrs
+        - props
+        - emits
+        - setup
+        - data
+        - computed
+        - methods
+        - filters
+        - watch
+        - LIFECYCLE_HOOKS
+        - ROUTER_GUARDS
+        - template
+        - render
 
-parser: "@babel/eslint-parser"
+parser: "vue-eslint-parser"
 parserOptions:
   requireConfigFile: false
+  parser:
+    js: "@babel/eslint-parser"
 
 globals:
   inject: false

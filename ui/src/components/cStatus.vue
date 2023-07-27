@@ -24,7 +24,9 @@ import {
 import cIcon from '~components/cIcon.vue';
 
 
-import { statuses } from '~constants';
+import {
+  statuses,
+} from '~constants';
 
 
 export default {
@@ -57,11 +59,13 @@ export default {
   },
 
   filters: {
-    capitalize: function (value) {
-      if (!value) return ''
-      value = value.toString()
-      return value.charAt(0).toUpperCase() + value.slice(1)
+    capitalize(value) {
+      if (!value) return '';
+      const str = value.toString();
+
+      return str.charAt(0).toUpperCase() + str.slice(1);
     },
+
     replaceUnderscoreToSpaces: replace(/_/g, ' '),
   },
 };

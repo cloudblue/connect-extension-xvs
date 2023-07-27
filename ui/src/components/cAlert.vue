@@ -26,12 +26,6 @@ import {
 import cIcon from '~components/cIcon.vue';
 
 
-import {
-  isString,
-  pathTo,
-} from '~utils';
-
-
 const typeAlert = [
   'info',
   'error',
