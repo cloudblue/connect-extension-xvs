@@ -115,7 +115,7 @@ def test_post_configuration(
             ),
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     data = response.json()
     assert 'id' in data
     assert 'at' in data['events']['created']
@@ -170,7 +170,7 @@ def test_post_configuration_deactivate_previous(
             ),
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     assert dbsession.query(Configuration).count() == 2
     assert dbsession.query(File).count() == 2

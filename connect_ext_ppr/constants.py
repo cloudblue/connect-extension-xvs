@@ -527,3 +527,11 @@ BASE_SCHEMA = {
     ],
 }
 PPR_FILE_NAME = "PPR_{product_id}_v{version}_{timestamp}.xlsx"
+DESCRIPTION_TEMPLATE = """
+**Description**
+{description}
+
+{summary}
+"""
+SUMMARY_TEMPLATE = """Summary:
+{summary}"""

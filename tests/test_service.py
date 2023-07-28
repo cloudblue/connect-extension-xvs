@@ -227,7 +227,6 @@ def test_create_ppr_base_on_another_ppr_version_w_config(
 
     assert new_ppr.id
     assert new_ppr.summary == {
-        'ResourceCategories': {},
         'Resources': {
             'created': ['PRD-000-000-000-00001'],
         },
@@ -281,7 +280,6 @@ def test_create_ppr_base_on_another_ppr_version_wo_config(
 
     assert new_ppr.id
     assert new_ppr.summary == {
-        'ResourceCategories': {},
         'Resources': {
             'created': ['PRD-000-000-000-00001'],
         },
@@ -338,7 +336,6 @@ def test_create_ppr_wo_ppr_version_w_config(
 
     assert new_ppr.id
     assert new_ppr.summary == {
-        'ResourceCategories': {},
         'Resources': {
             'created': ['PRD-000-000-000-00001'],
         },

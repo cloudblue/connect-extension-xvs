@@ -3,8 +3,10 @@ from datetime import datetime
 
 import pandas as pd
 from sqlalchemy import exists
+from sqlalchemy.exc import DBAPIError
+from sqlalchemy.sql import desc
 
-from connect_ext_ppr.constants import PPR_FILE_NAME
+from connect_ext_ppr.constants import DESCRIPTION_TEMPLATE, PPR_FILE_NAME
 from connect_ext_ppr.db import get_db_ctx_manager
 from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.configuration import Configuration
@@ -14,6 +16,8 @@ from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.replicas import Product
 from connect_ext_ppr.schemas import FileSchema, PPRVersionCreateSchema
 from connect_ext_ppr.utils import (
+    build_summary,
+    clean_empties_from_dict,
     create_ppr_to_media,
     get_base_workbook,
     get_configuration_from_media,
@@ -23,9 +27,6 @@ from connect_ext_ppr.utils import (
     validate_ppr_schema,
     workbook_to_dict,
 )
-
-from sqlalchemy.exc import DBAPIError
-from sqlalchemy.sql import desc
 
 
 def insert_product_from_listing(db, listing_data, logger):
@@ -242,6 +243,9 @@ def create_ppr(ppr, context, deployment, db, client, logger):
             summary.update({'errors': errors})
             status = PPRVersion.STATUS.failed
     try:
+        summary = clean_empties_from_dict(summary)
+        desc_summary = build_summary(summary)
+        description = ppr.description or file_data.name.rsplit('.', 1)[0]
         if db.query(exists().where(File.id == file_data.id)).scalar():
             raise ExtensionHttpError.EXT_002(
                 format_kwargs={'obj_id': file_data.id},
@@ -263,7 +267,7 @@ def create_ppr(ppr, context, deployment, db, client, logger):
             deployment=deployment.id,
             version=new_version,
             product_version=product_version,
-            description=ppr.description,
+            description=DESCRIPTION_TEMPLATE.format(description=description, summary=desc_summary),
             summary=summary,
             status=status,
             created_by=context.user_id,

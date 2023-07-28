@@ -14,6 +14,10 @@ def test_get_pprs(
     api_client,
 ):
     deployment = deployment_factory()
+    description = (
+        '\n**Description**\nWhat a lovely day\n\nSummary:\n* Resources\n'
+        '    * Created\n        * PRD-000-068-001-00001\n        * PRD-000-068-001-00002\n\n'
+    )
     ppr_file = file_factory(
         id='MFL-XXX',
         mime_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -39,7 +43,7 @@ def test_get_pprs(
             'Resources': {'created': ['PRD-000-068-001-00001', 'PRD-000-068-001-00002']},
             'ResourceCategories': {},
         },
-        description=None,
+        description=description,
         status='ready',
     )
     response = api_client.get(
@@ -82,8 +86,7 @@ def test_get_pprs(
         },
         'version': 2,
         'product_version': 5,
-        'description': "{'Resources': {'created': ['PRD-000-068-001-00001', "
-                       "'PRD-000-068-001-00002']}, 'ResourceCategories': {}}",
+        'description': description,
         'status': 'ready',
     }
     assert isinstance(events['created']['at'], str)
@@ -201,7 +204,7 @@ def test_upload_ppr(
             'description': 'What a lovely day',
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     data = response.json()
     events = data.pop('events')
     id = data.pop('id')
@@ -215,7 +218,7 @@ def test_upload_ppr(
             'size': 87657,
             'mime_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
-        'description': 'What a lovely day',
+        'description': '\n**Description**\nWhat a lovely day\n\nSummary:\n\n',
         'status': 'ready',
     }
     assert id[:6] == 'PPRFL-'
@@ -259,7 +262,7 @@ def test_upload_ppr_invalid(
             'description': 'What a lovely day',
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     data = response.json()
     events = data.pop('events')
     id = data.pop('id')
@@ -274,10 +277,9 @@ def test_upload_ppr_invalid(
             'mime_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
         'description': (
-            'What a lovely day\n'
-            '{\'errors\': ["\'Smth else\' is not one of [\'Name_EN\', '
-            "'Description_EN', 'ResourceCategory', 'MPN', 'UOM', "
-            '\'Measurable\']"]}'
+            "\n**Description**\nWhat a lovely day\n\nSummary:\n* Errors\n    * 'Smth else'"
+            " is not one of ['Name_EN', 'Description_EN', 'ResourceCategory', 'MPN', 'UOM',"
+            " 'Measurable']\n\n"
         ),
         'status': 'failed',
     }
@@ -324,7 +326,7 @@ def test_post_ppr_new_version(
             'description': 'What a lovely day',
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     data = response.json()
     events = data.pop('events')
     id = data.pop('id')
@@ -338,7 +340,7 @@ def test_post_ppr_new_version(
             'size': 87657,
             'mime_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
-        'description': 'What a lovely day',
+        'description': '\n**Description**\nWhat a lovely day\n\nSummary:\n\n',
         'status': 'ready',
     }
     assert id[:6] == 'PPRFL-'
@@ -479,7 +481,7 @@ def test_generate_ppr(
         installation=installation,
         json={},
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     data = response.json()
     events = data.pop('events')
     id = data.pop('id')
@@ -499,8 +501,8 @@ def test_generate_ppr(
         'version': 1,
         'product_version': 3,
         'description': (
-            "{'Resources': {'created': ['PRD-XXX-XXX-XXX-00001', 'PRD-XXX-XXX-XXX-00002']}, "
-            "'ResourceCategories': {}}"
+            f"\n**Description**\n{file_name.rsplit('.', 1)[0]}\n\nSummary:\n* Resources\n"
+            f"    * Created\n        * PRD-XXX-XXX-XXX-00001\n        * PRD-XXX-XXX-XXX-00002\n\n"
         ),
         'status': 'ready',
     }
@@ -560,7 +562,7 @@ def test_generate_ppr_no_configuration(
         installation=installation,
         json={},
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     data = response.json()
     events = data.pop('events')
     id = data.pop('id')
@@ -576,8 +578,8 @@ def test_generate_ppr_no_configuration(
         'version': 1,
         'product_version': 3,
         'description': (
-            "{'Resources': {'created': ['PRD-XXX-XXX-XXX-00001', 'PRD-XXX-XXX-XXX-00002']}, "
-            "'ResourceCategories': {}}"
+            f"\n**Description**\n{file_name.rsplit('.', 1)[0]}\n\nSummary:\n* Resources\n"
+            f"    * Created\n        * PRD-XXX-XXX-XXX-00001\n        * PRD-XXX-XXX-XXX-00002\n\n"
         ),
         'status': 'ready',
     }
