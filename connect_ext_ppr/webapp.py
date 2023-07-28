@@ -76,6 +76,7 @@ from connect_ext_ppr.utils import (
     get_deployment_by_id,
     get_deployment_request_schema,
     get_deployment_schema,
+    get_hub,
     get_hubs,
     get_instance_by_id,
     get_marketplace_schema,
@@ -136,6 +137,36 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             )
 
         return response_list
+
+    @router.get(
+        '/deployments/requests/{depl_req_id}',
+        summary='Deployment Request details',
+        response_model=DeploymentRequestSchema,
+    )
+    def get_deployment_request(
+        self,
+        depl_req_id: str,
+        db: VerboseBaseSession = Depends(get_db),
+        client: ConnectClient = Depends(get_installation_client),
+        installation: dict = Depends(get_installation),
+    ):
+        dr = (
+            db.query(DeploymentRequest).options(
+                joinedload(DeploymentRequest.ppr),
+                joinedload(DeploymentRequest.deployment),
+            )
+            .filter(
+                DeploymentRequest.deployment.has(account_id=installation['owner']['id']),
+                DeploymentRequest.id == depl_req_id)
+            .first()
+        )
+        if dr:
+            hub = get_hub(client, dr.deployment.hub_id)
+            return get_deployment_request_schema(dr, hub)
+        raise ExtensionHttpError.EXT_001(
+            format_kwargs={'obj_id': depl_req_id},
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
 
     @router.get(
         '/deployments/{deployment_id}',

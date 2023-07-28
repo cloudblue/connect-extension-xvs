@@ -114,6 +114,11 @@ def get_product_items(client, prd_id):
     return client.products[prd_id].items.all()
 
 
+@connect_error
+def get_hub(client, hub_id):
+    return client.hubs[hub_id].get()
+
+
 def namespaced_media_client(client, account_id, deployment_id, file_collection):
     return (
         client
