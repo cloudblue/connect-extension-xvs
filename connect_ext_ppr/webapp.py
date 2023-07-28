@@ -161,7 +161,8 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             )
 
         hub = get_client_object(client, 'hubs', dep.hub_id)
-        vendor = get_client_object(client, 'accounts', dep.product.owner_id)
+        product = get_client_object(client, 'products', dep.product.id)
+        vendor = product['owner']
         deployment = get_deployment_schema(dep, dep.product, vendor, hub)
         return deployment
 

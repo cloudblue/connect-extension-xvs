@@ -106,9 +106,11 @@ def test_get_deployment(
                 'name': 'Hub for the best',
             },
             {
-                'id': 'VA-000-000',
-                'name': 'Vendor account 00 for El Loro',
-                'icon': '/media/VA-000-000/media/icon.png',
+                'owner': {
+                    'id': 'VA-000-000',
+                    'name': 'Vendor account 00 for El Loro',
+                    'icon': '/media/VA-000-000/media/icon.png',
+                },
             },
         ],
     )
