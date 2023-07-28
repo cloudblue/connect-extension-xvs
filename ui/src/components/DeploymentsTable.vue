@@ -92,6 +92,7 @@ import {
   getDeployments,
 } from '@/utils';
 
+
 const prepareRow = template({
   id: ['id'],
   productId: ['product', 'id'],
@@ -114,7 +115,8 @@ export default {
     Pic,
     cStatus,
   },
-    data() {
+
+  data() {
     return {
       localValue: null,
       headers: [{
@@ -146,8 +148,7 @@ export default {
         text: 'status',
         value: 'status',
         align: 'left',
-      },
-    ],
+      }],
     };
   },
 

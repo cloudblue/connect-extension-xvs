@@ -14,6 +14,7 @@
 import cView from '~components/cView.vue';
 import DeploymentsTable from '~components/DeploymentsTable.vue';
 
+
 export default {
   components: {
     cView,

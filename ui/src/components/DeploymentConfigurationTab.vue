@@ -14,7 +14,10 @@ c-data-table(
           v-if="header.value === 'file'",
           :key="header.value",
         )
-          a.text-decoration-none(@click="downloadFile(row.fileLocation)", download) {{ row.fileName }}
+          a.text-decoration-none(
+            @click="downloadFile(row.fileLocation)",
+            download,
+          ) {{ row.fileName }}
           c-chip._ml_8.color_border-radius(
             text="Active",
             color="orange",
@@ -72,8 +75,8 @@ import {
 } from '@/utils';
 
 import {
-  getFileSize,
   downloader,
+  getFileSize,
 } from '~helpers';
 
 
@@ -95,10 +98,12 @@ export default {
     cDataTable,
     DetailItem,
   },
+
   props: {
     deploymentId: String,
     accountId: String,
   },
+
   data() {
     return {
       localValue: null,
@@ -136,14 +141,14 @@ export default {
   methods: {
     prepareRow,
     getFileSize,
-    downloadFile(url) {
+    downloadFile() {
       const downloadUrl = `https://vendor.cnct.info/public/v1/media/folders/accounts/${this.accountId}/${this.deploymentId}/pprs/files/MFL-9618-6980-7316`;
 
       downloader({ url: downloadUrl });
     },
   },
 
-  async created() {
+  created() {
     getDeploymentConfigurations(this.deploymentId).then(data => {
       this.localValue = data;
     });

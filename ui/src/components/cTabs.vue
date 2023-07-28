@@ -95,7 +95,7 @@ export default {
   },
 
   created() {
-    if (!this.localCurrentTab && this.tabs.length) this.localCurrentTab = this.tabs[0];
+    if (!this.localCurrentTab && this.tabs.length) [this.localCurrentTab] = this.tabs;
   },
 };
 </script>

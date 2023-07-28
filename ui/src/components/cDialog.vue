@@ -127,7 +127,6 @@ import {
   equals,
   find,
   findIndex,
-  head,
   ifElse,
   inc,
   map,
@@ -149,20 +148,15 @@ import {
 import cAlert from '~components/cAlert.vue';
 import cButton from '~components/cButton.vue';
 import cIcon from '~components/cIcon.vue';
-import cTooltip from '~components/cTooltip.vue';
 
 
 import {
-  alt,
   arr,
-  debounce,
   isNotNilOrEmpty,
   kebabCase,
   lessThan,
-  obj,
   pathOrPath,
   pathTo,
-  propOrProp,
   propTo,
   template,
 } from '~utils';
@@ -189,7 +183,6 @@ export default {
   ],
 
   components: {
-    cTooltip,
     cAlert,
     cIcon,
     cButton,
