@@ -63,7 +63,7 @@ def test_add_mutiples_deployments(
         new_dep = dbsession.query(Deployment).filter_by(hub_id=hub_id).first()
         assert new_dep is not None
         assert dbsession.query(MarketplaceConfiguration).filter_by(
-            deployment=new_dep.id,
+            deployment_id=new_dep.id,
             marketplace=marketplace_id,
         ).filter(MarketplaceConfiguration.id.is_not(null())).count() == 1
 

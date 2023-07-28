@@ -17,23 +17,19 @@ from connect_ext_ppr.tasks_manager import (
 )
 
 
-@pytest.mark.asyncio
-async def test_apply_ppr_and_delegate_to_marketplaces():
-    assert await apply_ppr_and_delegate_to_marketplaces()
+def test_apply_ppr_and_delegate_to_marketplaces():
+    assert apply_ppr_and_delegate_to_marketplaces()
 
 
-@pytest.mark.asyncio
-async def test_delegate_to_l2():
-    assert await delegate_to_l2()
+def test_delegate_to_l2():
+    assert delegate_to_l2()
 
 
-@pytest.mark.asyncio
-async def test_validate_ppr():
-    assert await validate_ppr()
+def test_validate_ppr():
+    assert validate_ppr()
 
 
-@pytest.mark.asyncio
-async def test_main_process(
+def test_main_process(
     dbsession,
     deployment_factory,
     deployment_request_factory,
@@ -46,7 +42,7 @@ async def test_main_process(
     task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
     task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
-    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
+    assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(status=DeploymentStatusChoices.synced).count() == 1
     assert dbsession.query(DeploymentRequest).filter_by(
@@ -59,8 +55,7 @@ async def test_main_process(
     ).count() == 3
 
 
-@pytest.mark.asyncio
-async def test_main_process_wo_l2_delegation(
+def test_main_process_wo_l2_delegation(
     dbsession,
     deployment_factory,
     deployment_request_factory,
@@ -72,7 +67,7 @@ async def test_main_process_wo_l2_delegation(
     dr = deployment_request_factory(deployment=dep, delegate_l2=False, ppr=ppr)
     task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
-    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
+    assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -87,8 +82,7 @@ async def test_main_process_wo_l2_delegation(
     ).count() == 2
 
 
-@pytest.mark.asyncio
-async def test_main_process_deployment_w_new_ppr_version(
+def test_main_process_deployment_w_new_ppr_version(
     dbsession,
     file_factory,
     deployment_factory,
@@ -96,16 +90,16 @@ async def test_main_process_deployment_w_new_ppr_version(
     task_factory,
     ppr_version_factory,
 ):
-    file = file_factory(id='MFL-123')
+    ppr_file = file_factory(id='MFL-123')
     dep = deployment_factory()
     dr_ppr = ppr_version_factory(
-        id='PPR-1234', file=file.id, product_version=1, deployment=dep)
+        id='PPR-1234', file=ppr_file.id, product_version=1, deployment=dep)
     ppr_version_factory(id='PPR-123', product_version=2, deployment=dep)
     dr = deployment_request_factory(deployment=dep, delegate_l2=False, ppr=dr_ppr)
     task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
     task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
-    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
+    assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -120,7 +114,6 @@ async def test_main_process_deployment_w_new_ppr_version(
     ).count() == 3
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('type_function_to_mock', 'done_tasks', 'tasks_w_errors', 'pending_tasks'),
     (
@@ -129,7 +122,7 @@ async def test_main_process_deployment_w_new_ppr_version(
         (TaskTypesChoices.delegate_to_l2, 2, 1, 0),
     ),
 )
-async def test_main_process_ends_w_error(
+def test_main_process_ends_w_error(
     dbsession,
     deployment_factory,
     deployment_request_factory,
@@ -148,17 +141,14 @@ async def test_main_process_ends_w_error(
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
     task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
 
-    def mock_dict_get(key):
-        if key == type_function_to_mock:
-            return mocker.AsyncMock(return_value=False)
-        return mocker.AsyncMock(return_value=True)
+    my_mock = mocker.Mock()
 
-    my_mock = mocker.AsyncMock()
-    my_mock.get = mock_dict_get
-    import connect_ext_ppr
-    connect_ext_ppr.tasks_manager.TASK_PER_TYPE = my_mock
+    def mock_get(key):
+        return lambda: key != type_function_to_mock
+    my_mock.get = mock_get
 
-    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.error
+    mocker.patch('connect_ext_ppr.tasks_manager.TASK_PER_TYPE', my_mock)
+    assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.error
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -184,7 +174,6 @@ async def test_main_process_ends_w_error(
     ).count() == pending_tasks
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('task_statuses', 'done_tasks', 'aborted_tasks'),
     (
@@ -205,7 +194,7 @@ async def test_main_process_ends_w_error(
         ),
     ),
 )
-async def test_main_process_w_aborted_tasks(
+def test_main_process_w_aborted_tasks(
     dbsession,
     deployment_factory,
     deployment_request_factory,
@@ -254,7 +243,7 @@ async def test_main_process_w_aborted_tasks(
 
     dbsession.refresh = change_dr_status
 
-    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.aborted
+    assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.aborted
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -271,8 +260,7 @@ async def test_main_process_w_aborted_tasks(
     ).count() == aborted_tasks
 
 
-@pytest.mark.asyncio
-async def test_main_process_w_aborted_deployment_request(
+def test_main_process_w_aborted_deployment_request(
     dbsession,
     deployment_factory,
     deployment_request_factory,
@@ -311,7 +299,7 @@ async def test_main_process_w_aborted_deployment_request(
         status=TasksStatusChoices.aborted,
     )
 
-    assert await main_process(dr.id, {}) == DeploymentRequestStatusChoices.aborted
+    assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.aborted
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -323,3 +311,66 @@ async def test_main_process_w_aborted_deployment_request(
     assert dbsession.query(Task).filter(
         Task.status == TasksStatusChoices.aborted,
     ).count() == 3
+
+
+@pytest.mark.parametrize(
+    ('type_function_to_mock', 'done_tasks', 'tasks_w_errors', 'pending_tasks'),
+    (
+        (TaskTypesChoices.ppr_validation, 0, 1, 2),
+        (TaskTypesChoices.apply_and_delegate, 1, 1, 1),
+        (TaskTypesChoices.delegate_to_l2, 2, 1, 0),
+    ),
+)
+def test_main_process_ends_w_task_exception(
+    dbsession,
+    deployment_factory,
+    deployment_request_factory,
+    done_tasks,
+    tasks_w_errors,
+    pending_tasks,
+    type_function_to_mock,
+    mocker,
+    task_factory,
+    ppr_version_factory,
+):
+    dep = deployment_factory()
+    ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep, version=1)
+    dr = deployment_request_factory(deployment=dep, delegate_l2=True, ppr=ppr)
+    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
+    task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
+    task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
+
+    my_mock = mocker.Mock()
+
+    def mock_get(key):
+        if key == type_function_to_mock:
+            raise Exception('Unexpected Error')
+        return lambda: True
+
+    my_mock.get = mock_get
+
+    mocker.patch('connect_ext_ppr.tasks_manager.TASK_PER_TYPE', my_mock)
+    assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.error
+
+    assert dbsession.query(Deployment).filter_by(
+        status=DeploymentStatusChoices.pending,
+    ).count() == 1
+    assert dbsession.query(DeploymentRequest).filter_by(
+        status=DeploymentRequestStatusChoices.error,
+    ).count() == 1
+
+    assert dbsession.query(Task).filter(
+        Task.status == TasksStatusChoices.done,
+        Task.started_at.is_not(null()),
+        Task.finished_at.is_not(null()),
+    ).count() == done_tasks
+    assert dbsession.query(Task).filter(
+        Task.status == TasksStatusChoices.error,
+        Task.started_at.is_not(null()),
+        Task.finished_at.is_not(null()),
+    ).count() == tasks_w_errors
+    assert dbsession.query(Task).filter(
+        Task.status == TasksStatusChoices.pending,
+        Task.started_at.is_(null()),
+        Task.finished_at.is_(null()),
+    ).count() == pending_tasks

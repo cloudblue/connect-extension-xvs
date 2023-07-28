@@ -185,7 +185,8 @@ def task_factory(dbsession, deployment_request_factory):
         if not deployment_request:
             deployment_request = deployment_request_factory()
 
-        task_id = f'TSK-{deployment_request.id[4:]}-{task_index}'
+        _, suffix = deployment_request.id.split('-', 1)
+        task_id = f'TSK-{suffix}-{task_index}'
         task = Task(
             id=task_id,
             deployment_request=deployment_request.id,
@@ -266,10 +267,10 @@ def file_factory(dbsession, media_response):
 
 
 @pytest.fixture
-def marketplace_config_factory(dbsession, ppr_version_factory):
+def marketplace_config_factory(dbsession):
     def _build_mc(deployment, marketplace_id, ppr_id=None):
         mp = MarketplaceConfiguration(
-            deployment=deployment.id,
+            deployment_id=deployment.id,
             marketplace=marketplace_id,
             ppr_id=ppr_id,
         )

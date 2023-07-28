@@ -4,10 +4,13 @@
 # All rights reserved.
 #
 from datetime import datetime
-from typing import Dict, Optional, Union
 
 from pydantic import BaseModel, Field, root_validator
+from fastapi import status
 
+from typing import Dict, List, Optional, Union
+
+from connect_ext_ppr.errors import ExtensionValidationError
 from connect_ext_ppr.models.enums import (
     ConfigurationStateChoices,
     DeploymentRequestStatusChoices,
@@ -53,6 +56,21 @@ class NonNullSchema(BaseModel):
         events = values.get('events')
         if events:
             values['events'] = clean_empties_from_dict(events)
+        return values
+
+
+class PrimaryKeyReference(BaseModel):
+    id: str
+
+
+class ChoicesSchema(BaseModel):
+    choices: Optional[List[PrimaryKeyReference]]
+    all: bool
+
+    @root_validator
+    def check_choices_exists_if_all_is_false(cls, values):
+        if not values.get('all') and not values.get('choices'):
+            raise ExtensionValidationError.VAL_003(status_code=status.HTTP_400_BAD_REQUEST)
         return values
 
 
@@ -187,3 +205,11 @@ class TaskSchema(NonNullSchema):
     events: Events
     status: TasksStatusChoices
     error_message: Optional[str]
+
+
+class DeploymentRequestCreateSchema(NonNullSchema):
+    deployment: PrimaryKeyReference
+    ppr: PrimaryKeyReference
+    manually: bool
+    delegate_l2: Optional[bool]
+    marketplaces: ChoicesSchema
