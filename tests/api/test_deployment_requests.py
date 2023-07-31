@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_list_deployments_requests(
     dbsession,
     mocker,
@@ -132,6 +135,86 @@ def test_get_deployment_request_not_found(
 
     response = api_client.get(
         f'/api/deployments/requests/{bad_dr.id}',
+        installation=installation,
+    )
+    error = response.json()
+
+    assert response.status_code == 404
+    assert error == {
+        'error_code': 'EXT_001', 'errors': [f'Object `{bad_dr.id}` not found.'],
+    }
+
+
+@pytest.mark.parametrize(
+    'status,error',
+    (('pending', None), ('error', 'An Error message!')),
+)
+def test_list_deployment_request_tasks(
+    dbsession,
+    mocker,
+    deployment_factory,
+    deployment_request_factory,
+    installation,
+    api_client,
+    task_factory,
+    status,
+    error,
+):
+    hub_data = {
+        'id': 'HB-0000-0001',
+        'name': 'Another Hub for the best',
+    }
+    dep1 = deployment_factory(account_id=installation['owner']['id'], hub_id=hub_data['id'])
+    dep2 = deployment_factory(account_id='PA-123-456')
+
+    dr1 = deployment_request_factory(deployment=dep1)
+    deployment_request_factory(deployment=dep1)
+    deployment_request_factory(deployment=dep2)
+
+    t1 = task_factory(deployment_request=dr1, status=status, error_message=error)
+    t2 = task_factory(deployment_request=dr1, task_index='002', status=status, error_message=error)
+
+    response = api_client.get(
+        f'/api/deployments/requests/{dr1.id}/tasks',
+        installation=installation,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == 2
+
+    for response_item, task, idx in zip(response.json(), [t1, t2], ['001', '002']):
+        events = response_item.pop('events')
+        error_message = response_item.pop('error_message', None)
+        assert response_item['id'].endswith(idx)
+        assert response_item == {
+            'id': task.id,
+            'title': task.title,
+            'status': task.status,
+        }
+        assert error_message == error
+        assert list(events.keys()) == ['created']
+        assert list(events['created'].keys()) == ['at', 'by']
+
+
+def test_list_deployment_request_tasks_not_found(
+    dbsession,
+    deployment_factory,
+    deployment_request_factory,
+    installation,
+    api_client,
+    task_factory,
+):
+
+    dep1 = deployment_factory(account_id=installation['owner']['id'])
+    dep2 = deployment_factory(account_id='PA-123-456')
+
+    dr1 = deployment_request_factory(deployment=dep1)
+    bad_dr = deployment_request_factory(deployment=dep2)
+
+    task_factory(deployment_request=dr1)
+    task_factory(deployment_request=dr1, task_index='002')
+
+    response = api_client.get(
+        f'/api/deployments/requests/{bad_dr.id}/tasks',
         installation=installation,
     )
     error = response.json()

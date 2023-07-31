@@ -14,10 +14,9 @@ from connect_ext_ppr.models.deployment import Deployment, MarketplaceConfigurati
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.replicas import Product
-from connect_ext_ppr.schemas import FileSchema, PPRVersionCreateSchema
+from connect_ext_ppr.schemas import clean_empties_from_dict, FileSchema, PPRVersionCreateSchema
 from connect_ext_ppr.utils import (
     build_summary,
-    clean_empties_from_dict,
     create_ppr_to_media,
     get_base_workbook,
     get_configuration_from_media,

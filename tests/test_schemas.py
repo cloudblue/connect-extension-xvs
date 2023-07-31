@@ -12,6 +12,7 @@ from connect_ext_ppr.schemas import (
     ConfigurationReferenceSchema,
     ConfigurationSchema,
     DeploymentSchema,
+    Events,
     FileReferenceSchema,
     FileSchema,
     HubSchema,
@@ -32,11 +33,19 @@ def test_remove_null_values_from_representation():
         inner: MyInnerSchema
         name: Optional[str]
         version: int
+        events: Events
 
     serializer = MyOuterSchema(
         id='XXX',
         inner=MyInnerSchema(bar='Some'),
         version=10,
+        events={
+            'created': {
+                'at': None,
+                'by': 'Some User',
+            },
+            'updated': None,
+        },
     )
 
     assert serializer.dict() == {
@@ -45,6 +54,11 @@ def test_remove_null_values_from_representation():
             "bar": "Some",
         },
         "version": 10,
+        "events": {
+            "created": {
+                "by": "Some User",
+            },
+        },
     }
 
 
