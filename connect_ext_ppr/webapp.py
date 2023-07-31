@@ -232,6 +232,33 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         return deployment
 
     @router.get(
+        '/deployments/{deployment_id}/requests',
+        summary='List all deployment requests in scope of a deployment',
+        response_model=List[DeploymentRequestSchema],
+    )
+    def list_requests_for_deployment(
+        self,
+        deployment_id: str,
+        client: ConnectClient = Depends(get_installation_client),
+        db: VerboseBaseSession = Depends(get_db),
+        installation: dict = Depends(get_installation),
+    ):
+        dep = get_deployment_by_id(deployment_id, db, installation)
+
+        hub = get_hub(client, dep.hub_id)
+
+        response_list = []
+        qs = (
+            db
+            .query(DeploymentRequest)
+            .filter_by(deployment_id=deployment_id)
+            .order_by(desc(DeploymentRequest.id))
+        )
+        for dr in qs:
+            response_list.append(get_deployment_request_schema(dr, hub))
+        return response_list
+
+    @router.get(
         '/deployments',
         summary='List all available deployments',
         response_model=List[DeploymentSchema],
