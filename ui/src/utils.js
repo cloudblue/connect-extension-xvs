@@ -16,6 +16,12 @@ export const getDeployment = (id) => fetch(`/api/deployments/${id}`).then((respo
 
 export const getDeploymentConfigurations = (id) => fetch(`/api/deployments/${id}/configurations`).then((response) => response.json());
 
+export const createDeploymentConfigurations = (id, data) => fetch(`/api/deployments/${id}/configurations`, {
+  method: 'POST',
+  body: JSON.stringify(data),
+  headers: { 'Content-Type': 'application/json' },
+}).then((response) => response.json());
+
 export const updateSettings = (settings) => fetch('/api/settings', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },

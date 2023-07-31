@@ -320,8 +320,6 @@ export const getFileSize = (bytes = 0, options = {}) => filesize(
 export const isNotEmptyString = allPass([complement(isEmpty), is(String)]);
 
 export const downloader = options => {
-  // eslint-disable-next-line no-console
-  console.log('options', options);
   const link = document.createElement('a');
   document.body.appendChild(link);
 

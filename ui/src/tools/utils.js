@@ -42,6 +42,7 @@ import {
   over,
   path,
   pathEq,
+  pathOr,
   pipe,
   prop,
   propEq,
@@ -50,6 +51,7 @@ import {
   repeat,
   replace,
   split,
+  startsWith,
   tail,
   times,
   toLower,
@@ -968,3 +970,47 @@ export const isBright = pipe(
   convert.hex.rgb,
   ([r, g, b]) => r * 0.299 + g * 0.587 + b * 0.114 > 180,
 );
+
+const EXPECTED_ERROR_PATHS = [
+  ['message'],
+  ['errors'],
+  ['text', 'message'],
+  ['text', 'errors'],
+  ['text', 'error'],
+  ['text', 'error', 'message'],
+];
+
+/**
+ * Returns string message of a given error.
+ *
+ * @function
+ * @param {object|string} error
+ * @param {array} errorList
+ * @returns {string}
+ */
+const getErrorText = error => pipe(
+  reduce((acc, p) => pathOr(acc, p, error), error),
+  nest,
+  flatten,
+  map(when(is(Object), always('Something went wrong'))),
+  join('\n'),
+)(EXPECTED_ERROR_PATHS);
+
+/**
+ * Returns error message.
+ * If status code is `5xx` always returns `Server error`.
+ *
+ * @function
+ * @param {object} error
+ * @returns {string} Error text
+ */
+export const textError = ifElse(
+  pipe(
+    prop('status'),
+    toString,
+    startsWith('5'),
+  ),
+  always('Server error'),
+  getErrorText,
+);
+

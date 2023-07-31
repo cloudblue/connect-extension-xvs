@@ -5,6 +5,7 @@
     v-bind="$attrs"
     :loading="localUpdating"
     :show-placeholder="isPlaceholderShown"
+    :manageable="showManagePanel"
     :headers.sync="localHeaders"
     :value="items"
     :total-items="localTotal"
@@ -199,6 +200,11 @@ export default {
     fixedFirstColumn: {
       type: Boolean,
       default: null,
+    },
+
+    showManagePanel: {
+      type: Boolean,
+      default: false,
     },
   },
 
