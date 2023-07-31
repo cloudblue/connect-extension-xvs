@@ -16,6 +16,7 @@ from connect_ext_ppr.utils import (
     process_ppr,
     process_resource_categories,
     process_resources,
+    validate_configuration_schema,
     validate_ppr_schema,
     workbook_to_dict,
 )
@@ -279,3 +280,69 @@ def test_process_resource_categories(ppr_workbook, configuration_json, product_f
         ],
     ]
     assert summary == {}
+
+
+def test_validate_configuration(configuration_json):
+    result = validate_configuration_schema(configuration_json, 'PRD-XXX-XXX-XXX')
+    assert result is None
+
+
+def test_validate_configuration_minimum_requiered():
+    configuration_json = {
+        'hierarchical_files_data': {
+            'PRD-XXX-XXX-XXX': {
+                'product_level': {
+                    'ResourceCategories': {
+                        'Name_en': 'Alice',
+                    },
+                },
+            },
+        },
+    }
+    result = validate_configuration_schema(configuration_json, 'PRD-XXX-XXX-XXX')
+    assert result is None
+
+
+def test_validate_configuration_no_hierarchical_files_data(configuration_json):
+    configuration_json.pop('hierarchical_files_data')
+    result = validate_configuration_schema(configuration_json, 'PRD-XXX-XXX-XXX')
+    assert result == ["'hierarchical_files_data' is a required property"]
+
+
+def test_validate_configuration_no_product(configuration_json):
+    result = validate_configuration_schema(configuration_json, 'PRD-YYY-YYY-YYY')
+    assert result == ["'PRD-YYY-YYY-YYY' is a required property"]
+
+
+def test_validate_configuration_no_product_level(configuration_json):
+    configuration_json['hierarchical_files_data']['PRD-XXX-XXX-XXX'].pop('product_level')
+    result = validate_configuration_schema(configuration_json, 'PRD-XXX-XXX-XXX')
+    assert result == ["'product_level' is a required property"]
+
+
+def test_validate_configuration_no_resource_categories(configuration_json):
+    product = configuration_json['hierarchical_files_data']['PRD-XXX-XXX-XXX']
+    product['product_level'].pop('ResourceCategories')
+    result = validate_configuration_schema(configuration_json, 'PRD-XXX-XXX-XXX')
+    assert result == ["'ResourceCategories' is a required property"]
+
+
+def test_validate_configuration_no_name_en(configuration_json):
+    product = configuration_json['hierarchical_files_data']['PRD-XXX-XXX-XXX']
+    product['product_level']['ResourceCategories'].pop('Name_en')
+    result = validate_configuration_schema(configuration_json, 'PRD-XXX-XXX-XXX')
+    assert result == [
+        "{'Description_en': 'A Chat bot', 'Description_de': 'A Chat bot', "
+        "'Description_es': 'A Chat bot', 'Description_fr': 'A Chat bot', "
+        "'Description_it': 'A Chat bot', 'Description_nl': 'A Chat bot', "
+        "'Description_pt': 'A Chat bot', 'Description_tr': 'A Chat bot'} is not valid under any of "
+        "the given schemas", "'Name_EN' is a required property", "'Name_en' is a required property",
+    ]
+
+
+def test_validate_configuration_capital_name_en(configuration_json):
+    product = configuration_json['hierarchical_files_data']['PRD-XXX-XXX-XXX']
+    name_en = product['product_level']['ResourceCategories'].pop('Name_en')
+    product['product_level']['ResourceCategories']['Name_EN'] = name_en
+    result = validate_configuration_schema(configuration_json, 'PRD-XXX-XXX-XXX')
+    assert result is None

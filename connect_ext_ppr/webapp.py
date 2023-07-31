@@ -34,7 +34,7 @@ from connect_ext_ppr.db import (
     get_db,
     VerboseBaseSession,
 )
-from connect_ext_ppr.errors import ExtensionHttpError
+from connect_ext_ppr.errors import ExtensionHttpError, ExtensionValidationError
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import (
     Deployment,
@@ -45,7 +45,7 @@ from connect_ext_ppr.models.enums import ConfigurationStateChoices, DeploymentSt
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.task import Task
-from connect_ext_ppr.service import add_deployments, create_ppr
+from connect_ext_ppr.service import add_deployments, create_ppr, validate_configuration
 from connect_ext_ppr.models.replicas import Product
 from connect_ext_ppr.schemas import (
     BatchProcessResponseSchema,
@@ -323,15 +323,21 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         self,
         configuration: ConfigurationCreateSchema,
         deployment_id: str,
+        client: ConnectClient = Depends(get_installation_client),
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
         request: Request = None,
     ):
-        get_deployment_by_id(deployment_id, db, installation)
+        deployment = get_deployment_by_id(deployment_id, db, installation)
         file_data = configuration.file
         if db.query(exists().where(File.id == file_data.id)).scalar():
             raise ExtensionHttpError.EXT_002(
                 format_kwargs={'obj_id': file_data.id},
+            )
+        errors = validate_configuration(client, deployment, file_data)
+        if errors:
+            raise ExtensionValidationError.VAL_000(
+                format_kwargs={'validation_error': errors},
             )
 
         try:
