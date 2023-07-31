@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 from sqlalchemy import null
 
@@ -734,3 +736,77 @@ def test_create_deployment_request_w_open_request(
     assert response.json()['errors'] == [
         'Cannot create a new request, an open one already exists.',
     ]
+
+
+def test_list_deployment_request_marketplaces(
+    deployment_factory,
+    deployment_request_factory,
+    installation,
+    api_client,
+    marketplace,
+    marketplace_config_factory,
+    mocker,
+    ppr_version_factory,
+):
+    m1 = marketplace
+    m2 = copy.deepcopy(marketplace)
+    m2['id'] = 'MP-123-123'
+    marketplaces = [m1, m2]
+
+    mocker.patch(
+        'connect_ext_ppr.webapp.get_marketplaces',
+        return_value=marketplaces,
+    )
+    dep1 = deployment_factory(account_id=installation['owner']['id'])
+    ppr = ppr_version_factory(deployment=dep1)
+
+    dr1 = deployment_request_factory(deployment=dep1)
+
+    marketplace_config_factory(deployment_request=dr1, marketplace_id=m1['id'])
+    marketplace_config_factory(deployment_request=dr1, marketplace_id=m2['id'], ppr_id=ppr.id)
+
+    marketplace_config_factory(deployment=dep1, marketplace_id=m1['id'])
+    marketplace_config_factory(deployment=dep1, marketplace_id=m2['id'])
+    marketplace_config_factory(deployment=dep1, marketplace_id='MP-124-114')
+
+    expected_response = [
+        {
+            'id': m['id'],
+            'name': m['name'],
+            'icon': m['icon'],
+        } for m in marketplaces
+    ]
+    expected_response[1]['ppr'] = {'id': ppr.id, 'version': ppr.version}
+
+    response = api_client.get(
+        f'/api/deployments/requests/{dr1.id}/marketplaces',
+        installation=installation,
+    )
+
+    assert response.status_code == 200
+    assert response.json() == expected_response
+
+
+def test_list_deployment_request_marketplaces_not_found(
+    deployment_factory,
+    deployment_request_factory,
+    installation,
+    api_client,
+):
+    dep1 = deployment_factory(account_id=installation['owner']['id'])
+    dep2 = deployment_factory(account_id='PA-098-890')
+
+    deployment_request_factory(deployment=dep1)
+    dr2 = deployment_request_factory(deployment=dep2)
+
+    response = api_client.get(
+        f'/api/deployments/requests/{dr2.id}/marketplaces',
+        installation=installation,
+    )
+
+    error = response.json()
+
+    assert response.status_code == 404
+    assert error == {
+        'error_code': 'EXT_001', 'errors': [f'Object `{dr2.id}` not found.'],
+    }

@@ -23,7 +23,7 @@ from connect_ext_ppr.constants import (
 )
 from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.enums import MimeTypeChoices
-from connect_ext_ppr.models.deployment import Deployment
+from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
 from connect_ext_ppr.schemas import (
     ConfigurationReferenceSchema,
     ConfigurationSchema,
@@ -372,6 +372,24 @@ def get_ppr_version_schema(ppr, file, conf):
         },
         status=ppr.status,
     )
+
+
+def get_deployment_request_by_id(dr_id, db, installation):
+    """Return deployment request or raise an error that it is not found"""
+    dr = (
+        db.query(DeploymentRequest)
+        .filter(
+            DeploymentRequest.deployment.has(account_id=installation['owner']['id']),
+            DeploymentRequest.id == dr_id,
+        )
+        .one_or_none()
+    )
+    if dr is None:
+        raise ExtensionHttpError.EXT_001(
+            format_kwargs={'obj_id': dr_id},
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    return dr
 
 
 def get_deployment_by_id(deployment_id, db, installation):
