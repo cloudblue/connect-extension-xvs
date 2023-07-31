@@ -14,16 +14,16 @@ from connect_ext_ppr.models.deployment import Deployment, MarketplaceConfigurati
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.replicas import Product
-from connect_ext_ppr.schemas import FileSchema, PPRVersionCreateSchema
+from connect_ext_ppr.schemas import clean_empties_from_dict, FileSchema, PPRVersionCreateSchema
 from connect_ext_ppr.utils import (
     build_summary,
-    clean_empties_from_dict,
     create_ppr_to_media,
     get_base_workbook,
     get_configuration_from_media,
     get_ppr_from_media,
     get_product_items,
     process_ppr,
+    validate_configuration_schema,
     validate_ppr_schema,
     workbook_to_dict,
 )
@@ -213,11 +213,11 @@ def create_ppr(ppr, context, deployment, db, client, logger):
             ws.to_excel(writer, ws.name, index=False)
 
         file_obj = open(file.name, 'rb')
+        writer.book.save(file_obj.name)
+
         file_obj.seek(0, os.SEEK_END)
         file_size = file_obj.tell()
         file_obj.seek(0)
-        writer.book.save(file_obj.name)
-
         file_name = PPR_FILE_NAME.format(
             product_id=deployment.product_id,
             version=new_version,
@@ -286,3 +286,8 @@ def create_ppr(ppr, context, deployment, db, client, logger):
         logger.error(ex)
         db.rollback()
         raise ExtensionHttpError.EXT_003()
+
+
+def validate_configuration(client, deployment, file_data):
+    data = get_configuration_from_media(client, deployment.account_id, deployment.id, file_data.id)
+    return validate_configuration_schema(data, deployment.product_id)

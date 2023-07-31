@@ -231,13 +231,17 @@ def test_create_ppr_base_on_another_ppr_version_w_config(
             'created': ['PRD-000-000-000-00001'],
         },
     }
-    file_name = dbsession.query(File.name).filter_by(id='MFL-ZZZ').limit(1).scalar()
+    file_ = (
+        dbsession.query(File)
+        .filter_by(id='MFL-ZZZ').limit(1).scalar()
+    )
     assert new_ppr.file == media_response['id']
     assert new_ppr.version == ppr_version.version + 1
     assert new_ppr.configuration == conf.id
     assert new_ppr.status == 'ready'
-    assert file_name.startswith(f"PPR_{deployment.product_id}_v{new_ppr.version}_")
-    assert file_name.endswith(".xlsx")
+    assert file_.name.startswith(f"PPR_{deployment.product_id}_v{new_ppr.version}_")
+    assert file_.name.endswith(".xlsx")
+    assert 10000 < file_.size < 20000
 
 
 def test_create_ppr_base_on_another_ppr_version_wo_config(

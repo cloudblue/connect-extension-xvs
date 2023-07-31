@@ -90,12 +90,19 @@ def test_get_configuration_not_found(
 
 
 def test_post_configuration(
-    deployment,
+    deployment_factory,
     media_response,
+    configuration_json,
     installation,
     api_client,
     dbsession,
+    mocker,
 ):
+    deployment = deployment_factory(product_id='PRD-XXX-XXX-XXX')
+    mocker.patch(
+        'connect_ext_ppr.service.get_configuration_from_media',
+        return_value=configuration_json,
+    )
     response = api_client.post(
         f'/api/deployments/{deployment.id}/configurations',
         installation=installation,
@@ -144,13 +151,20 @@ def test_post_configuration(
 
 
 def test_post_configuration_deactivate_previous(
-    deployment,
+    deployment_factory,
     file,
     configuration,
+    configuration_json,
     installation,
     api_client,
     dbsession,
+    mocker,
 ):
+    deployment = deployment_factory(product_id='PRD-XXX-XXX-XXX')
+    mocker.patch(
+        'connect_ext_ppr.service.get_configuration_from_media',
+        return_value=configuration_json,
+    )
     response = api_client.post(
         f'/api/deployments/{deployment.id}/configurations',
         installation=installation,
@@ -234,6 +248,48 @@ def test_post_configuration_file_already_exists(
         'error_code': 'EXT_002',
         'errors': [
             f'Object `{file.id}` already exists, cannot create a new one.',
+        ],
+    }
+
+
+def test_post_configuration_invalid(
+    deployment_factory,
+    media_response,
+    configuration_json,
+    installation,
+    api_client,
+    dbsession,
+    mocker,
+):
+    deployment = deployment_factory(product_id='PRD-YYY-YYY-YYY')
+    mocker.patch(
+        'connect_ext_ppr.service.get_configuration_from_media',
+        return_value=configuration_json,
+    )
+    response = api_client.post(
+        f'/api/deployments/{deployment.id}/configurations',
+        installation=installation,
+        json={
+            'file': {
+                'id': media_response['id'],
+                'name': media_response['name'],
+                'location': media_response['file'],
+                'size': media_response['size'],
+                'mime_type': media_response['mime_type'],
+            },
+        },
+        headers={
+            "connect-auth": (
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1Ijp7Im9pZCI6IlNVLTI5NS02ODktN"
+                "jI4IiwibmFtZSI6Ik5lcmkifX0.U_T6vuXnD293hcWNTJZ9QBViteNv8JXUL2gM0BezQ-k"
+            ),
+        },
+    )
+    assert response.status_code == 400
+    assert response.json() == {
+        'error_code': 'VAL_000',
+        'errors': [
+            '["\'PRD-YYY-YYY-YYY\' is a required property"]',
         ],
     }
 
