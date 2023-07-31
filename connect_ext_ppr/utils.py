@@ -15,7 +15,12 @@ from jsonschema.exceptions import _Error
 import jwt
 import pandas as pd
 
-from connect_ext_ppr.constants import BASE_SCHEMA, PPR_SCHEMA, SUMMARY_TEMPLATE
+from connect_ext_ppr.constants import (
+    BASE_SCHEMA,
+    CONFIGURATION_SCHEMA_TEMPLATE,
+    PPR_SCHEMA,
+    SUMMARY_TEMPLATE,
+)
 from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.enums import MimeTypeChoices
 from connect_ext_ppr.models.deployment import Deployment
@@ -435,6 +440,15 @@ def get_user_data_from_auth_token(token):
 def validate_ppr_schema(dict_file: Dict[str, Any]):
     try:
         jsonschema.validate(dict_file, PPR_SCHEMA)
+    except jsonschema.ValidationError as ex:
+        return _parse_json_schema_error(ex)
+
+
+def validate_configuration_schema(dict_file: Dict[str, Any], product_id):
+    schema_string = CONFIGURATION_SCHEMA_TEMPLATE.format(product_id=product_id)
+    schema = json.loads(schema_string)
+    try:
+        jsonschema.validate(dict_file, schema)
     except jsonschema.ValidationError as ex:
         return _parse_json_schema_error(ex)
 

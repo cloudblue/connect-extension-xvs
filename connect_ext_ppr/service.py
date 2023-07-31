@@ -23,6 +23,7 @@ from connect_ext_ppr.utils import (
     get_ppr_from_media,
     get_product_items,
     process_ppr,
+    validate_configuration_schema,
     validate_ppr_schema,
     workbook_to_dict,
 )
@@ -285,3 +286,8 @@ def create_ppr(ppr, context, deployment, db, client, logger):
         logger.error(ex)
         db.rollback()
         raise ExtensionHttpError.EXT_003()
+
+
+def validate_configuration(client, deployment, file_data):
+    data = get_configuration_from_media(client, deployment.account_id, deployment.id, file_data.id)
+    return validate_configuration_schema(data, deployment.product_id)

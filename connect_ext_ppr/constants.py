@@ -535,3 +535,38 @@ DESCRIPTION_TEMPLATE = """
 """
 SUMMARY_TEMPLATE = """Summary:
 {summary}"""
+
+
+CONFIGURATION_SCHEMA_TEMPLATE = """
+{{
+    "type": "object",
+    "properties": {{
+        "hierarchical_files_data": {{
+            "type": "object",
+            "properties": {{
+                "{product_id}": {{
+                    "type": "object",
+                    "properties": {{
+                        "product_level": {{
+                            "type": "object",
+                            "properties": {{
+                                "ResourceCategories": {{
+                                    "type": "object",
+                                    "anyOf": [
+                                        {{"required": ["Name_EN"]}},
+                                        {{"required": ["Name_en"]}}
+                                    ]
+                                }}
+                            }},
+                            "required": ["ResourceCategories"]
+                        }}
+                    }},
+                    "required": ["product_level"]
+                }}
+            }},
+            "required": ["{product_id}"]
+        }}
+    }},
+    "required": ["hierarchical_files_data"]
+}}
+"""
