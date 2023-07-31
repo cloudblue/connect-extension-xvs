@@ -213,11 +213,11 @@ def create_ppr(ppr, context, deployment, db, client, logger):
             ws.to_excel(writer, ws.name, index=False)
 
         file_obj = open(file.name, 'rb')
+        writer.book.save(file_obj.name)
+
         file_obj.seek(0, os.SEEK_END)
         file_size = file_obj.tell()
         file_obj.seek(0)
-        writer.book.save(file_obj.name)
-
         file_name = PPR_FILE_NAME.format(
             product_id=deployment.product_id,
             version=new_version,
