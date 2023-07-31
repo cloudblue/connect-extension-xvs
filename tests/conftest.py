@@ -180,6 +180,7 @@ def task_factory(dbsession, deployment_request_factory):
         task_index='001',
         type=None,
         status=Task.STATUSES.pending,
+        error_message=None,
     ):
         if not deployment_request:
             deployment_request = deployment_request_factory()
@@ -191,6 +192,8 @@ def task_factory(dbsession, deployment_request_factory):
             title=f'Title Task {task_index}',
             type=type,
             status=status,
+            error_message=error_message,
+            created_by=deployment_request.created_by,
         )
         dbsession.add(task)
         dbsession.commit()

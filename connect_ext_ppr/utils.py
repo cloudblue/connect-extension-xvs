@@ -31,28 +31,8 @@ from connect_ext_ppr.schemas import (
     PPRVersionReferenceSchema,
     PPRVersionSchema,
     ProductSchema,
+    TaskSchema,
 )
-
-
-def clean_empties_from_dict(data):
-    """
-    Removes inplace all the fields that are None or empty dicts in data.
-    Returns param data, that was modified inplace.
-    If the param is not a dict, will return the param unmodified.
-    :param data: dict
-    :rtype: dict
-    """
-    if not isinstance(data, dict):
-        return data
-
-    for key in list(data.keys()):
-        value = data[key]
-        if isinstance(value, dict):
-            clean_empties_from_dict(value)
-            value = data[key]
-        if not value:
-            del data[key]
-    return data
 
 
 class FileColletion:
@@ -251,7 +231,7 @@ def get_deployment_request_schema(deployment_request, hub):
         id=ppr.id,
         version=ppr.version,
     )
-    events = clean_empties_from_dict({
+    events = {
         'created': {
             'at': deployment_request.created_at,
             'by': deployment_request.created_by,
@@ -262,7 +242,7 @@ def get_deployment_request_schema(deployment_request, hub):
             'at': deployment_request.aborted_at,
             'by': deployment_request.aborted_by,
         },
-    })
+    }
 
     return DeploymentRequestSchema(
         id=deployment_request.id,
@@ -272,6 +252,32 @@ def get_deployment_request_schema(deployment_request, hub):
         manually=deployment_request.manually,
         delegate_l2=deployment_request.delegate_l2,
         events=events,
+    )
+
+
+def get_task_schema(task):
+    return TaskSchema(
+        id=task.id,
+        title=task.title,
+        events={
+            'created': {
+                'at': task.created_at,
+                'by': task.created_by,
+            },
+            'started': {
+                'at': task.started_at,
+            },
+            'finished': {
+                'at': task.finished_at,
+            },
+            'aborted': {
+                'at': task.aborted_at,
+                'by': task.aborted_by,
+            },
+
+        },
+        status=task.status,
+        error_message=task.error_message,
     )
 
 

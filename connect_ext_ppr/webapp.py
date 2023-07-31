@@ -44,6 +44,7 @@ from connect_ext_ppr.models.deployment import (
 from connect_ext_ppr.models.enums import ConfigurationStateChoices, DeploymentStatusChoices
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
+from connect_ext_ppr.models.task import Task
 from connect_ext_ppr.service import add_deployments, create_ppr
 from connect_ext_ppr.models.replicas import Product
 from connect_ext_ppr.schemas import (
@@ -58,6 +59,7 @@ from connect_ext_ppr.schemas import (
     PPRVersionCreateSchema,
     PPRVersionSchema,
     ProductSchema,
+    TaskSchema,
 )
 from connect_ext_ppr.services.pricing import (
     fetch_and_validate_batch,
@@ -82,6 +84,7 @@ from connect_ext_ppr.utils import (
     get_marketplace_schema,
     get_marketplaces,
     get_ppr_version_schema,
+    get_task_schema,
     get_user_data_from_auth_token,
 )
 
@@ -163,6 +166,37 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         if dr:
             hub = get_hub(client, dr.deployment.hub_id)
             return get_deployment_request_schema(dr, hub)
+        raise ExtensionHttpError.EXT_001(
+            format_kwargs={'obj_id': depl_req_id},
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+    @router.get(
+        '/deployments/requests/{depl_req_id}/tasks',
+        summary='List all tasks in scope of a deployment request',
+        response_model=List[TaskSchema],
+    )
+    def list_deployment_request_tasks(
+        self,
+        depl_req_id: str,
+        db: VerboseBaseSession = Depends(get_db),
+        client: ConnectClient = Depends(get_installation_client),
+        installation: dict = Depends(get_installation),
+    ):
+        dr = (
+            db.query(DeploymentRequest)
+            .filter(
+                DeploymentRequest.deployment.has(account_id=installation['owner']['id']),
+                DeploymentRequest.id == depl_req_id,
+            )
+            .one_or_none()
+        )
+        if dr:
+            task_list = []
+            tasks = db.query(Task).filter_by(deployment_request=dr.id).order_by(Task.id)
+            for task in tasks:
+                task_list.append(get_task_schema(task))
+            return task_list
         raise ExtensionHttpError.EXT_001(
             format_kwargs={'obj_id': depl_req_id},
             status_code=status.HTTP_404_NOT_FOUND,
