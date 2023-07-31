@@ -1,0 +1,19 @@
+env: production
+type: multiaccount
+package_id: com.cloudblue.xvs
+name: CloudBlue XVS Extension
+description: XVS Extension
+overview: overview.md
+website: https://connect.cloudblue.com
+icon: icon.png
+category: eCommerce
+var:                        # dictionary of variables, if 'value' missing = it will be retrieved from environment variables,
+  DATABASE_URL:               # if 'secure' flag is missing - it will be set to False
+      value:
+      secure: true
+  CBC_EXTENSION_DATABASE_URL:
+    value:
+    secure: true
+  CBC_EXTENSION_SSL_ENABLED:
+      value: true
+      secure: false
