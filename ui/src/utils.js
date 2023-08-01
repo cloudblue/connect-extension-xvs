@@ -22,6 +22,11 @@ export const createDeploymentConfigurations = (id, data) => fetch(`/api/deployme
   headers: { 'Content-Type': 'application/json' },
 }).then((response) => response.json());
 
+export const deleteDeploymentConfiguration = (deploymentId, configurationId) => fetch(
+  `/api/deployments/${deploymentId}/configurations/${configurationId}`,
+  { method: 'DELETE' },
+).then((response) => response.json());
+
 export const updateSettings = (settings) => fetch('/api/settings', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
