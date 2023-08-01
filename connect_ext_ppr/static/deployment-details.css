@@ -17,92 +17,6 @@
   color: #212121;
 }
 
-/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cChip.vue?vue&type=style&index=0&id=cf32a144&lang=stylus& ***!
-  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.c-chip {
-  --c-chip-color: 66, 66, 66;
-  --c-chip-text-color: var(--c-chip-color);
-  --c-chip-icon-color: var(--c-chip-color);
-  display: inline-flex;
-  overflow: hidden;
-  align-items: center;
-  box-sizing: border-box;
-  height: 24px;
-  padding-right: 4px;
-  padding-left: 8px;
-  border-radius: 12px;
-  vertical-align: middle;
-}
-.c-chip__text {
-  overflow: hidden;
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 13px;
-  line-height: 16px;
-  font-weight: normal;
-  color: rgb(var(--c-chip-text-color));
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  margin-left: 4px;
-  margin-right: 8px;
-}
-.c-chip__icon {
-  width: 16px;
-  height: 16px;
-  font-size: 16px;
-}
-.c-chip__icon.c-icon,
-.c-chip__icon.v-icon {
-  color: rgb(var(--c-chip-icon-color));
-}
-.c-chip__close-icon {
-  margin: 0;
-  color: rgb(var(--c-chip-text-color)) !important;
-  width: 14px;
-  height: 14px;
-}
-.c-chip__close-icon:hover {
-  background-color: rgba(var(--c-chip-icon-color),0.15);
-  border-radius: 50%;
-}
-.c-chip_small {
-  height: 16px;
-  padding-left: 4px;
-  padding-right: 4px;
-  border-radius: 8px;
-}
-.c-chip_small .c-chip__text {
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 12px;
-  margin-left: 4px;
-  margin-right: 4px;
-}
-.c-chip_small .c-chip__icon {
-  width: 12px;
-  height: 12px;
-  font-size: 12px;
-}
-.c-chip_small .c-chip__close-icon {
-  width: 10px;
-  height: 10px;
-}
-.c-chip_solid {
-  background-color: rgb(var(--c-chip-color));
-  --c-chip-text-color: 255, 255, 255;
-  --c-chip-icon-color: 255, 255, 255;
-}
-.c-chip_outline {
-  border: 1px solid rgb(var(--c-chip-color));
-}
-.c-chip_pale {
-  background-color: rgba(var(--c-chip-color),0.1);
-}
-.c-chip_non-rounded {
-  border-radius: 2px;
-}
-
 /*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cAlert.vue?vue&type=style&index=0&id=1ef58eba&lang=stylus& ***!
   \***************************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -510,6 +424,242 @@ a.c-vertical-tab_clickable:not(.c-vertical-tab_active) {
   line-height: 1;
 }
 
+/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/Markdown.vue?vue&type=style&index=0&id=23a39fd0&lang=stylus& ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.mark-down {
+  font-size: 14px;
+  line-height: 20px;
+}
+.mark-down > :first-child {
+  margin-top: 0;
+}
+.mark-down > :last-child {
+  margin-bottom: 0;
+}
+.mark-down h1,
+.mark-down h2,
+.mark-down h3,
+.mark-down h4,
+.mark-down h5 {
+  font-weight: 500;
+}
+.mark-down h1 {
+  margin-top: 40px;
+  margin-bottom: 28px;
+  font-size: 24px;
+  line-height: 1.1;
+}
+.mark-down h2 {
+  margin-top: 32px;
+  margin-bottom: 24px;
+  font-size: 20px;
+  line-height: 1.2;
+}
+.mark-down h3 {
+  font-size: 18px;
+  margin-bottom: 20px;
+  margin-top: 28px;
+  line-height: 24px;
+}
+.mark-down h4 {
+  font-size: 16px;
+  margin-bottom: 20px;
+  margin-top: 24px;
+}
+.mark-down h5 {
+  font-size: 14px;
+  margin-bottom: 20px;
+  margin-top: 24px;
+}
+.mark-down p {
+  white-space: break-spaces;
+}
+.mark-down blockquote {
+  border-left: 2px solid var(--theme_accent);
+  padding-left: 1em;
+  margin: 20px 20px 20px 18px;
+}
+.mark-down blockquote > * {
+  white-space: pre-wrap;
+}
+.mark-down blockquote > blockquote {
+  white-space: normal;
+}
+.mark-down p,
+.mark-down table,
+.mark-down pre,
+.mark-down ol,
+.mark-down ul {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+.mark-down hr {
+  margin-top: 30px;
+  margin-bottom: 30px;
+  border: 1px solid #e0e0e0;
+}
+.mark-down ol,
+.mark-down ul {
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 20px;
+}
+.mark-down ol ol,
+.mark-down ul ol,
+.mark-down ol ul,
+.mark-down ul ul {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.mark-down li {
+  margin-left: 1em;
+  margin-bottom: 4px;
+  margin-top: 4px;
+}
+.mark-down ul li::marker {
+  color: #444;
+}
+.mark-down img {
+  max-width: 100%;
+  max-height: 400px;
+}
+.mark-down code {
+  padding-left: 6px;
+  padding-right: 6px;
+  font-family: "Roboto Mono", monospace;
+  background-color: #eee;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 500;
+  color: inherit;
+  box-shadow: none;
+  line-break: anywhere;
+}
+.mark-down code:after,
+.mark-down code:before {
+  content: none;
+}
+.mark-down pre {
+  padding: 8px;
+  border-radius: 3px;
+  background-color: #eee;
+}
+.mark-down table {
+  border-collapse: collapse;
+  border: 1px solid #e0e0e0;
+  max-width: 100%;
+}
+.mark-down table td {
+  border: 1px solid #e0e0e0;
+}
+.mark-down table td,
+.mark-down table th {
+  padding: 8px 12px;
+}
+.mark-down table th {
+  border-width: 1px 1px 2px;
+  border-style: solid;
+  border-color: #e0e0e0;
+}
+.mark-down.truncated p {
+  white-space: break-spaces;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mark-down_escaped h1,
+.mark-down_escaped h2,
+.mark-down_escaped h3,
+.mark-down_escaped h4,
+.mark-down_escaped h5,
+.mark-down_escaped h6,
+.mark-down_escaped p,
+.mark-down_escaped b,
+.mark-down_escaped strong,
+.mark-down_escaped em,
+.mark-down_escaped i,
+.mark-down_escaped a,
+.mark-down_escaped blockquote,
+.mark-down_escaped ul,
+.mark-down_escaped ol,
+.mark-down_escaped li,
+.mark-down_escaped pre,
+.mark-down_escaped code {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: normal;
+  font-style: normal;
+  color: inherit;
+  text-decoration: none;
+  background: none;
+  border-radius: 0;
+  pointer-events: none;
+}
+.mark-down_escaped img,
+.mark-down_escaped table,
+.mark-down_escaped hr {
+  display: none;
+}
+
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/PprSummaryDialog.vue?vue&type=style&index=0&id=1e4b1e9d&lang=stylus& ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.ppr-summary-dialog__version {
+  display: flex;
+  align-items: center;
+}
+.ppr-summary-dialog__dot {
+  margin: 0 4px;
+}
+.ppr-summary-dialog__divider {
+  margin: 24px 0;
+}
+
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cTextarea.vue?vue&type=style&index=0&id=76164368&lang=stylus& ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.c-textarea {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.c-textarea__textarea {
+  padding: 8px;
+  width: calc(100% - 16px);
+  border: 1px solid #d8d8d8;
+  background-color: #fbfbfb;
+  color: #212121;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  resize: none;
+}
+.c-textarea__textarea:focus,
+.c-textarea__textarea:active {
+  outline: none;
+}
+.c-textarea_resizable .c-textarea__textarea {
+  resize: vertical;
+}
+.c-textarea__label-text {
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+  color: #212121;
+}
+.c-textarea__counter {
+  font-size: 12px;
+  line-height: 16px;
+  color: #707070;
+  text-align: right;
+}
+
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/UploadFile.vue?vue&type=style&index=0&id=39969cbe&lang=stylus& ***!
   \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
@@ -653,6 +803,120 @@ a.c-vertical-tab_clickable:not(.c-vertical-tab_active) {
   font-size: 18px;
   vertical-align: top;
   cursor: pointer;
+}
+
+/*!************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/PprUploadDialog.vue?vue&type=style&index=0&id=7045d12c&lang=stylus& ***!
+  \************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.ppr-upload-dialog__upload {
+  margin-bottom: 24px;
+}
+
+/*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/PprTab.vue?vue&type=style&index=0&id=040f9ee4&lang=stylus& ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.ppr-tab .ppr-version {
+  display: flex;
+  align-items: center;
+}
+.ppr-tab .ppr-version :first-child {
+  margin-right: 4px;
+}
+.ppr-tab .ppr-status {
+  display: flex;
+  align-items: center;
+}
+.ppr-tab .ppr-status__dot {
+  margin: 0 8px;
+}
+.ppr-tab .ppr-table__upload-btn {
+  margin-right: 12px;
+}
+
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cChip.vue?vue&type=style&index=0&id=cf32a144&lang=stylus& ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.c-chip {
+  --c-chip-color: 66, 66, 66;
+  --c-chip-text-color: var(--c-chip-color);
+  --c-chip-icon-color: var(--c-chip-color);
+  display: inline-flex;
+  overflow: hidden;
+  align-items: center;
+  box-sizing: border-box;
+  height: 24px;
+  padding-right: 4px;
+  padding-left: 8px;
+  border-radius: 12px;
+  vertical-align: middle;
+}
+.c-chip__text {
+  overflow: hidden;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: normal;
+  color: rgb(var(--c-chip-text-color));
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  margin-left: 4px;
+  margin-right: 8px;
+}
+.c-chip__icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+.c-chip__icon.c-icon,
+.c-chip__icon.v-icon {
+  color: rgb(var(--c-chip-icon-color));
+}
+.c-chip__close-icon {
+  margin: 0;
+  color: rgb(var(--c-chip-text-color)) !important;
+  width: 14px;
+  height: 14px;
+}
+.c-chip__close-icon:hover {
+  background-color: rgba(var(--c-chip-icon-color),0.15);
+  border-radius: 50%;
+}
+.c-chip_small {
+  height: 16px;
+  padding-left: 4px;
+  padding-right: 4px;
+  border-radius: 8px;
+}
+.c-chip_small .c-chip__text {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 12px;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+.c-chip_small .c-chip__icon {
+  width: 12px;
+  height: 12px;
+  font-size: 12px;
+}
+.c-chip_small .c-chip__close-icon {
+  width: 10px;
+  height: 10px;
+}
+.c-chip_solid {
+  background-color: rgb(var(--c-chip-color));
+  --c-chip-text-color: 255, 255, 255;
+  --c-chip-icon-color: 255, 255, 255;
+}
+.c-chip_outline {
+  border: 1px solid rgb(var(--c-chip-color));
+}
+.c-chip_pale {
+  background-color: rgba(var(--c-chip-color),0.1);
+}
+.c-chip_non-rounded {
+  border-radius: 2px;
 }
 
 /*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
