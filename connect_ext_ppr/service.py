@@ -130,7 +130,7 @@ def process_ppr_from_product_update(data, config, context, client, logger):
                 dep_qs = product.deployment.filter_by(account_id=context.account_id)
                 logger.info(f"Product version changed: {older_version} -> {data['version']}.")
                 for dep in dep_qs:
-                    create_ppr(ppr, context, dep, db, client, logger)
+                    create_ppr(ppr, context.user_id, dep, db, client, logger)
 
 
 def update_product(data, db, product, logger):
@@ -155,7 +155,7 @@ def get_ppr_new_version(db, deployment):
     return new_version
 
 
-def create_ppr(ppr, context, deployment, db, client, logger):
+def create_ppr(ppr, user_id, deployment, db, client, logger):
     file_data = ppr.file
     new_version = get_ppr_new_version(db, deployment)
     config_kwargs = {}
@@ -257,7 +257,7 @@ def create_ppr(ppr, context, deployment, db, client, logger):
             name=file_data.name,
             size=file_data.size,
             mime_type=file_data.mime_type,
-            created_by=context.user_id,
+            created_by=user_id,
         )
         db.add(file_instance)
         db.flush()
@@ -270,7 +270,7 @@ def create_ppr(ppr, context, deployment, db, client, logger):
             description=DESCRIPTION_TEMPLATE.format(description=description, summary=desc_summary),
             summary=summary,
             status=status,
-            created_by=context.user_id,
+            created_by=user_id,
             **config_kwargs,
         )
         db.set_verbose(new_ppr)

@@ -1085,6 +1085,15 @@ def user():
 
 
 @pytest.fixture
+def connect_auth_header():
+    """Connect-Auth header for the user fixture ('SU-295-689-628', 'Neri')"""
+    return (
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1Ijp7Im9pZCI6IlNVLTI5NS02ODktN"
+        "jI4IiwibmFtZSI6Ik5lcmkifX0.U_T6vuXnD293hcWNTJZ9QBViteNv8JXUL2gM0BezQ-k"
+    )
+
+
+@pytest.fixture
 def configuration_json():
     with open('./tests/fixtures/configuration.json') as json_file:
         return json.load(json_file)

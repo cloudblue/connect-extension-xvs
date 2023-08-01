@@ -14,8 +14,7 @@ from connect.eaas.core.decorators import (
     router,
     web_app,
 )
-from connect.eaas.core.inject.common import get_call_context, get_logger
-from connect.eaas.core.inject.models import Context
+from connect.eaas.core.inject.common import get_logger
 from connect.eaas.core.inject.synchronous import (
     get_installation,
     get_installation_client,
@@ -507,11 +506,12 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
         logger: Logger = Depends(get_logger),
-        context: Context = Depends(get_call_context),
+        request: Request = None,
     ):
         deployment = get_deployment_by_id(deployment_id, db, installation)
+        user_data = get_user_data_from_auth_token(request.headers['connect-auth'])
         ppr_version_instance, file_instance, configuration = create_ppr(
-            ppr_version, context, deployment, db, client, logger,
+            ppr_version, user_data['id'], deployment, db, client, logger,
         )
         return get_ppr_version_schema(ppr_version_instance, file_instance, configuration)
 

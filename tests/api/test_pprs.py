@@ -173,6 +173,7 @@ def test_get_ppr_not_found(
 def test_upload_ppr(
     deployment_factory,
     file_factory,
+    connect_auth_header,
     installation,
     api_client,
     mocker,
@@ -203,6 +204,9 @@ def test_upload_ppr(
             },
             'description': 'What a lovely day',
         },
+        headers={
+            "connect-auth": connect_auth_header,
+        },
     )
     assert response.status_code == 201
     data = response.json()
@@ -223,7 +227,7 @@ def test_upload_ppr(
     }
     assert id[:6] == 'PPRFL-'
     assert isinstance(events['created']['at'], str)
-    assert events['created']['by'] == 'UR-000'
+    assert events['created']['by'] == 'SU-295-689-628'
 
     assert dbsession.query(PPRVersion).count() == 1
     assert dbsession.query(File).count() == 1
@@ -232,6 +236,7 @@ def test_upload_ppr(
 def test_upload_ppr_invalid(
     deployment_factory,
     file_factory,
+    connect_auth_header,
     installation,
     api_client,
     mocker,
@@ -261,6 +266,9 @@ def test_upload_ppr_invalid(
             },
             'description': 'What a lovely day',
         },
+        headers={
+            "connect-auth": connect_auth_header,
+        },
     )
     assert response.status_code == 201
     data = response.json()
@@ -285,13 +293,14 @@ def test_upload_ppr_invalid(
     }
     assert id[:6] == 'PPRFL-'
     assert isinstance(events['created']['at'], str)
-    assert events['created']['by'] == 'UR-000'
+    assert events['created']['by'] == 'SU-295-689-628'
 
 
 def test_post_ppr_new_version(
     deployment_factory,
     file_factory,
     ppr_version_factory,
+    connect_auth_header,
     installation,
     api_client,
     mocker,
@@ -325,6 +334,9 @@ def test_post_ppr_new_version(
             },
             'description': 'What a lovely day',
         },
+        headers={
+            "connect-auth": connect_auth_header,
+        },
     )
     assert response.status_code == 201
     data = response.json()
@@ -345,7 +357,7 @@ def test_post_ppr_new_version(
     }
     assert id[:6] == 'PPRFL-'
     assert isinstance(events['created']['at'], str)
-    assert events['created']['by'] == 'UR-000'
+    assert events['created']['by'] == 'SU-295-689-628'
 
     assert dbsession.query(PPRVersion).count() == 2
     assert dbsession.query(File).count() == 2
@@ -381,6 +393,7 @@ def test_post_ppr_wrong_deployment(
 def test_post_ppr_file_already_exists(
     deployment_factory,
     file_factory,
+    connect_auth_header,
     installation,
     api_client,
     dbsession,
@@ -411,6 +424,9 @@ def test_post_ppr_file_already_exists(
                 'mime_type': file.mime_type,
             },
         },
+        headers={
+            "connect-auth": connect_auth_header,
+        },
     )
     assert response.status_code == 400
     assert response.json() == {
@@ -424,6 +440,7 @@ def test_post_ppr_file_already_exists(
 def test_generate_ppr(
     deployment_factory,
     configuration_factory,
+    connect_auth_header,
     installation,
     api_client,
     mocker,
@@ -480,6 +497,9 @@ def test_generate_ppr(
         f'/api/deployments/{deployment.id}/pprs',
         installation=installation,
         json={},
+        headers={
+            "connect-auth": connect_auth_header,
+        },
     )
     assert response.status_code == 201
     data = response.json()
@@ -509,12 +529,13 @@ def test_generate_ppr(
     assert id[:6] == 'PPRFL-'
     assert isinstance(events['created']['at'], str)
     assert file_name[:23] == 'PPR_PRD-XXX-XXX-XXX_v1_'
-    assert events['created']['by'] == 'UR-000'
+    assert events['created']['by'] == 'SU-295-689-628'
     assert 10000 < file_size < 20000
 
 
 def test_generate_ppr_no_configuration(
     deployment_factory,
+    connect_auth_header,
     installation,
     api_client,
     mocker,
@@ -561,6 +582,9 @@ def test_generate_ppr_no_configuration(
         f'/api/deployments/{deployment.id}/pprs',
         installation=installation,
         json={},
+        headers={
+            "connect-auth": connect_auth_header,
+        },
     )
     assert response.status_code == 201
     data = response.json()
@@ -586,5 +610,5 @@ def test_generate_ppr_no_configuration(
     assert id[:6] == 'PPRFL-'
     assert isinstance(events['created']['at'], str)
     assert file_name[:23] == 'PPR_PRD-XXX-XXX-XXX_v1_'
-    assert events['created']['by'] == 'UR-000'
+    assert events['created']['by'] == 'SU-295-689-628'
     assert 10000 < file_size < 20000
