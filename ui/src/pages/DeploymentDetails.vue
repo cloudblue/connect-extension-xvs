@@ -71,11 +71,10 @@ c-view.deployment-details(
     template(#ppr="")
       .ppr-tab PPR
     template(#configuration="")
-      .configuration-tab Configuration
-        deployment-configuration-tab(
-          :deployment-id="deployment.id",
-          :account-id="deployment.account_id",
-        )
+      deployment-configuration-tab(
+        :deployment-id="deployment.id",
+        :account-id="deployment.account_id",
+      )
 
 </template>
 

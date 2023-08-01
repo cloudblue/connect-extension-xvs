@@ -65,12 +65,7 @@ const entityTable = (
   },
 
   computed: {
-    preparedHeaders: vm => {
-      // eslint-disable-next-line no-console
-      console.log('vm.headers', vm.headers);
-
-      return map(when(is(Function), applyTo(vm)))(vm.headers);
-    },
+    preparedHeaders: vm => map(when(is(Function), applyTo(vm)))(vm.headers),
   },
 
   methods: {

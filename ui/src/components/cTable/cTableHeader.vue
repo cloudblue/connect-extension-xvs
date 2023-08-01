@@ -21,7 +21,7 @@ component.column.c-table-header(
             div.c-table-header__text {{ text }}
             c-icon.c-table-header__icon(
               :icon="icons[masterIcon]",
-              :class="{ 'c-table-header__icon_active': isIconActive }",
+              class="c-table-header__icon_active",
               size="18",
             )
 
