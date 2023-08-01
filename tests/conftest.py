@@ -168,7 +168,7 @@ def deployment_request_factory(dbsession):
             status=status,
         )
         dbsession.add(ppr)
-        dbsession.set_verbose(dep_req)
+        dbsession.set_next_verbose(dep_req, 'deployment_id')
         return dep_req
     return _build_deployment_request
 
