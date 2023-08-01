@@ -310,7 +310,7 @@ def add_new_deployment_request(db, dr_data, deployment, account_id, logger):
             created_by=account_id,
         )
         db.set_next_verbose(deployment_request, 'deployment_id')
-        db.commit()
+        db.flush()
         db.refresh(deployment_request)
 
         marketplaces = [m.id for m in dr_data.marketplaces.choices]
