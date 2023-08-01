@@ -110,6 +110,7 @@ from connect_ext_ppr.validator import (
 @proxied_connect_api(
     {
         '/public/v1/media': 'edit',
+        '/files': 'view',
     },
 )
 class ConnectExtensionXvsWebApplication(WebApplicationBase):
