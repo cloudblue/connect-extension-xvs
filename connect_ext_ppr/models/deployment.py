@@ -36,6 +36,7 @@ class Deployment(Model):
     updated_at = db.Column(db.DateTime(), onupdate=datetime.utcnow, default=datetime.utcnow)
 
     product = relationship("Product", back_populates="deployment")
+    marketplaces = relationship('MarketplaceConfiguration', backref='deployment', lazy=True)
 
 
 class DeploymentRequest(Model):
@@ -63,7 +64,11 @@ class DeploymentRequest(Model):
     aborted_by = db.Column(db.String(20), nullable=True)
 
     ppr = relationship('PPRVersion', foreign_keys="DeploymentRequest.ppr_id")
-    deployment = relationship('Deployment', foreign_keys="DeploymentRequest.deployment_id")
+    deployment = relationship(
+        'Deployment',
+        foreign_keys="DeploymentRequest.deployment_id",
+        innerjoin=True,
+    )
 
 
 class MarketplaceConfiguration(Model):
@@ -71,7 +76,7 @@ class MarketplaceConfiguration(Model):
 
     id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     marketplace = db.Column(db.String(16))
-    deployment = db.Column(db.ForeignKey(Deployment.id), nullable=True)
+    deployment_id = db.Column(db.ForeignKey(Deployment.id), nullable=True)
     deployment_request = db.Column(db.ForeignKey(DeploymentRequest.id), nullable=True)
     ppr_id = db.Column(db.String, db.ForeignKey(PPRVersion.id))
 

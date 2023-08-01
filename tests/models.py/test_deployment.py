@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from connect_ext_ppr.db import VerboseSessionError
 from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
 from connect_ext_ppr.models.replicas import Product
+from connect_ext_ppr.models.task import Task
 
 
 def _get_id_prefix_or_body(id_: str, idx: int):
@@ -130,3 +131,35 @@ def test_validate_unique_constraint_deployment(dbsession, deployment):
     assert (
         'duplicate key value violates unique constraint "prd_account_hub_key"' in exc.value.args[0]
     )
+
+
+@pytest.mark.parametrize(
+    'initial_tasks_count',
+    (0, 1),
+)
+def test_generate_all_next_verbose_id(
+    dbsession,
+    deployment_factory,
+    deployment_request_factory,
+    initial_tasks_count,
+    task_factory,
+):
+    dep = deployment_factory()
+    dr = deployment_request_factory(deployment=dep)
+
+    for index in range(initial_tasks_count):
+        task_factory(deployment_request=dr, task_index=f'00{index}')
+
+    tasks = []
+    tasks.append(Task(deployment_request=dr.id))
+    tasks.append(Task(deployment_request=dr.id))
+
+    dbsession.set_all_next_verbose(tasks, 'deployment_request')
+    dbsession.commit()
+
+    _, suffix = dr.id.split('-', 1)
+    index = initial_tasks_count
+    for task in tasks:
+        dbsession.refresh(task)
+        assert f'TSK-{suffix}-00{index}' == task.id
+        index += 1

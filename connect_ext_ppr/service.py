@@ -10,10 +10,15 @@ from connect_ext_ppr.constants import DESCRIPTION_TEMPLATE, PPR_FILE_NAME
 from connect_ext_ppr.db import get_db_ctx_manager
 from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.configuration import Configuration
-from connect_ext_ppr.models.deployment import Deployment, MarketplaceConfiguration
+from connect_ext_ppr.models.deployment import (
+    Deployment,
+    DeploymentRequest,
+    MarketplaceConfiguration,
+)
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.replicas import Product
+from connect_ext_ppr.models.task import Task
 from connect_ext_ppr.schemas import clean_empties_from_dict, FileSchema, PPRVersionCreateSchema
 from connect_ext_ppr.utils import (
     build_summary,
@@ -55,11 +60,12 @@ def add_marketplaces_to_deployment(db, deployment, marketplaces):
     configs = []
     for marketplace in marketplaces:
         mc = MarketplaceConfiguration(
-            deployment=deployment.id,
+            deployment_id=deployment.id,
             marketplace=marketplace,
         )
         configs.append(mc)
     db.add_all(configs)
+    db.commit()
 
 
 def add_deployments(installation, listings, config, logger):
@@ -98,6 +104,7 @@ def add_deployments(installation, listings, config, logger):
                     )
                     deployments.append(dep)
                     seen.add(comb)
+
                 key = f"{product_id}#{hub_id}"
                 deployments_marketplaces.setdefault(
                     key,
@@ -291,3 +298,57 @@ def create_ppr(ppr, user_id, deployment, db, client, logger):
 def validate_configuration(client, deployment, file_data):
     data = get_configuration_from_media(client, deployment.account_id, deployment.id, file_data.id)
     return validate_configuration_schema(data, deployment.product_id)
+
+
+def add_new_deployment_request(db, dr_data, deployment, account_id, logger):
+    try:
+        deployment_request = DeploymentRequest(
+            deployment_id=dr_data.deployment.id,
+            ppr_id=dr_data.ppr.id,
+            manually=dr_data.manually,
+            delegate_l2=dr_data.delegate_l2,
+            created_by=account_id,
+        )
+        db.set_next_verbose(deployment_request, 'deployment_id')
+        db.commit()
+        db.refresh(deployment_request)
+
+        marketplaces = [m.id for m in dr_data.marketplaces.choices]
+        if dr_data.marketplaces.all:
+            marketplaces = [m.id for m in deployment.marketplaces]
+
+        for m_id in marketplaces:
+            mc = MarketplaceConfiguration(
+                deployment_request=deployment_request.id,
+                marketplace=m_id,
+            )
+            db.add(mc)
+
+        tasks = []
+        tasks.append(Task(
+            deployment_request=deployment_request.id,
+            title='PPR Validation',
+            type=Task.TYPES.ppr_validation,
+            created_by=account_id,
+        ))
+        tasks.append(Task(
+            deployment_request=deployment_request.id,
+            title='Apply PP and delegate to marketplaces',
+            type=Task.TYPES.apply_and_delegate,
+            created_by=account_id,
+        ))
+        if deployment_request.delegate_l2:
+            tasks.append(Task(
+                deployment_request=deployment_request.id,
+                title='Delegate to L2',
+                type=Task.TYPES.delegate_to_l2,
+                created_by=account_id,
+            ))
+
+        db.set_all_next_verbose(tasks, 'deployment_request')
+        db.commit()
+        return deployment_request
+    except DBAPIError as ex:
+        logger.error(ex)
+        db.rollback()
+        raise ExtensionHttpError.EXT_003()

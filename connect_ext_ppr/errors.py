@@ -91,6 +91,7 @@ class ExtensionHttpError(ExtensionErrorBase):
             " for first row in Batch {batch_id}.",
         15: 'No Marketplace is linked with Deployment Hub {hub_id}',
         16: "Pricing Batch '{batch_id}' does not have any file.",
+        17: "Cannot create a new request, an open one already exists.",
     }
 
 
@@ -98,4 +99,8 @@ class ExtensionValidationError(ExtensionErrorBase):
     PREFIX = 'VAL'
     ERRORS = {
         0: "{validation_error}",  # PPR Schema validation
+        1: "{field}: {id} not found.",
+        2: "{field}: This values {values} are invalid.",
+        3: "At least one choice needs to be specified.",
+        4: "Cannot applied PPR to {entity} {values}.",
     }

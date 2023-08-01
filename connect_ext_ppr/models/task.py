@@ -13,6 +13,7 @@ class Task(Model):
     PREFIX = 'TSK'
 
     STATUSES = TasksStatusChoices
+    TYPES = TaskTypesChoices
 
     id = db.Column(db.String(30), primary_key=True)
     status = db.Column(

@@ -20,8 +20,8 @@ from connect.eaas.core.inject.synchronous import (
     get_installation_client,
 )
 from connect.eaas.core.extension import WebApplicationBase
+from fastapi import BackgroundTasks, Depends, Request, Response, status
 from fastapi.responses import JSONResponse
-from fastapi import Depends, Request, Response, status
 from sqlalchemy import desc, exists
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload, selectinload, Session
@@ -30,6 +30,7 @@ from connect_ext_ppr.client.exception import ClientError
 from connect_ext_ppr.db import (
     create_db,
     get_cbc_extension_db,
+    get_config,
     get_db,
     VerboseBaseSession,
 )
@@ -44,13 +45,19 @@ from connect_ext_ppr.models.enums import ConfigurationStateChoices, DeploymentSt
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.task import Task
-from connect_ext_ppr.service import add_deployments, create_ppr, validate_configuration
 from connect_ext_ppr.models.replicas import Product
+from connect_ext_ppr.service import (
+    add_deployments,
+    add_new_deployment_request,
+    create_ppr,
+    validate_configuration,
+)
 from connect_ext_ppr.schemas import (
     BatchProcessResponseSchema,
     BatchSchema,
     ConfigurationCreateSchema,
     ConfigurationSchema,
+    DeploymentRequestCreateSchema,
     DeploymentRequestSchema,
     DeploymentSchema,
     HubSchema,
@@ -67,6 +74,7 @@ from connect_ext_ppr.services.pricing import (
     prepare_file,
     process_batch,
 )
+from connect_ext_ppr.tasks_manager import main_process
 from connect_ext_ppr.utils import (
     _get_extension_client,
     _get_installation,
@@ -86,6 +94,12 @@ from connect_ext_ppr.utils import (
     get_task_schema,
     get_user_data_from_auth_token,
 )
+from connect_ext_ppr.validator import (
+    validate_deployment,
+    validate_dr_marketplaces,
+    validate_marketplaces_ppr,
+    validate_ppr_version_belongs_to_deployment,
+)
 
 
 @web_app(router)
@@ -99,6 +113,54 @@ from connect_ext_ppr.utils import (
     },
 )
 class ConnectExtensionXvsWebApplication(WebApplicationBase):
+    # example route for creation of deployment request
+    @router.post(
+        '/deployments/requests',
+        summary='Create a new deployment request',
+        response_model=DeploymentRequestSchema,
+    )
+    def add_dep_request(
+        self,
+        deployment_request: DeploymentRequestCreateSchema,
+        background_tasks: BackgroundTasks,
+        client: ConnectClient = Depends(get_installation_client),
+        db: VerboseBaseSession = Depends(get_db),
+        installation: dict = Depends(get_installation),
+        config: dict = Depends(get_config),
+        logger: Logger = Depends(get_logger),
+    ):
+        account_id = installation['owner']['id']
+        deployment = db.query(Deployment).filter_by(id=deployment_request.deployment.id).first()
+        validate_deployment(deployment, account_id)
+
+        open_dr = db.query(DeploymentRequest).filter(
+            DeploymentRequest.deployment_id.like(deployment_request.deployment.id),
+            DeploymentRequest.status.in_(
+                [DeploymentRequest.STATUSES.pending, DeploymentRequest.STATUSES.processing],
+            ),
+        )
+
+        if db.query(open_dr.exists()).scalar():
+            raise ExtensionHttpError.EXT_017()
+
+        ppr = db.query(PPRVersion).filter_by(id=deployment_request.ppr.id).first()
+        validate_ppr_version_belongs_to_deployment(ppr, deployment)
+
+        dr_marketplaces = [m.id for m in deployment_request.marketplaces.choices]
+        validate_dr_marketplaces(
+            dr_marketplaces,
+            [m.marketplace for m in deployment.marketplaces],
+        )
+        validate_marketplaces_ppr(ppr, dr_marketplaces, deployment.marketplaces)
+
+        instance = add_new_deployment_request(
+            db, deployment_request, deployment, account_id, logger,
+        )
+
+        background_tasks.add_task(main_process, instance.id, config)
+
+        hub = get_client_object(client, 'hubs', instance.deployment.hub_id)
+        return get_deployment_request_schema(instance, hub)
 
     @router.get(
         '/deployments/requests',
@@ -280,20 +342,6 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
                 get_deployment_schema(dep, dep.product, vendor, hub),
             )
         return response_list
-
-    @router.post(
-        '/deployments/requests',
-        summary='Create a new deployment request',
-        response_model=DeploymentRequestSchema,
-        status_code=status.HTTP_201_CREATED,
-    )
-    def add_dep_request(self, db: VerboseBaseSession = Depends(get_db)):
-        deployment = db.query(Deployment).first()
-        instance = DeploymentRequest(deployment_id=deployment.id)
-        db.set_next_verbose(instance, 'deployment')
-        db.commit()
-        db.refresh(instance)
-        return instance
 
     @router.get(
         '/deployments/{deployment_id}/configurations',
@@ -531,7 +579,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
 
         mkplc_configs = db.query(MarketplaceConfiguration).options(
             selectinload(MarketplaceConfiguration.ppr),
-        ).filter_by(deployment=deployment_id)
+        ).filter_by(deployment_id=deployment_id)
 
         mkplc_ids = [m.marketplace for m in mkplc_configs]
 

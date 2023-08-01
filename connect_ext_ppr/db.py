@@ -114,6 +114,33 @@ class VerboseBaseSession(Session):
         instance.id = '{0}-{1}'.format(_instance_id, '{0:03d}'.format(new_suffix))
         return self.add(instance)
 
+    def set_all_next_verbose(self, instances, related_id_field):
+        first_item = instances[0]
+        instance_class = first_item.__class__
+        new_suffix = 0
+        related_id_value = getattr(first_item, related_id_field)
+
+        if (
+            self.query(self.query(instance_class).filter(
+                instance_class.__dict__[related_id_field] == related_id_value).exists(),
+            ).scalar()
+        ):
+
+            last_obj = self.query(instance_class).order_by(
+                instance_class.id.desc(),
+            ).first()
+            _instance_id, suffix = last_obj.id.rsplit('-', 1)
+            new_suffix = int(suffix) + 1
+        else:
+            id_body = related_id_value.split('-', 1)[-1]
+            _instance_id = f"{instance_class.PREFIX}-{id_body}"
+
+        for instance in instances:
+            instance.id = '{0}-{1}'.format(_instance_id, '{0:03d}'.format(new_suffix))
+            new_suffix += 1
+
+        return self.add_all(instances)
+
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, class_=VerboseBaseSession)
 Model = declarative_base()
