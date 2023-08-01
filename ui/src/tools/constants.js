@@ -195,6 +195,16 @@ export const statuses = {
     icon: icons.waiting,
     color: statusesColors.negative,
   },
+  ready: {
+    text: 'ready',
+    icon: icons.done,
+    color: statusesColors.done,
+  },
+  failed: {
+    text: 'error',
+    icon: icons.error,
+    color: statusesColors.negative,
+  },
 };
 
 export const animationTime = 300;

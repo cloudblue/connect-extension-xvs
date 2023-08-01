@@ -22,6 +22,41 @@ export const createDeploymentConfigurations = (id, data) => fetch(`/api/deployme
   headers: { 'Content-Type': 'application/json' },
 }).then((response) => response.json());
 
+export const getPPRs = (id) => fetch(`/api/deployments/${id}/pprs`)
+  .then((response) => response.json());
+
+export const getPPR = (deploymentId, id) => fetch(
+  `/api/deployments/${deploymentId}/pprs/${id}`,
+).then((response) => response.json());
+
+export const regeneratePPR = (id) => fetch(`/api/deployments/${id}/pprs`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({}),
+}).then((response) => response.json());
+
+export const uploadPPR = (deploymentId, {
+  id,
+  location,
+  size,
+  name,
+  mimeType,
+  description,
+}) => fetch(`/api/deployments/${deploymentId}/pprs`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    file: {
+      id,
+      location,
+      size,
+      name,
+      mime_type: mimeType,
+    },
+    description,
+  }),
+}).then((response) => response.json());
+
 export const deleteDeploymentConfiguration = (deploymentId, configurationId) => fetch(
   `/api/deployments/${deploymentId}/configurations/${configurationId}`,
   { method: 'DELETE' },

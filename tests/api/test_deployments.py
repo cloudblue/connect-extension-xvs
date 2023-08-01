@@ -8,6 +8,7 @@ def test_proxied_connect_endpoints(api_client):
     assert isinstance(proxied, dict)
     assert proxied == {
         '/public/v1/media': 'edit',
+        '/files': 'view',
     }
 
 
