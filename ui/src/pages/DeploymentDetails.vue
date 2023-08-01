@@ -68,8 +68,13 @@ c-view.deployment-details(
   )
     template(#marketplaces="")
       .marketplaces-tab Marketplaces
+
     template(#ppr="")
-      .ppr-tab PPR
+      ppr-tab(
+        :deployment-id="deployment.id",
+        :account-id="deployment.account_id",
+      )
+
     template(#configuration="")
       deployment-configuration-tab(
         :deployment-id="deployment.id",
@@ -91,6 +96,7 @@ import DetailItem from '~components/DetailItem.vue';
 import GridItem from '~components/GridItem.vue';
 import Pic from '~components/Pic.vue';
 
+import PprTab from '~components/PprTab.vue';
 import DeploymentConfigurationTab from '~components/DeploymentConfigurationTab.vue';
 
 import {
@@ -108,6 +114,7 @@ export default {
     DetailItem,
     GridItem,
     Pic,
+    PprTab,
   },
 
   data: () => ({
