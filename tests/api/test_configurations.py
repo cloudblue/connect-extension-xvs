@@ -93,6 +93,7 @@ def test_post_configuration(
     deployment_factory,
     media_response,
     configuration_json,
+    connect_auth_header,
     installation,
     api_client,
     dbsession,
@@ -116,10 +117,7 @@ def test_post_configuration(
             },
         },
         headers={
-            "connect-auth": (
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1Ijp7Im9pZCI6IlNVLTI5NS02ODktN"
-                "jI4IiwibmFtZSI6Ik5lcmkifX0.U_T6vuXnD293hcWNTJZ9QBViteNv8JXUL2gM0BezQ-k"
-            ),
+            "connect-auth": connect_auth_header,
         },
     )
     assert response.status_code == 201
@@ -155,6 +153,7 @@ def test_post_configuration_deactivate_previous(
     file,
     configuration,
     configuration_json,
+    connect_auth_header,
     installation,
     api_client,
     dbsession,
@@ -178,10 +177,7 @@ def test_post_configuration_deactivate_previous(
             },
         },
         headers={
-            "connect-auth": (
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1Ijp7Im9pZCI6IlNVLTI5NS02ODktN"
-                "jI4IiwibmFtZSI6Ik5lcmkifX0.U_T6vuXnD293hcWNTJZ9QBViteNv8JXUL2gM0BezQ-k"
-            ),
+            "connect-auth": connect_auth_header,
         },
     )
     assert response.status_code == 201
@@ -256,6 +252,7 @@ def test_post_configuration_invalid(
     deployment_factory,
     media_response,
     configuration_json,
+    connect_auth_header,
     installation,
     api_client,
     dbsession,
@@ -279,10 +276,7 @@ def test_post_configuration_invalid(
             },
         },
         headers={
-            "connect-auth": (
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1Ijp7Im9pZCI6IlNVLTI5NS02ODktN"
-                "jI4IiwibmFtZSI6Ik5lcmkifX0.U_T6vuXnD293hcWNTJZ9QBViteNv8JXUL2gM0BezQ-k"
-            ),
+            "connect-auth": connect_auth_header,
         },
     )
     assert response.status_code == 400

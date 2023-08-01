@@ -70,7 +70,7 @@ class ConnectExtensionXvsEventsApplication(EventsApplicationBase):
     def handle_product_changed(self, request):
         '''
         Product change event: update or not the product version present
-        in the Deployment object. If Deployment object does not exists in
+        in the Deployment object. If Deployment object does not exist in
         db, create a new one.
         '''
         self.logger.info(f"Product {request['id']} changed.")

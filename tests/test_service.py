@@ -131,7 +131,7 @@ def test_create_ppr_base_on_user_uploaded_file(
     )
 
     new_ppr, _, _ = create_ppr(
-        ppr_data, common_context, deployment, dbsession, connect_client, logger,
+        ppr_data, common_context.user_id, deployment, dbsession, connect_client, logger,
     )
 
     assert new_ppr.id
@@ -166,7 +166,7 @@ def test_create_ppr_base_on_user_uploaded_file_with_errors(
     )
 
     new_ppr, _, _ = create_ppr(
-        ppr_data, common_context, deployment, dbsession, connect_client, logger,
+        ppr_data, common_context.user_id, deployment, dbsession, connect_client, logger,
     )
 
     assert new_ppr.id
@@ -222,7 +222,7 @@ def test_create_ppr_base_on_another_ppr_version_w_config(
     )
 
     new_ppr, _, _ = create_ppr(
-        ppr_data, common_context, deployment, dbsession, connect_client, logger,
+        ppr_data, common_context.user_id, deployment, dbsession, connect_client, logger,
     )
 
     assert new_ppr.id
@@ -279,7 +279,7 @@ def test_create_ppr_base_on_another_ppr_version_wo_config(
     )
 
     new_ppr, _, _ = create_ppr(
-        ppr_data, common_context, deployment, dbsession, connect_client, logger,
+        ppr_data, common_context.user_id, deployment, dbsession, connect_client, logger,
     )
 
     assert new_ppr.id
@@ -335,7 +335,7 @@ def test_create_ppr_wo_ppr_version_w_config(
     )
 
     new_ppr, _, _ = create_ppr(
-        ppr_data, common_context, deployment, dbsession, connect_client, logger,
+        ppr_data, common_context.user_id, deployment, dbsession, connect_client, logger,
     )
 
     assert new_ppr.id
@@ -376,7 +376,7 @@ def test_create_ppr_db_error(
 
     with pytest.raises(ClientError) as ex:
         create_ppr(
-            ppr_data, common_context, deployment,
+            ppr_data, common_context.user_id, deployment,
             dbsession, connect_client, logger,
         )
     assert ex.value.message == (
