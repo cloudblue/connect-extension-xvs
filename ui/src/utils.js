@@ -57,6 +57,11 @@ export const uploadPPR = (deploymentId, {
   }),
 }).then((response) => response.json());
 
+export const deleteDeploymentConfiguration = (deploymentId, configurationId) => fetch(
+  `/api/deployments/${deploymentId}/configurations/${configurationId}`,
+  { method: 'DELETE' },
+).then((response) => response.json());
+
 export const updateSettings = (settings) => fetch('/api/settings', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
