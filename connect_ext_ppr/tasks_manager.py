@@ -71,6 +71,7 @@ def main_process(deployment_request_id, config):
         if deployment_request.status != DeploymentRequestStatusChoices.pending:
             return deployment_request.status
 
+        deployment_request.started_at = datetime.utcnow()
         deployment = deployment_request.deployment
         deployment.status = DeploymentStatusChoices.processing
         deployment_request.status = DeploymentRequestStatusChoices.processing
@@ -94,6 +95,7 @@ def main_process(deployment_request_id, config):
         else:
             deployment_request.status = DeploymentRequestStatusChoices.error
 
+        deployment_request.finished_at = datetime.utcnow()
         db.add(deployment_request)
         db.commit()
 

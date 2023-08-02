@@ -37,3 +37,8 @@ class Task(Model):
     def abort(self, by):
         self.aborted_at = datetime.utcnow()
         self.aborted_by = by
+
+    @transition('status', target=STATUSES.pending, sources=[STATUSES.error])
+    def retry(self):
+        self.started_at = None
+        self.finished_at = None

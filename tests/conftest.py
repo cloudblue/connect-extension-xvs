@@ -153,6 +153,8 @@ def deployment_request_factory(dbsession):
             ppr=None,
             delegate_l2=False,
             status=None,
+            started_at=None,
+            finished_at=None,
     ):
         if not deployment:
             deployment = deployment_factory(id='DPLR-123-123-123')
@@ -166,6 +168,8 @@ def deployment_request_factory(dbsession):
             created_by=deployment.account_id,
             delegate_l2=delegate_l2,
             status=status,
+            started_at=started_at,
+            finished_at=finished_at,
         )
         dbsession.add(ppr)
         dbsession.set_next_verbose(dep_req, 'deployment_id')
@@ -181,6 +185,8 @@ def task_factory(dbsession, deployment_request_factory):
         type=None,
         status=Task.STATUSES.pending,
         error_message=None,
+        started_at=None,
+        finished_at=None,
     ):
         if not deployment_request:
             deployment_request = deployment_request_factory()
@@ -195,6 +201,8 @@ def task_factory(dbsession, deployment_request_factory):
             status=status,
             error_message=error_message,
             created_by=deployment_request.created_by,
+            started_at=started_at,
+            finished_at=finished_at,
         )
         dbsession.add(task)
         dbsession.commit()

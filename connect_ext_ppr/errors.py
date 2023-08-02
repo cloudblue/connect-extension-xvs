@@ -92,6 +92,8 @@ class ExtensionHttpError(ExtensionErrorBase):
         15: 'No Marketplace is linked with Deployment Hub {hub_id}',
         16: "Pricing Batch '{batch_id}' does not have any file.",
         17: "Cannot create a new request, an open one already exists.",
+        18: "Deployment request `{dep_request_id}` can not be retried, newer requests were"
+        " created for related deployment `{deployment_id}`: {new_requests}.",
     }
 
 
