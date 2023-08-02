@@ -160,6 +160,7 @@ export default {
   line-height: 20px;
   text-align: left;
   color: #212121;
+  white-space: break-spaces;
 
   &:first-letter {
     text-transform: uppercase;

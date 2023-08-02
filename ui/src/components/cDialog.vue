@@ -73,7 +73,7 @@
         )
 
       .c-window__content(:class="{ 'c-window__content_no-frame': noFrame }")
-        c-alert(
+        c-alert.c-dialog__error(
           v-if="isErrorShown",
           :message="localErrorText",
           :icon="icons.googleErrorBaseline",
@@ -498,6 +498,10 @@ export default {
       animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
       animation-duration: 0.15s;
     }
+  }
+
+  &__error {
+    margin-bottom: 20px;
   }
 }
 
