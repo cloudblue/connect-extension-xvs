@@ -209,7 +209,7 @@ def test_list_deployment_request_tasks_not_found(
     dep1 = deployment_factory(account_id=installation['owner']['id'])
     dep2 = deployment_factory(account_id='PA-123-456')
 
-    dr1 = deployment_request_factory(deployment=dep1)
+    dr1 = deployment_request_factory(deployment=dep1, status='done')
     bad_dr = deployment_request_factory(deployment=dep2)
 
     task_factory(deployment_request=dr1)
@@ -705,6 +705,7 @@ def test_create_deployment_request_w_open_request(
         'id': 'HB-0000-0001',
         'name': 'Another Hub for the best',
     }
+
     mocker.patch('connect_ext_ppr.webapp.get_client_object', side_effect=[hub_data])
 
     dep = deployment_factory(account_id=installation['owner']['id'], hub_id=hub_data['id'])
@@ -739,13 +740,14 @@ def test_create_deployment_request_w_open_request(
 
 
 def test_list_deployment_request_marketplaces(
+    dbsession,
+    mocker,
     deployment_factory,
     deployment_request_factory,
     installation,
     api_client,
     marketplace,
     marketplace_config_factory,
-    mocker,
     ppr_version_factory,
 ):
     m1 = marketplace
@@ -809,4 +811,206 @@ def test_list_deployment_request_marketplaces_not_found(
     assert response.status_code == 404
     assert error == {
         'error_code': 'EXT_001', 'errors': [f'Object `{dr2.id}` not found.'],
+    }
+
+
+def test_abort_deployment_request_aborted(
+    dbsession,
+    mocker,
+    deployment_factory,
+    deployment_request_factory,
+    installation,
+    api_client,
+    task_factory,
+):
+
+    hub_data = {
+        'id': 'HB-0000-0001',
+        'name': 'Another Hub for the best',
+    }
+
+    mocker.patch(
+        'connect_ext_ppr.webapp.get_hub',
+        return_value=hub_data,
+    )
+
+    dep1 = deployment_factory(account_id=installation['owner']['id'], hub_id=hub_data['id'])
+    dep2 = deployment_factory(account_id='PA-123-456')
+
+    dr1 = deployment_request_factory(deployment=dep1, status='pending')
+    deployment_request_factory(deployment=dep1)
+    deployment_request_factory(deployment=dep2)
+
+    t1 = task_factory(deployment_request=dr1, status='pending')
+    t2 = task_factory(deployment_request=dr1, task_index='002', status='pending')
+
+    response = api_client.post(
+        f'/api/deployments/requests/{dr1.id}/abort',
+        installation=installation,
+        headers={
+            "connect-auth": (
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1Ijp7Im9pZCI6IlNVLTI5NS02ODktN"
+                "jI4IiwibmFtZSI6Ik5lcmkifX0.U_T6vuXnD293hcWNTJZ9QBViteNv8JXUL2gM0BezQ-k"
+            ),
+        },
+    )
+    response_item = response.json()
+    events = response_item.pop('events')
+    assert response.status_code == 200
+    assert dr1.status == 'aborted'
+    assert response_item == {
+        'id': dr1.id,
+        'deployment': {
+            'id': dep1.id,
+            'product': {
+                'id': dep1.product.id,
+                'name': dep1.product.name,
+                'icon': dep1.product.logo,
+            },
+            'hub': hub_data,
+        },
+        'ppr': {
+            'id': dr1.ppr_id,
+            'version': dr1.ppr.version,
+        },
+        'status': dr1.status.value,
+        'manually': dr1.manually,
+        'delegate_l2': dr1.delegate_l2,
+
+    }
+    assert list(events.keys()) == ['created', 'aborted', 'aborting']
+    assert list(events['created'].keys()) == ['at', 'by']
+    assert list(events['aborted'].keys()) == ['at', 'by']
+    assert list(events['aborting'].keys()) == ['at', 'by']
+    for task in (t1, t2):
+        assert task.status == 'aborted'
+        assert task.aborted_at > dr1.aborting_at
+        assert task.aborted_by == dr1.aborted_by
+
+
+def test_abort_deployment_request_aborting(
+    dbsession,
+    mocker,
+    deployment_factory,
+    deployment_request_factory,
+    installation,
+    api_client,
+    task_factory,
+):
+    dep1 = deployment_factory(account_id=installation['owner']['id'])
+    dep2 = deployment_factory(account_id='PA-098-890')
+
+    deployment_request_factory(deployment=dep1)
+
+    hub_data = {
+        'id': 'HB-0000-0001',
+        'name': 'Another Hub for the best',
+    }
+
+    mocker.patch(
+        'connect_ext_ppr.webapp.get_hub',
+        return_value=hub_data,
+    )
+
+    dep1 = deployment_factory(account_id=installation['owner']['id'], hub_id=hub_data['id'])
+    dep2 = deployment_factory(account_id='PA-123-456')
+
+    dr1 = deployment_request_factory(deployment=dep1, status='processing')
+    deployment_request_factory(deployment=dep1)
+    deployment_request_factory(deployment=dep2)
+
+    t1 = task_factory(deployment_request=dr1, status='done')
+    t2 = task_factory(deployment_request=dr1, task_index='002', status='pending')
+
+    response = api_client.post(
+        f'/api/deployments/requests/{dr1.id}/abort',
+        installation=installation,
+        headers={
+            "connect-auth": (
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1Ijp7Im9pZCI6IlNVLTI5NS02ODktN"
+                "jI4IiwibmFtZSI6Ik5lcmkifX0.U_T6vuXnD293hcWNTJZ9QBViteNv8JXUL2gM0BezQ-k"
+            ),
+        },
+    )
+    response_item = response.json()
+    events = response_item.pop('events')
+    assert response.status_code == 200
+    assert dr1.status == 'aborting'
+    assert response_item == {
+        'id': dr1.id,
+        'deployment': {
+            'id': dep1.id,
+            'product': {
+                'id': dep1.product.id,
+                'name': dep1.product.name,
+                'icon': dep1.product.logo,
+            },
+            'hub': hub_data,
+        },
+        'ppr': {
+            'id': dr1.ppr_id,
+            'version': dr1.ppr.version,
+        },
+        'status': dr1.status.value,
+        'manually': dr1.manually,
+        'delegate_l2': dr1.delegate_l2,
+
+    }
+    assert not dr1.aborted_at
+    assert not dr1.aborted_by
+    assert list(events.keys()) == ['created', 'aborting']
+    assert list(events['created'].keys()) == ['at', 'by']
+    assert list(events['aborting'].keys()) == ['at', 'by']
+    for task, task_status in ((t1, 'done'), (t2, 'aborted')):
+        assert task.status == task_status
+    assert not t1.aborted_at
+    assert not t1.aborted_by
+    assert t2.aborted_at > dr1.aborting_at
+    assert t2.aborted_by == dr1.aborting_by
+
+
+def test_abort_deployment_request_not_allow(
+    dbsession,
+    mocker,
+    deployment_factory,
+    deployment_request_factory,
+    installation,
+    api_client,
+    task_factory,
+):
+    hub_data = {
+        'id': 'HB-0000-0001',
+        'name': 'Another Hub for the best',
+    }
+    dep1 = deployment_factory(account_id=installation['owner']['id'], hub_id=hub_data['id'])
+    dep2 = deployment_factory(account_id='PA-123-456')
+
+    origin_status = 'done'
+    dr1 = deployment_request_factory(deployment=dep1, status=origin_status)
+    deployment_request_factory(deployment=dep1)
+    deployment_request_factory(deployment=dep2)
+
+    t1 = task_factory(deployment_request=dr1, status='pending')
+    t2 = task_factory(deployment_request=dr1, task_index='002', status='pending')
+
+    response = api_client.post(
+        f'/api/deployments/requests/{dr1.id}/abort',
+        installation=installation,
+        headers={
+            "connect-auth": (
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1Ijp7Im9pZCI6IlNVLTI5NS02ODktN"
+                "jI4IiwibmFtZSI6Ik5lcmkifX0.U_T6vuXnD293hcWNTJZ9QBViteNv8JXUL2gM0BezQ-k"
+            ),
+        },
+    )
+    error = response.json()
+
+    assert response.status_code == 400
+    assert (t1.status, t2.status) == ('pending', 'pending')
+    assert dr1.status == origin_status
+    assert error == {
+        'error_code': 'VAL_005', 'errors': [
+            "Transition not allowed: can not set status from `done` to 'aborting'"
+            ", allowed status sources for 'aborting' are 'pending, processing'.",
+        ],
     }

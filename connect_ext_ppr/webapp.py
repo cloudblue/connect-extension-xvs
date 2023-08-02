@@ -281,6 +281,41 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             )
         return marketplaces_list
 
+    @router.post(
+        '/deployments/requests/{depl_req_id}/abort',
+        summary='Abort a deployment request',
+        response_model=DeploymentRequestSchema,
+    )
+    def abort(
+        self,
+        depl_req_id: str,
+        db: VerboseBaseSession = Depends(get_db),
+        client: ConnectClient = Depends(get_installation_client),
+        installation: dict = Depends(get_installation),
+        request: Request = None,
+    ):
+        dr = get_deployment_request_by_id(depl_req_id, db, installation)
+        origin_state = dr.status
+
+        tasks = (
+            db
+            .query(Task)
+            .filter_by(deployment_request=dr.id, status=Task.STATUSES.pending)
+            .with_for_update()
+        )
+        user_data = get_user_data_from_auth_token(request.headers['connect-auth'])
+        by = user_data['id']
+        dr.aborting(by)
+        db.flush()
+        for task in tasks:
+            task.abort(by)
+        db.flush()
+        if origin_state == DeploymentRequest.STATUSES.pending:
+            dr.abort_by_api(by)
+        db.commit()
+        hub = get_hub(client, dr.deployment.hub_id)
+        return get_deployment_request_schema(dr, hub)
+
     @router.get(
         '/deployments/{deployment_id}',
         summary='Deployment details',
