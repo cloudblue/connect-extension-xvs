@@ -3,6 +3,7 @@ c-dialog.ppr-upload-dialog(
   v-model="localValue",
   title="Upload PPR",
   :actions="actions",
+  :error-text="errorText",
 )
   upload-file.ppr-upload-dialog__upload(
     ref="fileUpload",
@@ -59,6 +60,7 @@ export default {
     localValue: false,
     description: '',
     isUploadingPPR: false,
+    errorText: '',
   }),
 
   computed: {
@@ -85,18 +87,23 @@ export default {
     },
 
     async onFileUploadSuccess({ response }) {
-      await uploadPPR(this.deploymentId, {
-        id: response.id,
-        location: response.file,
-        size: response.size,
-        name: response.name,
-        mimeType: response.mime_type,
-        description: this.description,
-      });
+      try {
+        await uploadPPR(this.deploymentId, {
+          id: response.id,
+          location: response.file,
+          size: response.size,
+          name: response.name,
+          mimeType: response.mime_type,
+          description: this.description,
+        });
 
-      this.isUploadingFile = false;
-      this.localValue = false;
-      this.$emit('uploaded');
+        this.localValue = false;
+        this.$emit('uploaded');
+      } catch (e) {
+        this.errorText = e.message;
+      } finally {
+        this.isUploadingPPR = false;
+      }
     },
   },
 };
