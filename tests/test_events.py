@@ -9,6 +9,7 @@ from connect.client import ClientError
 from connect.client.rql import R
 
 from connect_ext_ppr.events import ConnectExtensionXvsEventsApplication
+from connect_ext_ppr.models.deployment import MarketplaceConfiguration
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.replicas import Product
 
@@ -32,7 +33,7 @@ def test_handle_listing_processing_listed(
     )
     rql = R().visibility.listing.eq(True)
     rql |= R().visibility.syndication.eq(True)
-    rql & R().id.in_([product['id']])
+    rql &= R().id.in_([product['id']])
     client_mocker.products.filter(rql).limit(1).mock(
         return_value=[product],
     )
@@ -55,14 +56,56 @@ def test_handle_listing_processing_listed(
 
 
 def test_handle_listing_processing_unlisted(
+    client_mocker_factory,
     connect_client,
+    deployment_factory,
+    deployment_request_factory,
     logger,
     listing,
+    marketplace,
+    marketplace_config_factory,
     installation,
     dbsession,
 ):
     config = {}
     listing['status'] = 'unlisted'
+    product = listing['product']
+
+    deployments = []
+    for hub in marketplace['hubs']:
+        dep = deployment_factory(
+            product_id=product['id'],
+            hub_id=hub['hub']['id'],
+            account_id=installation['owner']['id'],
+        )
+        deployments.append(dep)
+        marketplace_config_factory(deployment=dep, marketplace_id=marketplace['id'])
+
+    dep = deployment_factory(
+        product_id=product['id'],
+        hub_id='HB-123-543',
+        account_id=installation['owner']['id'],
+    )
+    marketplace_config_factory(deployment=dep, marketplace_id='MP-789')
+
+    dep1 = deployments[0]
+    dep1_dr1 = deployment_request_factory(deployment=dep1, status='error')
+    marketplace_config_factory(deployment_request=dep1_dr1, marketplace_id=marketplace['id'])
+    marketplace_config_factory(deployment_request=dep1_dr1, marketplace_id='MP-789')
+
+    dep1_dr2 = deployment_request_factory(deployment=dep1, status='pending')
+    marketplace_config_factory(deployment_request=dep1_dr2, marketplace_id=marketplace['id'])
+    marketplace_config_factory(deployment_request=dep1_dr2, marketplace_id='MP-789')
+
+    dep2 = deployments[1]
+    dep2_dr1 = deployment_request_factory(deployment=dep2, status='processing')
+    marketplace_config_factory(deployment_request=dep2_dr1, marketplace_id=marketplace['id'])
+    marketplace_config_factory(deployment_request=dep2_dr1, marketplace_id='MP-789')
+
+    client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
+    client_mocker.marketplaces.filter(R().id.in_([marketplace['id']])).limit(1).mock(
+        return_value=[marketplace],
+    )
 
     ext = ConnectExtensionXvsEventsApplication(
         connect_client, logger, config,
@@ -72,9 +115,154 @@ def test_handle_listing_processing_unlisted(
     result = ext.handle_listing_processing(listing)
     assert result.status == 'success'
 
-    product_data = listing['product']
-    q = dbsession.query(Product).filter_by(id=product_data['id'])
-    assert q.count() == 0
+    assert dbsession.query(MarketplaceConfiguration).filter_by(
+        marketplace=marketplace['id'],
+        active=False,
+    ).filter(
+        MarketplaceConfiguration.deployment_id.in_([d.id for d in deployments]),
+    ).count() == len(marketplace['hubs'])
+
+    assert dbsession.query(MarketplaceConfiguration).filter_by(
+        active=True,
+        deployment_request=dep1_dr1.id,
+    ).count() == 2
+
+    assert dbsession.query(MarketplaceConfiguration).filter_by(
+        marketplace=marketplace['id'],
+        active=False,
+        deployment_request=dep1_dr2.id,
+    ).count() == 1
+    assert dbsession.query(MarketplaceConfiguration).filter_by(
+        active=True,
+        deployment_request=dep1_dr2.id,
+    ).count() == 1
+
+    assert dbsession.query(MarketplaceConfiguration).filter_by(
+        marketplace=marketplace['id'],
+        active=False,
+        deployment_request=dep2_dr1.id,
+    ).count() == 1
+    assert dbsession.query(MarketplaceConfiguration).filter_by(
+        active=True,
+        deployment_request=dep2_dr1.id,
+    ).count() == 1
+
+
+def test_handle_listing_processing_unlisted_no_marketplace_removal_in_dr(
+    client_mocker_factory,
+    connect_client,
+    deployment_factory,
+    deployment_request_factory,
+    logger,
+    listing,
+    marketplace,
+    marketplace_config_factory,
+    installation,
+    dbsession,
+):
+    config = {}
+    listing['status'] = 'unlisted'
+    product = listing['product']
+
+    deployments = []
+    for hub in marketplace['hubs']:
+        dep = deployment_factory(
+            product_id=product['id'],
+            hub_id=hub['hub']['id'],
+            account_id=installation['owner']['id'],
+        )
+        deployments.append(dep)
+        marketplace_config_factory(deployment=dep, marketplace_id=marketplace['id'])
+
+    dep = deployment_factory(
+        product_id=product['id'],
+        hub_id='HB-123-543',
+        account_id=installation['owner']['id'],
+    )
+    marketplace_config_factory(deployment=dep, marketplace_id='MP-789')
+
+    dep1 = deployments[0]
+    dep1_dr1 = deployment_request_factory(deployment=dep1, status='error')
+    marketplace_config_factory(deployment_request=dep1_dr1, marketplace_id=marketplace['id'])
+    marketplace_config_factory(deployment_request=dep1_dr1, marketplace_id='MP-789')
+
+    dep1_dr2 = deployment_request_factory(deployment=dep1, status='done')
+    marketplace_config_factory(deployment_request=dep1_dr2, marketplace_id=marketplace['id'])
+    marketplace_config_factory(deployment_request=dep1_dr2, marketplace_id='MP-789')
+
+    client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
+    client_mocker.marketplaces.filter(R().id.in_([marketplace['id']])).limit(1).mock(
+        return_value=[marketplace],
+    )
+
+    ext = ConnectExtensionXvsEventsApplication(
+        connect_client, logger, config,
+        installation=installation,
+        installation_client=connect_client,
+    )
+    result = ext.handle_listing_processing(listing)
+    assert result.status == 'success'
+
+    assert dbsession.query(MarketplaceConfiguration).filter_by(
+        marketplace=marketplace['id'],
+        active=False,
+    ).filter(
+        MarketplaceConfiguration.deployment_id.in_([d.id for d in deployments]),
+    ).count() == len(marketplace['hubs'])
+
+    assert dbsession.query(MarketplaceConfiguration).filter_by(
+        active=True,
+        deployment_request=dep1_dr1.id,
+    ).count() == 2
+
+    assert dbsession.query(MarketplaceConfiguration).filter_by(
+        marketplace=marketplace['id'],
+        active=True,
+        deployment_request=dep1_dr2.id,
+    ).count() == 1
+    assert dbsession.query(MarketplaceConfiguration).filter_by(
+        active=True,
+        deployment_request=dep1_dr2.id,
+    ).count() == 2
+
+
+def test_handle_listing_processing_unlisted_no_dr(
+    client_mocker_factory,
+    connect_client,
+    deployment_factory,
+    logger,
+    listing,
+    marketplace,
+    marketplace_config_factory,
+    installation,
+    dbsession,
+):
+    config = {}
+    listing['status'] = 'unlisted'
+
+    for hub in marketplace['hubs']:
+        dep = deployment_factory(
+            product_id=listing['product']['id'],
+            hub_id=hub['hub']['id'],
+            account_id=installation['owner']['id'],
+        )
+        marketplace_config_factory(deployment=dep, marketplace_id=marketplace['id'])
+
+    client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
+    client_mocker.marketplaces.filter(R().id.in_([marketplace['id']])).limit(1).mock(
+        return_value=[marketplace],
+    )
+
+    ext = ConnectExtensionXvsEventsApplication(
+        connect_client, logger, config,
+        installation=installation,
+        installation_client=connect_client,
+    )
+    result = ext.handle_listing_processing(listing)
+    assert result.status == 'success'
+    assert dbsession.query(MarketplaceConfiguration).filter_by(
+        active=False,
+    ).count() == len(marketplace['hubs'])
 
 
 def test_handle_listing_processing_deployment_exists(
@@ -84,7 +272,6 @@ def test_handle_listing_processing_deployment_exists(
     listing,
     marketplace,
     installation,
-    dbsession,
     deployment,
 ):
     config = {}

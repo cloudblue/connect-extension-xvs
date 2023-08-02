@@ -268,11 +268,17 @@ def file_factory(dbsession, media_response):
 
 @pytest.fixture
 def marketplace_config_factory(dbsession):
-    def _build_mc(marketplace_id, deployment=None, deployment_request=None, ppr_id=None):
-
+    def _build_mc(
+        marketplace_id,
+        deployment=None,
+        deployment_request=None,
+        ppr_id=None,
+        active=True,
+    ):
         mp = MarketplaceConfiguration(
             marketplace=marketplace_id,
             ppr_id=ppr_id,
+            active=active,
         )
         if deployment:
             mp.deployment_id = deployment.id

@@ -19,7 +19,7 @@ def test_get_deployments(
     api_client,
 ):
     mocker.patch(
-        'connect_ext_ppr.webapp.get_all_info',
+        'connect_ext_ppr.webapp.get_all_listing_info',
         return_value=[
             {
                 'product': {
@@ -82,7 +82,7 @@ def test_get_deployments_empty(
     api_client,
 ):
     mocker.patch(
-        'connect_ext_ppr.webapp.get_all_info',
+        'connect_ext_ppr.webapp.get_all_listing_info',
         return_value=[],
     )
     response = api_client.get(
@@ -187,6 +187,7 @@ def test_get_deployments_marketplaces(
     ppr = ppr_version_factory(deployment=deployment)
     marketplace_config_factory(deployment=deployment, marketplace_id=m1['id'], ppr_id=ppr.id)
     marketplace_config_factory(deployment=deployment, marketplace_id=m2['id'])
+    marketplace_config_factory(deployment=deployment, marketplace_id='MP-657', active=False)
     marketplace_config_factory(deployment=another_dep, marketplace_id=m3['id'])
 
     response = api_client.get(

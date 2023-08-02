@@ -72,8 +72,8 @@ def _get_installation(client):
     return client('devops').installations.filter(rql).first()
 
 
-def get_listings(client):
-    rql = R().status.eq("listed")
+def get_listings(client, status='listed'):
+    rql = R().status.eq(status)
     return client.listings.filter(rql)
 
 
@@ -158,8 +158,8 @@ def get_configuration_from_media(client, account_id, deployment_id, media_id):
 
 
 @connect_error
-def get_all_info(client):
-    listings = list(get_listings(client))
+def get_all_listing_info(client, status='listed'):
+    listings = list(get_listings(client, status))
     mkp_ids = list({li['contract']['marketplace']['id'] for li in listings})
     prod_ids = list({li['product']['id'] for li in listings})
     marketplaces = list(get_marketplaces(client, mkp_ids))

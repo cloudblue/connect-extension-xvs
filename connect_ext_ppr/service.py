@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 
 import pandas as pd
-from sqlalchemy import exists
+from sqlalchemy import exists, update
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.sql import desc
 
@@ -352,3 +352,61 @@ def add_new_deployment_request(db, dr_data, deployment, account_id, logger):
         logger.error(ex)
         db.rollback()
         raise ExtensionHttpError.EXT_003()
+
+
+def deactivate_marketplaces(installation, listings, config, logger):
+    with get_db_ctx_manager(config) as db:
+        for li in listings:
+            marketplace_id = li['contract']['marketplace']['id']
+            product_id = li['product']['id']
+            hubs = [hub['hub']['id'] for hub in li['contract']['marketplace']['hubs']]
+            deployments = [d.id for d in db.query(Deployment.id).filter_by(
+                product_id=product_id,
+                account_id=installation['owner']['id'],
+            ).filter(
+                Deployment.hub_id.in_(hubs),
+            ).all()]
+
+            stmt = (
+                update(MarketplaceConfiguration)
+                .where(
+                    MarketplaceConfiguration.marketplace == marketplace_id,
+                    MarketplaceConfiguration.deployment_id.in_(deployments))
+                .values(active=False)
+                .returning(MarketplaceConfiguration.deployment_id)
+            )
+
+            result = db.execute(stmt)
+            logger.info(
+                f'Marketplace {marketplace_id} has been deactivate from deployments {result.all()}',
+            )
+
+            deployments_requests = (
+                db.query(DeploymentRequest.id)
+                .filter(
+                    DeploymentRequest.deployment_id.in_(deployments),
+                    DeploymentRequest.status.in_([
+                        DeploymentRequest.STATUSES.pending,
+                        DeploymentRequest.STATUSES.processing,
+                    ]),
+                )
+            )
+
+            stmt = (
+                update(MarketplaceConfiguration)
+                .where(
+                    MarketplaceConfiguration.marketplace == marketplace_id,
+                    MarketplaceConfiguration.deployment_request.in_(
+                        [dr.id for dr in deployments_requests],
+                    ))
+                .values(active=False)
+                .returning(MarketplaceConfiguration.deployment_request)
+            )
+
+            result = db.execute(stmt)
+            logger.info(
+                f'Marketplace {marketplace_id} has been deactivate from deployments requests '
+                f'{result.all()}',
+            )
+
+            db.commit()

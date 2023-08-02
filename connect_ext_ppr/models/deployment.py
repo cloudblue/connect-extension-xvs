@@ -97,5 +97,6 @@ class MarketplaceConfiguration(Model):
     deployment_id = db.Column(db.ForeignKey(Deployment.id), nullable=True)
     deployment_request = db.Column(db.ForeignKey(DeploymentRequest.id), nullable=True)
     ppr_id = db.Column(db.String, db.ForeignKey(PPRVersion.id))
+    active = db.Column(db.Boolean(), default=True)
 
     ppr = relationship('PPRVersion', foreign_keys='MarketplaceConfiguration.ppr_id')
