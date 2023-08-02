@@ -30,6 +30,7 @@
               download,
             ) {{ row.fileName }}
             c-chip._ml_8.color_border-radius(
+              v-if="row.configState === 'active'",
               text="Active",
               color="orange",
             )
@@ -66,6 +67,7 @@
               c-button.list-item(
                 color="red",
                 label="Delete",
+                @click="deleteConfig(row.configId)",
                 :upper-case="false",
               )
 
@@ -82,7 +84,6 @@
       message-text="Drag files here or&nbsp;<a>browse</a>",
       accepted-files=".json",
       label="Upload file",
-
       @upload-success="uploadSuccess",
     )
 
@@ -103,6 +104,7 @@ import {
 
 import {
   createDeploymentConfigurations,
+  deleteDeploymentConfiguration,
   getDeploymentConfigurations,
 } from '@/utils';
 
@@ -117,6 +119,7 @@ import {
 
 
 const prepareRow = template({
+  configId: ['id'],
   fileName: ['file', 'name'],
   fileId: ['file', 'id'],
   fileLocation: ['file', 'location'],
@@ -124,6 +127,7 @@ const prepareRow = template({
   addedAt: ['events', 'created', 'at'],
   addedByName: ['events', 'created', 'by', 'name'],
   addedById: ['events', 'created', 'by', 'id'],
+  configState: ['state'],
 });
 
 
@@ -204,7 +208,7 @@ export default {
     prepareRow,
     getFileSize,
     downloadFile(name) {
-      const downloadUrl = `https://vendor.cnct.info/public/v1/media/folders/accounts/${this.accountId}/${this.deploymentId}/pprs/files/${name}`;
+      const downloadUrl = `https://vendor.cnct.info/public/v1/media/folders/accounts/${this.accountId}/${this.deploymentId}/configurations/files/${name}`;
 
       downloader({ url: downloadUrl });
     },
@@ -215,7 +219,7 @@ export default {
 
     uploadFile() {
       this.isUploadingFile = true;
-      const uri = `media/folders/accounts/${this.accountId}/${this.deploymentId}/pprs/files`;
+      const uri = `media/folders/accounts/${this.accountId}/${this.deploymentId}/configurations/files`;
       this.$refs.fileUpload.startUploadFile(uri);
     },
 
@@ -241,6 +245,10 @@ export default {
       getDeploymentConfigurations(this.deploymentId).then(data => {
         this.localValue = data;
       });
+    },
+
+    deleteConfig(configId) {
+      deleteDeploymentConfiguration(this.deploymentId, configId);
     },
   },
 
