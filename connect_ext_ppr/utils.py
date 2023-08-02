@@ -159,11 +159,11 @@ def get_configuration_from_media(client, account_id, deployment_id, media_id):
 
 @connect_error
 def get_all_info(client):
-    listings = get_listings(client)
+    listings = list(get_listings(client))
     mkp_ids = list({li['contract']['marketplace']['id'] for li in listings})
     prod_ids = list({li['product']['id'] for li in listings})
-    marketplaces = get_marketplaces(client, mkp_ids)
-    products = get_products(client, prod_ids)
+    marketplaces = list(get_marketplaces(client, mkp_ids))
+    products = list(get_products(client, prod_ids))
     for list_ in listings:
         mkp_id = list_['contract']['marketplace']['id']
         prd_id = list_['product']['id']
