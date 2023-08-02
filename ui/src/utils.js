@@ -17,7 +17,7 @@ export const getPPRs = (id) => rest.get(`/api/deployments/${id}/pprs`);
 
 export const getPPR = (deploymentId, id) => rest.get(`/api/deployments/${deploymentId}/pprs/${id}`);
 
-export const regeneratePPR = id => rest.post(`/api/deployments/${id}/pprs`);
+export const regeneratePPR = id => rest.post(`/api/deployments/${id}/pprs`, {});
 
 export const deleteDeploymentConfiguration = (deploymentId, configurationId) => rest.delete(`/api/deployments/${deploymentId}/configurations/${configurationId}`);
 
