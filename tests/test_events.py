@@ -7,7 +7,6 @@ import json
 
 from connect.client import ClientError
 from connect.client.rql import R
-import pytest
 
 from connect_ext_ppr.events import ConnectExtensionXvsEventsApplication
 from connect_ext_ppr.models.ppr import PPRVersion
@@ -235,11 +234,7 @@ def test_reschedule_product_change(
     assert result.status == 'reschedule'
 
 
-@pytest.mark.parametrize(
-    'status',
-    ('installed', 'uninstalled'),
-)
-def test_handle_installation_changed(
+def test_handle_installation_installed(
     connect_client,
     client_mocker_factory,
     dbsession,
@@ -248,26 +243,46 @@ def test_handle_installation_changed(
     listing,
     marketplace,
     product,
-    status,
 ):
     config = {}
 
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
 
-    if status == 'installed':
-        client_mocker.listings.filter(status="listed").mock(
-            return_value=[listing],
-        )
-        client_mocker.marketplaces.filter(id__in=[marketplace['id']]).mock(
-            return_value=[marketplace],
-        )
-        rql = R().visibility.listing.eq(True)
-        rql |= R().visibility.syndication.eq(True)
-        rql & R().id.in_([product['id']])
-        client_mocker.products.filter(rql).mock(
-            return_value=[product],
-        )
-    installation['status'] = status
+    client_mocker.listings.filter(status="listed").mock(
+        return_value=[listing],
+    )
+    client_mocker.marketplaces.filter(id__in=[marketplace['id']]).mock(
+        return_value=[marketplace],
+    )
+    rql = R().visibility.listing.eq(True)
+    rql |= R().visibility.syndication.eq(True)
+    rql & R().id.in_([product['id']])
+    client_mocker.products.filter(rql).mock(
+        return_value=[product],
+    )
+    installation['status'] = 'installed'
+    ext = ConnectExtensionXvsEventsApplication(
+        connect_client, logger, config,
+        installation=installation,
+        installation_client=connect_client,
+    )
+    result = ext.on_installation_status_change(installation)
+    assert result.status == 'success'
+
+
+def test_handle_installation_uninstalled(
+    connect_client,
+    client_mocker_factory,
+    dbsession,
+    logger,
+    installation,
+    listing,
+    marketplace,
+    product,
+):
+    config = {}
+
+    installation['status'] = 'uninstalled'
     ext = ConnectExtensionXvsEventsApplication(
         connect_client, logger, config,
         installation=installation,

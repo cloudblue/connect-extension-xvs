@@ -169,6 +169,7 @@ def get_all_info(client):
         prd_id = list_['product']['id']
         list_['contract']['marketplace'] = filter_object_list_by_id(marketplaces, mkp_id)
         list_['product'] = filter_object_list_by_id(products, prd_id)
+    listings = [li for li in listings if li['contract']['marketplace'].get('hubs')]
     return listings
 
 
