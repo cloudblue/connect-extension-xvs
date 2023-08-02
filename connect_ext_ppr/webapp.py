@@ -83,6 +83,7 @@ from connect_ext_ppr.utils import (
     get_client_object,
     get_configuration_schema,
     get_deployment_by_id,
+    get_deployment_request_by_id,
     get_deployment_request_schema,
     get_deployment_schema,
     get_hub,
@@ -242,27 +243,43 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         self,
         depl_req_id: str,
         db: VerboseBaseSession = Depends(get_db),
-        client: ConnectClient = Depends(get_installation_client),
         installation: dict = Depends(get_installation),
     ):
-        dr = (
-            db.query(DeploymentRequest)
-            .filter(
-                DeploymentRequest.deployment.has(account_id=installation['owner']['id']),
-                DeploymentRequest.id == depl_req_id,
-            )
-            .one_or_none()
-        )
+        dr = get_deployment_request_by_id(depl_req_id, db, installation)
         if dr:
             task_list = []
             tasks = db.query(Task).filter_by(deployment_request=dr.id).order_by(Task.id)
             for task in tasks:
                 task_list.append(get_task_schema(task))
             return task_list
-        raise ExtensionHttpError.EXT_001(
-            format_kwargs={'obj_id': depl_req_id},
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
+
+    @router.get(
+        '/deployments/requests/{depl_req_id}/marketplaces',
+        summary='List all marketplaces in scope of a deployment request',
+        response_model=List[MarketplaceSchema],
+    )
+    def list_deployment_request_marketplaces(
+        self,
+        depl_req_id: str,
+        db: VerboseBaseSession = Depends(get_db),
+        client: ConnectClient = Depends(get_installation_client),
+        installation: dict = Depends(get_installation),
+    ):
+        dr = get_deployment_request_by_id(depl_req_id, db, installation)
+
+        marketplaces_list = []
+        marketplaces = db.query(MarketplaceConfiguration).options(
+            selectinload(MarketplaceConfiguration.ppr),
+        ).filter_by(deployment_request=dr.id)
+
+        marketplaces_pprs = {m.marketplace: m.ppr for m in marketplaces}
+        marketplaces_data = get_marketplaces(client, marketplaces_pprs.keys())
+
+        for marketplace in marketplaces_data:
+            marketplaces_list.append(
+                get_marketplace_schema(marketplace, marketplaces_pprs.get(marketplace['id'])),
+            )
+        return marketplaces_list
 
     @router.get(
         '/deployments/{deployment_id}',
