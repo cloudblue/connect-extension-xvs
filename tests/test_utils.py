@@ -59,6 +59,42 @@ def test_get_all_info_success(
     assert all_info[0] == listing
 
 
+def test_get_all_info_marketplace_wo_hubs(
+    connect_client,
+    client_mocker_factory,
+    marketplace,
+    listing,
+    product,
+):
+    client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
+    listing_wo_hubs = copy.deepcopy(listing)
+    listing_wo_hubs['contract']['marketplace']['id'] = 'MP-1637'
+    listing_wo_hubs['product']['id'] = 'PRD-000-000-988'
+    marketplace_wo_hubs = copy.deepcopy(marketplace)
+    marketplace_wo_hubs['id'] = 'MP-1637'
+    product_wo_hubs = copy.deepcopy(product)
+    product_wo_hubs['id'] = 'PRD-000-000-988'
+    marketplace_wo_hubs.pop('hubs')
+
+    client_mocker.listings.filter(R().status.eq("listed")).mock(
+        return_value=[listing, listing_wo_hubs],
+    )
+    client_mocker.marketplaces.filter(R().id.in_([marketplace['id']])).mock(
+        return_value=[marketplace, marketplace_wo_hubs],
+    )
+    rql = R().visibility.listing.eq(True)
+    rql |= R().visibility.syndication.eq(True)
+    rql &= R().id.in_([product['id']])
+    client_mocker.products.filter(rql).mock(
+        return_value=[product, product_wo_hubs],
+    )
+    all_info = get_all_info(connect_client)
+    listing['contract']['marketplace'] = marketplace
+    listing['product'] = product
+    assert len(all_info) == 1
+    assert all_info[0] == listing
+
+
 def test_get_marketplaces(
         connect_client,
         marketplace,
