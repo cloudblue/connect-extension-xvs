@@ -40,7 +40,7 @@ from connect_ext_ppr.schemas import (
 )
 
 
-class FileColletion:
+class FileCollection:
     PPR = 'pprs'
     CONFIFURATION = 'configurations'
 
@@ -131,7 +131,7 @@ def create_media_file(
 
 
 def create_ppr_to_media(client, account_id, deployment_id, filename, content, file_size=None):
-    file_collection = FileColletion.PPR
+    file_collection = FileCollection.PPR
     file_type = MimeTypeChoices.application_vnd_ms_xslx
     media_file = create_media_file(
         client, account_id, deployment_id, file_collection,
@@ -148,12 +148,12 @@ def get_file_from_media(client, account_id, deployment_id, media_id, file_collec
 
 
 def get_ppr_from_media(client, account_id, deployment_id, media_id):
-    file_collection = FileColletion.PPR
+    file_collection = FileCollection.PPR
     return get_file_from_media(client, account_id, deployment_id, media_id, file_collection)
 
 
 def get_configuration_from_media(client, account_id, deployment_id, media_id):
-    file_collection = FileColletion.CONFIFURATION
+    file_collection = FileCollection.CONFIFURATION
     return get_file_from_media(client, account_id, deployment_id, media_id, file_collection)
 
 
@@ -247,6 +247,10 @@ def get_deployment_request_schema(deployment_request, hub):
         'aborted': {
             'at': deployment_request.aborted_at,
             'by': deployment_request.aborted_by,
+        },
+        'aborting': {
+            'at': deployment_request.aborting_at,
+            'by': deployment_request.aborting_by,
         },
     }
 

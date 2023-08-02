@@ -88,7 +88,7 @@ def main_process(deployment_request_id, config):
         db.refresh(deployment_request, with_for_update=True)
 
         if deployment_request.status == DeploymentRequestStatusChoices.aborting:
-            deployment_request.status = DeploymentRequestStatusChoices.aborted
+            deployment_request.abort()
         elif was_succesfull:
             deployment_request.status = DeploymentRequestStatusChoices.done
         else:
