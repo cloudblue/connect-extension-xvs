@@ -7,6 +7,7 @@ from connect_ext_ppr.db import Model
 from connect_ext_ppr.models.enums import DeploymentRequestStatusChoices, DeploymentStatusChoices
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.replicas import Product
+from connect_ext_ppr.models.models_utils import transition
 
 
 class Deployment(Model):
@@ -62,6 +63,8 @@ class DeploymentRequest(Model):
     finished_at = db.Column(db.DateTime(), nullable=True)
     aborted_at = db.Column(db.DateTime(), nullable=True)
     aborted_by = db.Column(db.String(20), nullable=True)
+    aborting_at = db.Column(db.DateTime(), nullable=True)
+    aborting_by = db.Column(db.String(20), nullable=True)
 
     ppr = relationship('PPRVersion', foreign_keys="DeploymentRequest.ppr_id")
     deployment = relationship(
@@ -69,6 +72,21 @@ class DeploymentRequest(Model):
         foreign_keys="DeploymentRequest.deployment_id",
         innerjoin=True,
     )
+
+    @transition('status', target=STATUSES.aborting, sources=[STATUSES.pending, STATUSES.processing])
+    def aborting(self, by):
+        self.aborting_at = datetime.utcnow()
+        self.aborting_by = by
+
+    @transition('status', target=STATUSES.aborted, sources=[STATUSES.aborting])
+    def abort(self):
+        self.aborted_at = datetime.utcnow()
+        self.aborted_by = self.aborting_by
+
+    @transition('status', target=STATUSES.aborted, sources=[STATUSES.aborting])
+    def abort_by_api(self, by):
+        self.aborted_at = datetime.utcnow()
+        self.aborted_by = by
 
 
 class MarketplaceConfiguration(Model):

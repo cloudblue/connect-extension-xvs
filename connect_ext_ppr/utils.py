@@ -23,7 +23,7 @@ from connect_ext_ppr.constants import (
 )
 from connect_ext_ppr.errors import ExtensionHttpError
 from connect_ext_ppr.models.enums import MimeTypeChoices
-from connect_ext_ppr.models.deployment import Deployment
+from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
 from connect_ext_ppr.schemas import (
     ConfigurationReferenceSchema,
     ConfigurationSchema,
@@ -40,7 +40,7 @@ from connect_ext_ppr.schemas import (
 )
 
 
-class FileColletion:
+class FileCollection:
     PPR = 'pprs'
     CONFIFURATION = 'configurations'
 
@@ -131,7 +131,7 @@ def create_media_file(
 
 
 def create_ppr_to_media(client, account_id, deployment_id, filename, content, file_size=None):
-    file_collection = FileColletion.PPR
+    file_collection = FileCollection.PPR
     file_type = MimeTypeChoices.application_vnd_ms_xslx
     media_file = create_media_file(
         client, account_id, deployment_id, file_collection,
@@ -148,12 +148,12 @@ def get_file_from_media(client, account_id, deployment_id, media_id, file_collec
 
 
 def get_ppr_from_media(client, account_id, deployment_id, media_id):
-    file_collection = FileColletion.PPR
+    file_collection = FileCollection.PPR
     return get_file_from_media(client, account_id, deployment_id, media_id, file_collection)
 
 
 def get_configuration_from_media(client, account_id, deployment_id, media_id):
-    file_collection = FileColletion.CONFIFURATION
+    file_collection = FileCollection.CONFIFURATION
     return get_file_from_media(client, account_id, deployment_id, media_id, file_collection)
 
 
@@ -169,6 +169,7 @@ def get_all_info(client):
         prd_id = list_['product']['id']
         list_['contract']['marketplace'] = filter_object_list_by_id(marketplaces, mkp_id)
         list_['product'] = filter_object_list_by_id(products, prd_id)
+    listings = [li for li in listings if li['contract']['marketplace'].get('hubs')]
     return listings
 
 
@@ -246,6 +247,10 @@ def get_deployment_request_schema(deployment_request, hub):
         'aborted': {
             'at': deployment_request.aborted_at,
             'by': deployment_request.aborted_by,
+        },
+        'aborting': {
+            'at': deployment_request.aborting_at,
+            'by': deployment_request.aborting_by,
         },
     }
 
@@ -372,6 +377,24 @@ def get_ppr_version_schema(ppr, file, conf):
         },
         status=ppr.status,
     )
+
+
+def get_deployment_request_by_id(dr_id, db, installation):
+    """Return deployment request or raise an error that it is not found"""
+    dr = (
+        db.query(DeploymentRequest)
+        .filter(
+            DeploymentRequest.deployment.has(account_id=installation['owner']['id']),
+            DeploymentRequest.id == dr_id,
+        )
+        .one_or_none()
+    )
+    if dr is None:
+        raise ExtensionHttpError.EXT_001(
+            format_kwargs={'obj_id': dr_id},
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    return dr
 
 
 def get_deployment_by_id(deployment_id, db, installation):

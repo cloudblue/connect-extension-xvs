@@ -5,6 +5,7 @@ import sqlalchemy as db
 from connect_ext_ppr.db import Model
 from connect_ext_ppr.models.enums import TasksStatusChoices, TaskTypesChoices
 from connect_ext_ppr.models.deployment import DeploymentRequest
+from connect_ext_ppr.models.models_utils import transition
 
 
 class Task(Model):
@@ -31,3 +32,8 @@ class Task(Model):
     finished_at = db.Column(db.DateTime(), nullable=True)
     aborted_at = db.Column(db.DateTime(), nullable=True)
     aborted_by = db.Column(db.String(20), nullable=True)
+
+    @transition('status', target=STATUSES.aborted, sources=[STATUSES.pending])
+    def abort(self, by):
+        self.aborted_at = datetime.utcnow()
+        self.aborted_by = by

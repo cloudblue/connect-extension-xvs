@@ -103,4 +103,6 @@ class ExtensionValidationError(ExtensionErrorBase):
         2: "{field}: This values {values} are invalid.",
         3: "At least one choice needs to be specified.",
         4: "Cannot applied PPR to {entity} {values}.",
+        5: "Transition not allowed: can not set {field_name} from `{source}` to"
+        " '{target}', allowed {field_name} sources for '{target}' are '{allowed}'.",
     }
