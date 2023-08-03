@@ -9,9 +9,6 @@ import createApp, {
   Card,
 } from '@cloudblueconnect/connect-ui-toolkit';
 
-import {
-  settings,
-} from '../pages';
 
 import '@/styles/app.styl';
 import '../../styles/index.css';
@@ -19,5 +16,4 @@ import '../../styles/index.css';
 
 Vue.use(PortalVue);
 
-createApp({ 'settings-card': Card })
-  .then(settings);
+createApp({ 'settings-card': Card });

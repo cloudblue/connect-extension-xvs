@@ -87,6 +87,7 @@
   line-height: 20px;
   text-align: left;
   color: #212121;
+  white-space: break-spaces;
 }
 .c-alert__text:first-letter {
   text-transform: uppercase;
@@ -186,6 +187,9 @@
   animation-name: z-shake-dialog;
   animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   animation-duration: 0.15s;
+}
+.c-dialog__error {
+  margin-bottom: 20px;
 }
 .c-window {
   display: grid;
@@ -810,6 +814,51 @@ a.c-vertical-tab_clickable:not(.c-vertical-tab_active) {
   \************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 .ppr-upload-dialog__upload {
   margin-bottom: 24px;
+}
+
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cSnackbar.vue?vue&type=style&index=0&id=2ea59ad2&lang=stylus& ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.c-snackbar {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  color: #fff;
+  pointer-events: none;
+  z-index: 1000;
+  font-size: 14px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 24px;
+}
+.c-snackbar__wrapper {
+  width: auto;
+  max-width: 568px;
+  min-width: 288px;
+  margin: 0 auto;
+  margin-right: 0;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  background-color: #323232;
+  pointer-events: auto;
+  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12);
+}
+.c-snackbar__wrapper_no-max-width {
+  max-width: none;
+}
+.c-snackbar__content {
+  width: 100%;
+  padding: 16px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+}
+.c-snackbar__autoheight {
+  height: auto;
 }
 
 /*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\

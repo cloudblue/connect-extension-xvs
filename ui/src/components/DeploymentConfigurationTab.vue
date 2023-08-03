@@ -76,6 +76,7 @@
     title="Upload Configuration File",
     width="500px",
     :actions="getUploadDialogActions",
+    :error-text="uploadErrorText",
   )
     p This file will become active after the upload is complete.
     upload-file(
@@ -87,6 +88,11 @@
       @upload-success="uploadSuccess",
     )
 
+  error-snackbar(
+    v-model="showErrorSnackbar",
+    :text="errorSnackbarText",
+  )
+
 </template>
 
 <script>
@@ -97,6 +103,7 @@ import TableActionsList from '~components/ActionsMenu.vue';
 import cChip from '~components/cChip.vue';
 import cDialog from '~components/cDialog.vue';
 import UploadFile from '~components/UploadFile.vue';
+import ErrorSnackbar from '~components/ErrorSnackbar.vue';
 
 import {
   template,
@@ -140,6 +147,7 @@ export default {
     cDataTable,
     DetailItem,
     UploadFile,
+    ErrorSnackbar,
   },
 
   props: {
@@ -186,6 +194,9 @@ export default {
 
       uploadConfigurationDialogIsShown: false,
       isUploadingFile: false,
+      uploadErrorText: '',
+      showErrorSnackbar: false,
+      errorSnackbarText: '',
     };
   },
 
@@ -223,14 +234,19 @@ export default {
       this.$refs.fileUpload.startUploadFile(uri);
     },
 
-    uploadSuccess({ response }) {
-      this.isUploadingFile = false;
-      this.uploadConfigurationDialogIsShown = false;
-      this.createConfig(response);
+    async uploadSuccess({ response }) {
+      try {
+        await this.createConfig(response);
+        this.uploadConfigurationDialogIsShown = false;
+      } catch (e) {
+        this.uploadErrorText = e.message;
+      } finally {
+        this.isUploadingFile = false;
+      }
     },
 
     createConfig(response) {
-      createDeploymentConfigurations(this.deploymentId, {
+      return createDeploymentConfigurations(this.deploymentId, {
         file: {
           id: response.id,
           name: response.name,
@@ -238,17 +254,26 @@ export default {
           size: response.size,
           mime_type: 'application/json',
         },
-      }).then(() => { this.getConfigs(); });
+      }).then(() => this.getConfigs());
     },
 
-    getConfigs() {
-      getDeploymentConfigurations(this.deploymentId).then(data => {
-        this.localValue = data;
-      });
+    async getConfigs() {
+      try {
+        this.localValue = await getDeploymentConfigurations(this.deploymentId);
+      } catch (e) {
+        this.showErrorSnackbar = true;
+        this.errorSnackbarText = e.message;
+      }
     },
 
-    deleteConfig(configId) {
-      deleteDeploymentConfiguration(this.deploymentId, configId);
+    async deleteConfig(configId) {
+      try {
+        await deleteDeploymentConfiguration(this.deploymentId, configId);
+        await this.getConfigs();
+      } catch (e) {
+        this.showErrorSnackbar = true;
+        this.errorSnackbarText = e.message;
+      }
     },
   },
 

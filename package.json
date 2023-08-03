@@ -11,7 +11,7 @@
     "watch": "NODE_ENV=development webpack watch",
     "lint": "eslint ui/src --ext .js --ext .vue",
     "lint:fix": "npm run lint -- --fix",
-    "test": "NODE_ENV=test jest --no-cache"
+    "test": "NODE_ENV=test jest --no-cache --passWithNoTests"
   },
   "author": "Ingram Micro",
   "license": "Apache Software License 2.0",

@@ -108,6 +108,11 @@
     @uploaded="loadPPRs",
   )
 
+  error-snackbar(
+    v-model="showErrorSnackbar",
+    :text="errorSnackbarText",
+  )
+
 </template>
 
 <script>
@@ -128,6 +133,7 @@ import cIcon from '~components/cIcon.vue';
 import cStatus from '~components/cStatus.vue';
 import PprSummaryDialog from '~components/PprSummaryDialog.vue';
 import PprUploadDialog from '~components/PprUploadDialog.vue';
+import ErrorSnackbar from '~components/ErrorSnackbar.vue';
 
 import {
   downloader,
@@ -164,6 +170,7 @@ export default {
     cIcon,
     cStatus,
     PprSummaryDialog,
+    ErrorSnackbar,
   },
 
   props: {
@@ -226,6 +233,9 @@ export default {
           width: 80,
         },
       ],
+
+      showErrorSnackbar: false,
+      errorSnackbarText: '',
     };
   },
 
@@ -242,16 +252,28 @@ export default {
     },
 
     async regeneratePPR() {
-      this.isRegeneratingPPR = true;
-      await regeneratePPR(this.deploymentId);
-      await this.loadPPRs();
-      this.isRegeneratingPPR = false;
+      try {
+        this.isRegeneratingPPR = true;
+        await regeneratePPR(this.deploymentId);
+        await this.loadPPRs();
+      } catch (e) {
+        this.showErrorSnackbar = true;
+        this.errorSnackbarText = e.message;
+      } finally {
+        this.isRegeneratingPPR = false;
+      }
     },
 
     async loadPPRs() {
-      this.loading = true;
-      this.localValue = await getPPRs(this.deploymentId);
-      this.loading = false;
+      try {
+        this.loading = true;
+        this.localValue = await getPPRs(this.deploymentId);
+      } catch (e) {
+        this.showErrorSnackbar = true;
+        this.errorSnackbarText = e.message;
+      } finally {
+        this.loading = false;
+      }
     },
 
     openUploadPPRDialog() {
