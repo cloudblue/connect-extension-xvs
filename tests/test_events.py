@@ -443,7 +443,7 @@ def test_handle_installation_installed(
     )
     rql = R().visibility.listing.eq(True)
     rql |= R().visibility.syndication.eq(True)
-    rql & R().id.in_([product['id']])
+    rql &= R().id.in_([product['id']])
     client_mocker.products.filter(rql).mock(
         return_value=[product],
     )
