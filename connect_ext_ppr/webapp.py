@@ -51,6 +51,7 @@ from connect_ext_ppr.service import (
     add_new_deployment_request,
     create_ppr,
     deactivate_marketplaces,
+    DeploymentRequestActionHandler,
     validate_configuration,
 )
 from connect_ext_ppr.schemas import (
@@ -121,6 +122,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         '/deployments/requests',
         summary='Create a new deployment request',
         response_model=DeploymentRequestSchema,
+        status_code=status.HTTP_201_CREATED,
     )
     def add_dep_request(
         self,
@@ -301,24 +303,29 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         request: Request = None,
     ):
         dr = get_deployment_request_by_id(depl_req_id, db, installation)
-        origin_state = dr.status
+        dr = DeploymentRequestActionHandler.abort(request, db, dr)
+        hub = get_hub(client, dr.deployment.hub_id)
+        return get_deployment_request_schema(dr, hub)
 
-        tasks = (
-            db
-            .query(Task)
-            .filter_by(deployment_request=dr.id, status=Task.STATUSES.pending)
-            .with_for_update()
-        )
-        user_data = get_user_data_from_auth_token(request.headers['connect-auth'])
-        by = user_data['id']
-        dr.aborting(by)
-        db.flush()
-        for task in tasks:
-            task.abort(by)
-        db.flush()
-        if origin_state == DeploymentRequest.STATUSES.pending:
-            dr.abort_by_api(by)
-        db.commit()
+    @router.post(
+        '/deployments/requests/{depl_req_id}/retry',
+        summary='Retry a deployment request',
+        response_model=DeploymentRequestSchema,
+    )
+    def retry(
+        self,
+        depl_req_id: str,
+        background_tasks: BackgroundTasks,
+        db: VerboseBaseSession = Depends(get_db),
+        client: ConnectClient = Depends(get_installation_client),
+        installation: dict = Depends(get_installation),
+        config: dict = Depends(get_config),
+    ):
+        dr = get_deployment_request_by_id(depl_req_id, db, installation)
+        dr = DeploymentRequestActionHandler.retry(db, dr)
+
+        background_tasks.add_task(main_process, dr.id, config)
+
         hub = get_hub(client, dr.deployment.hub_id)
         return get_deployment_request_schema(dr, hub)
 

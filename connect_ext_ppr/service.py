@@ -27,6 +27,7 @@ from connect_ext_ppr.utils import (
     get_configuration_from_media,
     get_ppr_from_media,
     get_product_items,
+    get_user_data_from_auth_token,
     process_ppr,
     validate_configuration_schema,
     validate_ppr_schema,
@@ -410,3 +411,62 @@ def deactivate_marketplaces(installation, listings, config, logger):
             )
 
             db.commit()
+
+
+class DeploymentRequestActionHandler:
+
+    @classmethod
+    def abort(cls, request, db, deployment_request):
+        origin_state = deployment_request.status
+        user_data = get_user_data_from_auth_token(request.headers['connect-auth'])
+        by = user_data['id']
+        deployment_request.aborting(by)
+        db.flush()
+        tasks = (
+            db
+            .query(Task)
+            .filter_by(deployment_request=deployment_request.id, status=Task.STATUSES.pending)
+            .with_for_update()
+        )
+        for task in tasks:
+            task.abort(by)
+        db.flush()
+        if origin_state == DeploymentRequest.STATUSES.pending:
+            deployment_request.abort_by_api(by)
+        db.commit()
+        return deployment_request
+
+    @classmethod
+    def retry(cls, db, deployment_request):
+        most_recent_requests = (
+            db
+            .query(DeploymentRequest)
+            .filter(
+                DeploymentRequest.created_at > deployment_request.created_at,
+                DeploymentRequest.deployment_id == deployment_request.deployment_id,
+            )
+            .order_by(DeploymentRequest.created_at.desc())
+        )
+        if db.query(most_recent_requests.exists()).scalar():
+            new_requests = (
+                ', '.join("(request_id={0}, status={1})"
+                          .format(req.id, req.status) for req in most_recent_requests)
+            )
+            raise ExtensionHttpError.EXT_018(
+                format_kwargs={
+                    'dep_request_id': deployment_request.id,
+                    'deployment_id': deployment_request.deployment_id,
+                    'new_requests': new_requests,
+                },
+            )
+        deployment_request.retry()
+        db.flush()
+        tasks = (
+            db
+            .query(Task)
+            .filter_by(deployment_request=deployment_request.id, status=Task.STATUSES.error)
+        )
+        for task in tasks:
+            task.retry()
+        db.commit()
+        return deployment_request

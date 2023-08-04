@@ -1,4 +1,5 @@
 import copy
+from datetime import datetime
 
 import pytest
 from sqlalchemy import null
@@ -266,7 +267,7 @@ def test_create_deployment_request(
 
     deployment_request = dbsession.query(DeploymentRequest).first()
 
-    assert response.status_code == 200, response.json()
+    assert response.status_code == 201, response.json()
     data = response.json()
     events = data.pop('events')
     assert data == {
@@ -349,7 +350,7 @@ def test_create_deployment_request_without_delegation_to_l2(
 
     deployment_request = dbsession.query(DeploymentRequest).first()
 
-    assert response.status_code == 200, response.json()
+    assert response.status_code == 201, response.json()
     data = response.json()
     events = data.pop('events')
     assert data == {
@@ -421,7 +422,7 @@ def test_create_deployment_request_with_all_marketplaces(
 
     deployment_request = dbsession.query(DeploymentRequest).first()
 
-    assert response.status_code == 200, response.json()
+    assert response.status_code == 201, response.json()
     data = response.json()
     events = data.pop('events')
     assert data == {
@@ -1009,5 +1010,183 @@ def test_abort_deployment_request_not_allow(
         'error_code': 'VAL_005', 'errors': [
             "Transition not allowed: can not set status from `done` to 'aborting'"
             ", allowed status sources for 'aborting' are 'pending, processing'.",
+        ],
+    }
+
+
+@pytest.mark.parametrize(
+    'dr_final_status,task_type,task_final_status,',
+    (
+        ('done', ('ppr_validation', 'delegate_to_l2'), 'done'),
+        ('error', (None, None), 'error'),
+    ),
+)
+def test_retry_deployment_request_ok(
+    dbsession,
+    mocker,
+    deployment_factory,
+    deployment_request_factory,
+    installation,
+    api_client,
+    task_factory,
+    ppr_version_factory,
+    dr_final_status,
+    task_final_status,
+    task_type,
+):
+
+    hub_data = {
+        'id': 'HB-0000-0001',
+        'name': 'Another Hub for the best',
+    }
+
+    mocker.patch(
+        'connect_ext_ppr.webapp.get_hub',
+        return_value=hub_data,
+    )
+
+    dep1 = deployment_factory(account_id=installation['owner']['id'], hub_id=hub_data['id'])
+    ppr_version_factory(deployment=dep1)
+
+    started_at = datetime.utcnow()
+    finished_at = datetime.utcnow()
+    dr1 = deployment_request_factory(
+        deployment=dep1,
+        status='error',
+        started_at=started_at,
+        finished_at=finished_at,
+    )
+    t1_type, t2_type = task_type
+    task_factory(
+        deployment_request=dr1,
+        status='error',
+        error_message='An Error!.',
+        type=t1_type,
+        started_at=started_at,
+        finished_at=finished_at,
+    )
+    task_factory(
+        deployment_request=dr1,
+        task_index='002',
+        status='error',
+        error_message='An Error!.',
+        type=t2_type,
+        started_at=started_at,
+        finished_at=finished_at,
+    )
+
+    response = api_client.post(
+        f'/api/deployments/requests/{dr1.id}/retry',
+        installation=installation,
+    )
+
+    response_item = response.json()
+    events = response_item.pop('events')
+    assert response.status_code == 200
+    assert response_item == {
+        'id': dr1.id,
+        'deployment': {
+            'id': dep1.id,
+            'product': {
+                'id': dep1.product.id,
+                'name': dep1.product.name,
+                'icon': dep1.product.logo,
+            },
+            'hub': hub_data,
+        },
+        'ppr': {
+            'id': dr1.ppr_id,
+            'version': dr1.ppr.version,
+        },
+        'status': DeploymentRequest.STATUSES.pending,
+        'manually': dr1.manually,
+        'delegate_l2': dr1.delegate_l2,
+
+    }
+    assert dr1.status == dr_final_status
+    assert isinstance(dr1.started_at, datetime) and dr1.started_at > started_at
+    assert isinstance(dr1.finished_at, datetime) and dr1.finished_at > finished_at
+    assert list(events.keys()) == ['created']
+    assert list(events['created'].keys()) == ['at', 'by']
+
+
+def test_retry_deployment_request_not_allow(
+    dbsession,
+    mocker,
+    deployment_factory,
+    deployment_request_factory,
+    installation,
+    api_client,
+    task_factory,
+):
+    hub_data = {
+        'id': 'HB-0000-0001',
+        'name': 'Another Hub for the best',
+    }
+    dep1 = deployment_factory(account_id=installation['owner']['id'], hub_id=hub_data['id'])
+
+    origin_status = 'done'
+    dr1 = deployment_request_factory(deployment=dep1, status=origin_status)
+
+    t1 = task_factory(deployment_request=dr1, status='done')
+    t2 = task_factory(deployment_request=dr1, task_index='002', status='done')
+
+    response = api_client.post(
+        f'/api/deployments/requests/{dr1.id}/retry',
+        installation=installation,
+    )
+    error = response.json()
+
+    assert response.status_code == 400
+    assert (t1.status, t2.status) == ('done', 'done')
+    assert dr1.status == origin_status
+    assert error == {
+        'error_code': 'VAL_005', 'errors': [
+            "Transition not allowed: can not set status from `done` to 'pending'"
+            ", allowed status sources for 'pending' are 'error'.",
+        ],
+    }
+
+
+def test_retry_deployment_request_w_newer_requests_fails(
+    dbsession,
+    mocker,
+    deployment_factory,
+    deployment_request_factory,
+    installation,
+    api_client,
+    task_factory,
+):
+    hub_data = {
+        'id': 'HB-0000-0001',
+        'name': 'Another Hub for the best',
+    }
+    dep1 = deployment_factory(account_id=installation['owner']['id'], hub_id=hub_data['id'])
+
+    origin_status = 'error'
+    dr1 = deployment_request_factory(deployment=dep1, status=origin_status)
+    dr2 = deployment_request_factory(deployment=dep1, status='pending')
+    dr3 = deployment_request_factory(deployment=dep1, status='done')
+    dr4 = deployment_request_factory(deployment=dep1, status='error')
+
+    t1 = task_factory(deployment_request=dr1, status='error')
+    t2 = task_factory(deployment_request=dr1, task_index='002', status='error')
+
+    response = api_client.post(
+        f'/api/deployments/requests/{dr1.id}/retry',
+        installation=installation,
+    )
+    error = response.json()
+
+    assert response.status_code == 400
+    assert (t1.status, t2.status) == ('error', 'error')
+    assert dr1.status == origin_status
+    assert error == {
+        'error_code': 'EXT_018', 'errors': [
+            f"Deployment request `{dr1.id}` can not be retried, newer requests "
+            f"were created for related deployment `{dep1.id}`: "
+            f"(request_id={dr4.id}, status={dr4.status}), "
+            f"(request_id={dr3.id}, status={dr3.status}), "
+            f"(request_id={dr2.id}, status={dr2.status}).",
         ],
     }

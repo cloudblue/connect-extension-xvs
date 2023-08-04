@@ -270,6 +270,7 @@ def test_handle_listing_processing_deployment_exists(
     client_mocker_factory,
     logger,
     listing,
+    product,
     marketplace,
     installation,
     deployment,
@@ -282,6 +283,12 @@ def test_handle_listing_processing_deployment_exists(
 
     client_mocker.marketplaces.filter(R().id.in_([marketplace['id']])).limit(1).mock(
         return_value=[marketplace],
+    )
+    rql = R().visibility.listing.eq(True)
+    rql |= R().visibility.syndication.eq(True)
+    rql & R().id.in_([product['id']])
+    client_mocker.products.filter(rql).limit(1).mock(
+        return_value=[product],
     )
     ext = ConnectExtensionXvsEventsApplication(
         connect_client, logger, config,
