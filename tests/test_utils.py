@@ -382,3 +382,11 @@ def test_validate_configuration_capital_name_en(configuration_json):
     product['product_level']['ResourceCategories']['Name_EN'] = name_en
     result = validate_configuration_schema(configuration_json, 'PRD-XXX-XXX-XXX')
     assert result is None
+
+
+def test_get_all_info_wo_any_unlisted_listing(connect_client, client_mocker_factory):
+    client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
+
+    client_mocker.listings.filter(R().status.eq('unlisted')).mock(return_value=[])
+
+    assert get_all_listing_info(connect_client) == []

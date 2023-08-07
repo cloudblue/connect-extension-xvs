@@ -160,16 +160,17 @@ def get_configuration_from_media(client, account_id, deployment_id, media_id):
 @connect_error
 def get_all_listing_info(client, status='listed'):
     listings = list(get_listings(client, status))
-    mkp_ids = list({li['contract']['marketplace']['id'] for li in listings})
-    prod_ids = list({li['product']['id'] for li in listings})
-    marketplaces = list(get_marketplaces(client, mkp_ids))
-    products = list(get_products(client, prod_ids))
-    for list_ in listings:
-        mkp_id = list_['contract']['marketplace']['id']
-        prd_id = list_['product']['id']
-        list_['contract']['marketplace'] = filter_object_list_by_id(marketplaces, mkp_id)
-        list_['product'] = filter_object_list_by_id(products, prd_id)
-    listings = [li for li in listings if li['contract']['marketplace'].get('hubs')]
+    if listings:
+        mkp_ids = list({li['contract']['marketplace']['id'] for li in listings})
+        prod_ids = list({li['product']['id'] for li in listings})
+        marketplaces = list(get_marketplaces(client, mkp_ids))
+        products = list(get_products(client, prod_ids))
+        for list_ in listings:
+            mkp_id = list_['contract']['marketplace']['id']
+            prd_id = list_['product']['id']
+            list_['contract']['marketplace'] = filter_object_list_by_id(marketplaces, mkp_id)
+            list_['product'] = filter_object_list_by_id(products, prd_id)
+        listings = [li for li in listings if li['contract']['marketplace'].get('hubs')]
     return listings
 
 
