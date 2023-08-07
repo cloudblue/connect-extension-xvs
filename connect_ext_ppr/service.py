@@ -316,7 +316,7 @@ def add_new_deployment_request(db, dr_data, deployment, account_id, logger):
 
         marketplaces = [m.id for m in dr_data.marketplaces.choices]
         if dr_data.marketplaces.all:
-            marketplaces = [m.id for m in deployment.marketplaces]
+            marketplaces = [m.marketplace for m in deployment.marketplaces]
 
         for m_id in marketplaces:
             mc = MarketplaceConfiguration(
