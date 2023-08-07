@@ -281,7 +281,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         ).filter_by(deployment_request=dr.id)
 
         marketplaces_pprs = {m.marketplace: m.ppr for m in marketplaces}
-        marketplaces_data = get_marketplaces(client, marketplaces_pprs.keys())
+        marketplaces_data = get_marketplaces(client, list(marketplaces_pprs.keys()))
 
         for marketplace in marketplaces_data:
             marketplaces_list.append(
