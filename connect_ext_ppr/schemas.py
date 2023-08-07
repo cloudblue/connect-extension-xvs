@@ -64,7 +64,7 @@ class PrimaryKeyReference(BaseModel):
 
 
 class ChoicesSchema(BaseModel):
-    choices: Optional[List[PrimaryKeyReference]]
+    choices: Optional[List[PrimaryKeyReference]] = []
     all: bool
 
     @root_validator
