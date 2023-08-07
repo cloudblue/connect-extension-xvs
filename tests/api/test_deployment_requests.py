@@ -484,6 +484,37 @@ def test_create_deployment_request_invalid_deployment(
     assert response.json()['errors'] == [f'deployment: {dep.id} not found.']
 
 
+def test_create_deployment_request_invalid_deployment_id(
+    deployment_factory,
+    ppr_version_factory,
+    installation,
+    api_client,
+):
+    deployment_factory(account_id=installation['owner']['id'])
+    dep = deployment_factory(account_id='PA-123-456')
+    ppr = ppr_version_factory(deployment=dep)
+
+    body = {
+        'deployment': {'id': 'DEP-123-45'},
+        'ppr': {
+            'id': ppr.id,
+        },
+        'manually': True,
+        'delegate_l2': True,
+        'marketplaces': {'all': True},
+    }
+
+    response = api_client.post(
+        '/api/deployments/requests',
+        installation=installation,
+        json=body,
+    )
+
+    assert response.status_code == 400
+    assert response.json()['error_code'] == 'VAL_001'
+    assert response.json()['errors'] == ['deployment: DEP-123-45 not found.']
+
+
 def test_create_deployment_request_invalid_ppr(
     deployment_factory,
     ppr_version_factory,
@@ -511,6 +542,34 @@ def test_create_deployment_request_invalid_ppr(
     assert response.status_code == 400
     assert response.json()['error_code'] == 'VAL_001'
     assert response.json()['errors'] == [f'ppr: {ppr.id} not found.']
+
+
+def test_create_deployment_request_invalid_ppr_id(
+    deployment_factory,
+    ppr_version_factory,
+    installation,
+    api_client,
+):
+    dep = deployment_factory(account_id=installation['owner']['id'])
+    ppr_version_factory(deployment=dep)
+
+    body = {
+        'deployment': {'id': dep.id},
+        'ppr': {'id': 'PPR-123456789'},
+        'manually': True,
+        'delegate_l2': True,
+        'marketplaces': {'all': True},
+    }
+
+    response = api_client.post(
+        '/api/deployments/requests',
+        installation=installation,
+        json=body,
+    )
+
+    assert response.status_code == 400
+    assert response.json()['error_code'] == 'VAL_001'
+    assert response.json()['errors'] == ['ppr: PPR-123456789 not found.']
 
 
 def test_create_deployment_invalid_marketplace(

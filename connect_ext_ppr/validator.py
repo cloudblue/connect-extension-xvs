@@ -3,24 +3,43 @@ from fastapi import status
 from connect_ext_ppr.errors import ExtensionValidationError
 
 
-def validate_deployment(deployment, account_id):
-    """
-    Validates that the deployment belongs to the account
-    """
-    if deployment.account_id != account_id:
+def validate_object_exists(object, object_id, field_name):
+    if not object:
         raise ExtensionValidationError.VAL_001(
             format_kwargs={
-                'field': 'deployment',
-                'id': deployment.id,
+                'field': field_name,
+                'id': object_id,
             },
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
 
-def validate_ppr_version_belongs_to_deployment(ppr, deployment):
+def validate_deployment(data, deployment, account_id):
     """
-    Validates that the ppr can be asociated to DR
+    Validates that the deployment belongs to the account.
+    param: data from form sent by the user
+    param: deployment Deployment object or None
+    param: account_id Account id of the user that we want to check if deployment belongs to.
     """
+    validate_object_exists(deployment, data.id, 'deployment')
+    if deployment.account_id != account_id:
+        raise ExtensionValidationError.VAL_001(
+            format_kwargs={
+                'field': 'deployment',
+                'id': deployment.id if deployment else None,
+            },
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+def validate_ppr_version_belongs_to_deployment(data, ppr, deployment):
+    """
+    Validates that the ppr can be asociated to DR.
+    param: data from form sent by the user
+    param: ppr PPR object or None
+    param: deployment Deployment object agains validations will be done
+    """
+    validate_object_exists(ppr, data.id, 'ppr')
     if ppr.deployment != deployment.id:
         raise ExtensionValidationError.VAL_001(
             format_kwargs={'field': 'ppr', 'id': ppr.id},

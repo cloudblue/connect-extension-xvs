@@ -135,8 +135,10 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         logger: Logger = Depends(get_logger),
     ):
         account_id = installation['owner']['id']
-        deployment = db.query(Deployment).filter_by(id=deployment_request.deployment.id).first()
-        validate_deployment(deployment, account_id)
+        deployment = db.query(Deployment).filter_by(
+            id=deployment_request.deployment.id,
+        ).one_or_none()
+        validate_deployment(deployment_request.deployment, deployment, account_id)
 
         open_dr = db.query(DeploymentRequest).filter(
             DeploymentRequest.deployment_id.like(deployment_request.deployment.id),
@@ -148,8 +150,8 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         if db.query(open_dr.exists()).scalar():
             raise ExtensionHttpError.EXT_017()
 
-        ppr = db.query(PPRVersion).filter_by(id=deployment_request.ppr.id).first()
-        validate_ppr_version_belongs_to_deployment(ppr, deployment)
+        ppr = db.query(PPRVersion).filter_by(id=deployment_request.ppr.id).one_or_none()
+        validate_ppr_version_belongs_to_deployment(deployment_request.ppr, ppr, deployment)
 
         dep_marketplaces = db.query(MarketplaceConfiguration).filter_by(
             active=True,
