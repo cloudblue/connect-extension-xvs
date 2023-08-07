@@ -384,6 +384,13 @@ def test_create_deployment_request_without_delegation_to_l2(
     assert tasks[1].type == Task.TYPES.apply_and_delegate
 
 
+@pytest.mark.parametrize(
+    'marketplaces_dict',
+    (
+        {'choices': [], 'all': True},
+        {'all': True},
+    ),
+)
 def test_create_deployment_request_with_all_marketplaces(
     mocker,
     dbsession,
@@ -392,6 +399,7 @@ def test_create_deployment_request_with_all_marketplaces(
     ppr_version_factory,
     installation,
     api_client,
+    marketplaces_dict,
 ):
     hub_data = {
         'id': 'HB-0000-0001',
@@ -409,10 +417,7 @@ def test_create_deployment_request_with_all_marketplaces(
         'deployment': {'id': dep.id},
         'ppr': {'id': ppr.id},
         'manually': True,
-        'marketplaces': {
-            'choices': [],
-            'all': True,
-        },
+        'marketplaces': marketplaces_dict,
     }
     response = api_client.post(
         '/api/deployments/requests',
