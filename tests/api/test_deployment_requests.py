@@ -450,7 +450,10 @@ def test_create_deployment_request_with_all_marketplaces(
 
     assert dbsession.query(MarketplaceConfiguration).filter_by(
         deployment_request=deployment_request.id,
-    ).filter(MarketplaceConfiguration.deployment_id.is_(null())).count() == 2
+    ).filter(
+        MarketplaceConfiguration.deployment_id.is_(null()),
+        MarketplaceConfiguration.marketplace.in_(['MP-123', 'MP-124']),
+    ).count() == 2
 
 
 def test_create_deployment_request_invalid_deployment(
