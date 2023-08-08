@@ -4,9 +4,8 @@ def test_products(
     api_client,
     product_factory,
 ):
-    product1 = product_factory(id='PRD-000-001', name='Product 1')
-    product2 = product_factory(id='PRD-000-002', name='Product 2')
-
+    product1 = product_factory(id='PRD-000-001', name='Product 1', owner_id='VA-000-001')
+    product2 = product_factory(id='PRD-000-002', name='Product 2', owner_id='VA-000-002')
     deployment_factory(account_id='PA-159-159')
     deployment_factory(
         account_id=installation['owner']['id'],
@@ -35,11 +34,21 @@ def test_products(
             'id': product1.id,
             'name': product1.name,
             'icon': product1.logo,
+            'owner': {
+                'id': product1.owner_id,
+                'name': product1.owner.name,
+                'icon': product1.owner.logo,
+            },
         },
         {
             'id': product2.id,
             'name': product2.name,
             'icon': product2.logo,
+            'owner': {
+                'id': product2.owner_id,
+                'name': product2.owner.name,
+                'icon': product2.owner.logo,
+            },
         },
     ]
 

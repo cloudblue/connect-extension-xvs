@@ -17,7 +17,7 @@ from connect_ext_ppr.models.deployment import (
 )
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
-from connect_ext_ppr.models.replicas import Product
+from connect_ext_ppr.models.replicas import Account, Product
 from connect_ext_ppr.models.task import Task
 from connect_ext_ppr.schemas import clean_empties_from_dict, FileSchema, PPRVersionCreateSchema
 from connect_ext_ppr.utils import (
@@ -35,6 +35,17 @@ from connect_ext_ppr.utils import (
 )
 
 
+def upsert_account(db, account_data):
+    account = db.query(Account).filter_by(id=account_data['id']).one_or_none()
+    if not account:
+        account = Account(id=account_data['id'])
+
+    account.name = account_data['name']
+    account.logo = account_data['icon']
+    db.add(account)
+    db.commit()
+
+
 def insert_product_from_listing(db, listing_data, logger):
     product_data = listing_data['product']
     q = db.query(Product).filter_by(id=product_data['id'])
@@ -47,6 +58,7 @@ def insert_product_from_listing(db, listing_data, logger):
             owner_id=product_data['owner']['id'],
             version=product_data['version'],
         )
+        upsert_account(db, product_data['owner'])
         db.add(product)
         db.commit()
 
@@ -76,6 +88,7 @@ def add_deployments(installation, listings, config, logger):
         seen = set()
         for li in listings:
             insert_product_from_listing(db, li, logger)
+
             product_id = li['product']['id']
 
             for hub in li['contract']['marketplace']['hubs']:
@@ -143,6 +156,8 @@ def process_ppr_from_product_update(data, config, context, client, logger):
 
 def update_product(data, db, product, logger):
     logger.info(f"Updating product: {product.id}.")
+    upsert_account(db, data['owner'])
+
     product.name = data['name']
     product.logo = data.get('icon')
     product.version = data['version']

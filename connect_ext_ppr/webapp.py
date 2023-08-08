@@ -96,6 +96,7 @@ from connect_ext_ppr.utils import (
     get_marketplace_schema,
     get_marketplaces,
     get_ppr_version_schema,
+    get_product_schema,
     get_task_schema,
     get_user_data_from_auth_token,
 )
@@ -675,8 +676,11 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         ).distinct()
 
         response_list = []
-        for product in db.query(Product).filter(Product.id.in_(products_ids)):
-            response_list.append(ProductSchema(id=product.id, name=product.name, icon=product.logo))
+        products = db.query(Product).filter(Product.id.in_(products_ids)).options(
+            selectinload(Product.owner),
+        )
+        for product in products:
+            response_list.append(get_product_schema(product))
         return response_list
 
     @router.get(
