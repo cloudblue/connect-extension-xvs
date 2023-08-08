@@ -168,8 +168,11 @@ def get_all_listing_info(client, status='listed'):
         for list_ in listings:
             mkp_id = list_['contract']['marketplace']['id']
             prd_id = list_['product']['id']
-            list_['contract']['marketplace'] = filter_object_list_by_id(marketplaces, mkp_id)
-            list_['product'] = filter_object_list_by_id(products, prd_id)
+            try:
+                list_['contract']['marketplace'] = filter_object_list_by_id(marketplaces, mkp_id)
+                list_['product'] = filter_object_list_by_id(products, prd_id)
+            except KeyError:
+                pass
         listings = [li for li in listings if li['contract']['marketplace'].get('hubs')]
     return listings
 
