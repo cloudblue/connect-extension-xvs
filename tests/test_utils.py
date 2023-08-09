@@ -389,4 +389,54 @@ def test_get_all_info_wo_any_unlisted_listing(connect_client, client_mocker_fact
 
     client_mocker.listings.filter(R().status.eq('unlisted')).mock(return_value=[])
 
-    assert get_all_listing_info(connect_client) == []
+    assert get_all_listing_info(connect_client, status='unlisted') == []
+
+
+def test_get_all_info_w_product_not_available(
+    connect_client,
+    client_mocker_factory,
+    listing,
+    marketplace,
+):
+    client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
+    client_mocker.marketplaces.filter(R().id.in_([marketplace['id']])).mock(
+        return_value=[marketplace],
+    )
+    rql = R().visibility.listing.eq(True)
+    rql |= R().visibility.syndication.eq(True)
+    rql &= R().id.in_([listing['product']['id']])
+    client_mocker.products.filter(rql).mock(return_value=[])
+
+    client_mocker.listings.filter(R().status.eq("unlisted")).mock(
+        return_value=[listing],
+    )
+
+    expected_response = copy.deepcopy(listing)
+    expected_response['contract']['marketplace'] = marketplace
+    assert get_all_listing_info(connect_client, status='unlisted') == [expected_response]
+
+
+def test_get_all_info_w_marketplace_not_available(
+    connect_client,
+    client_mocker_factory,
+    listing,
+    product,
+):
+    """
+    get_all_listing_info filters listings wo hubs, so if we cannot return the marketplaces,
+    we are not going to have hubs, then we'll return an empty list in this case with only one item.
+    """
+    client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
+    client_mocker.marketplaces.filter(R().id.in_([listing['contract']['marketplace']['id']])).mock(
+        return_value=[],
+    )
+    rql = R().visibility.listing.eq(True)
+    rql |= R().visibility.syndication.eq(True)
+    rql &= R().id.in_([listing['product']['id']])
+    client_mocker.products.filter(rql).mock(return_value=[product])
+
+    client_mocker.listings.filter(R().status.eq('unlisted')).mock(
+        return_value=[listing],
+    )
+
+    assert get_all_listing_info(connect_client, status='unlisted') == []
