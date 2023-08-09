@@ -86,15 +86,21 @@ class ProductSchema(NonNullSchema):
     icon: Optional[str]
 
 
+class HubReferenceSchema(NonNullSchema):
+    id: str
+    name: str
+
+
 class HubSchema(NonNullSchema):
     id: str
     name: str
+    instance: PrimaryKeyReference
 
 
 class DeploymentSchema(NonNullSchema):
     id: str
     product: ProductSchema
-    hub: HubSchema
+    hub: HubReferenceSchema
     account_id: str
     owner: VendorSchema
     last_sync_at: datetime
@@ -155,7 +161,7 @@ class PPRVersionReferenceSchema(NonNullSchema):
 class DeploymentReferenceSchema(NonNullSchema):
     id: str
     product: ProductSchema
-    hub: HubSchema
+    hub: HubReferenceSchema
 
 
 class DeploymentRequestSchema(NonNullSchema):
