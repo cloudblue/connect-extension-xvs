@@ -695,7 +695,9 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         ]
         reponse_list = []
         for hub in get_hubs(client, hubs_ids):
-            reponse_list.append(HubSchema(id=hub['id'], name=hub['name']))
+            reponse_list.append(
+                HubSchema(id=hub['id'], name=hub['name'], instance={'id': hub['instance']['id']}),
+            )
         return reponse_list
 
     @router.get(

@@ -188,7 +188,7 @@ def test_parse_validation_error():
 
 
 def test_get_hubs(connect_client, client_mocker_factory):
-    hub = {'id': 'HB-0000-0000', 'name': 'An awesome hub'}
+    hub = {'id': 'HB-0000-0000', 'name': 'An awesome hub', 'instance': {'id': 'asdqweqr-342rfawr'}}
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
     client_mocker.hubs.filter(R().id.in_([hub['id']])).mock(return_value=[hub])
     assert list(get_hubs(connect_client, [hub['id']])) == [hub]

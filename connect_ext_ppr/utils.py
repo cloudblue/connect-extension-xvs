@@ -31,7 +31,7 @@ from connect_ext_ppr.schemas import (
     DeploymentRequestSchema,
     DeploymentSchema,
     FileSchema,
-    HubSchema,
+    HubReferenceSchema,
     MarketplaceSchema,
     PPRVersionReferenceSchema,
     PPRVersionSchema,
@@ -223,7 +223,7 @@ def get_deployment_reference_schema(deployment, hub):
     product = deployment.product
     product_schema = ProductSchema(id=product.id, name=product.name, icon=product.logo)
     hub_id = deployment.hub_id
-    hub_schema = HubSchema(id=hub_id, name=hub['name'])
+    hub_schema = HubReferenceSchema(id=hub_id, name=hub['name'])
     return DeploymentReferenceSchema(id=deployment.id, product=product_schema, hub=hub_schema)
 
 

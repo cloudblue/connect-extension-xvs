@@ -70,8 +70,8 @@ def test_hubs_by_product(
     )
 
     hubs = [
-        {'id': dep1.hub_id, 'name': 'An awesome hub'},
-        {'id': dep2.hub_id, 'name': 'Another awesome hub'},
+        {'id': dep1.hub_id, 'name': 'An awesome hub', 'instance': {'id': '37624yu2gr-34535rwew'}},
+        {'id': dep2.hub_id, 'name': 'Another awesome hub', 'instance': {'id': '37624yu2g-1231231'}},
     ]
     mocker.patch('connect_ext_ppr.webapp.get_hubs', side_effect=[hubs])
 

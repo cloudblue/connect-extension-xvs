@@ -15,7 +15,7 @@ from connect_ext_ppr.schemas import (
     Events,
     FileReferenceSchema,
     FileSchema,
-    HubSchema,
+    HubReferenceSchema,
     NonNullSchema,
     PPRVersionSchema,
     ProductSchema,
@@ -75,7 +75,7 @@ def test_deployment_schema(status):
             name='Some',
             icon='/media/VA-000-000/PRD-000-000-000/media/PRD-000-000-000-logo_cLqk6Vm.png',
         ),
-        hub=HubSchema(
+        hub=HubReferenceSchema(
             id='HB-1111-2222',
             name='Hub Hub',
         ),
