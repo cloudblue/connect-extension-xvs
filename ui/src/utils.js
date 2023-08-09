@@ -21,6 +21,8 @@ export const regeneratePPR = id => rest.post(`/api/deployments/${id}/pprs`, {});
 
 export const deleteDeploymentConfiguration = (deploymentId, configurationId) => rest.delete(`/api/deployments/${deploymentId}/configurations/${configurationId}`);
 
+export const getDeploymentsRequests = () => rest.get('/api/deployments/requests');
+
 export const uploadPPR = (deploymentId, {
   id,
   location,

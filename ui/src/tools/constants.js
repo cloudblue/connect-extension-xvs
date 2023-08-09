@@ -205,6 +205,41 @@ export const statuses = {
     icon: icons.error,
     color: statusesColors.negative,
   },
+  done: {
+    text: 'done',
+    icon: icons.done,
+    color: statusesColors.done,
+  },
+  synced: {
+    text: 'synced',
+    icon: icons.done,
+    color: statusesColors.done,
+  },
+  error: {
+    text: 'error',
+    icon: icons.error,
+    color: statusesColors.negative,
+  },
+  aborted: {
+    text: 'aborted',
+    icon: icons.failed,
+    color: statusesColors.negative,
+  },
+  aborting: {
+    text: 'aborting',
+    icon: icons.waiting,
+    color: statusesColors.negative,
+  },
+  delegated: {
+    text: 'delegated',
+    icon: icons.done,
+    color: statusesColors.done,
+  },
+  not_delegated: {
+    text: 'not delegated',
+    icon: icons.skip,
+    color: statusesColors.disabled,
+  },
 };
 
 export const animationTime = 300;
