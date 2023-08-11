@@ -9,11 +9,9 @@ icon: icon.png
 category: eCommerce
 var:                        # dictionary of variables, if 'value' missing = it will be retrieved from environment variables,
   DATABASE_URL:               # if 'secure' flag is missing - it will be set to False
-      value:
       secure: true
   CBC_EXTENSION_DATABASE_URL:
-    value:
     secure: true
   CBC_EXTENSION_SSL_ENABLED:
-      value: true
+      value: "true"
       secure: false
