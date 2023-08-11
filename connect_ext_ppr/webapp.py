@@ -48,6 +48,7 @@ from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.task import Task
 from connect_ext_ppr.models.replicas import Product
+from connect_ext_ppr.pagination import add_pagination, apply_pagination, PaginationParams
 from connect_ext_ppr.service import (
     add_deployments,
     add_new_deployment_request,
@@ -119,7 +120,6 @@ from connect_ext_ppr.validator import (
     },
 )
 class ConnectExtensionXvsWebApplication(WebApplicationBase):
-    # example route for creation of deployment request
     @router.post(
         '/deployments/requests',
         summary='Create a new deployment request',
@@ -395,12 +395,15 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def get_deployments(
         self,
         deployment_filter: DeploymentFilter = FilterDepends(DeploymentFilter),
+        pagination_params: PaginationParams = Depends(),
+        response: Response = None,
         client: ConnectClient = Depends(get_installation_client),
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
     ):
         deployments = db.query(Deployment).filter_by(account_id=installation['owner']['id'])
         deployments = deployment_filter.filter(deployments)
+        deployments = apply_pagination(deployments, db, pagination_params, response)
         listings = get_all_listing_info(client)
         vendors = [li['vendor'] for li in listings]
         hubs = [hub['hub'] for li in listings for hub in li['contract']['marketplace']['hubs']]
@@ -778,6 +781,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         # here we are going to add migration based on alembic.
         create_db(config)
         logger.info('Database created...')
+        add_pagination(cls.get_routers())
         client = _get_extension_client(logger)
         installation = _get_installation(client)
         if installation['owner']['id'] == installation['environment']['extension']['owner']['id']:

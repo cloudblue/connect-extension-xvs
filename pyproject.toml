@@ -22,7 +22,8 @@ psycopg2-binary = "^2.9.6"
 pandas = "^2.0.3"
 openpyxl = "^3.1.2"
 PyJWT = "^2.8.0"
-fastapi_filter = "^0.6.1"
+fastapi-filter = "^0.6.1"
+fastapi-pagination = "^0.12.7"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.1.2,<8"
