@@ -22,6 +22,7 @@ from connect.eaas.core.inject.synchronous import (
 from connect.eaas.core.extension import WebApplicationBase
 from fastapi import BackgroundTasks, Depends, Request, Response, status
 from fastapi.responses import JSONResponse
+from fastapi_filter import FilterDepends
 from sqlalchemy import desc, exists
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload, selectinload, Session
@@ -35,6 +36,7 @@ from connect_ext_ppr.db import (
     VerboseBaseSession,
 )
 from connect_ext_ppr.errors import ExtensionHttpError, ExtensionValidationError
+from connect_ext_ppr.filters import DeploymentFilter
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import (
     Deployment,
@@ -392,11 +394,13 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     )
     def get_deployments(
         self,
+        deployment_filter: DeploymentFilter = FilterDepends(DeploymentFilter),
         client: ConnectClient = Depends(get_installation_client),
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
     ):
         deployments = db.query(Deployment).filter_by(account_id=installation['owner']['id'])
+        deployments = deployment_filter.filter(deployments)
         listings = get_all_listing_info(client)
         vendors = [li['vendor'] for li in listings]
         hubs = [hub['hub'] for li in listings for hub in li['contract']['marketplace']['hubs']]

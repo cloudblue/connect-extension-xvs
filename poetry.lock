@@ -401,6 +401,26 @@ doc = ["mdx-include (>=1.4.1,<2.0.0)", "mkdocs (>=1.1.2,<2.0.0)", "mkdocs-markdo
 test = ["anyio[trio] (>=3.2.1,<4.0.0)", "black (==23.1.0)", "coverage[toml] (>=6.5.0,<8.0)", "databases[sqlite] (>=0.3.2,<0.7.0)", "email-validator (>=1.1.1,<2.0.0)", "flask (>=1.1.2,<3.0.0)", "httpx (>=0.23.0,<0.24.0)", "isort (>=5.0.6,<6.0.0)", "mypy (==0.982)", "orjson (>=3.2.1,<4.0.0)", "passlib[bcrypt] (>=1.7.2,<2.0.0)", "peewee (>=3.13.3,<4.0.0)", "pytest (>=7.1.3,<8.0.0)", "python-jose[cryptography] (>=3.3.0,<4.0.0)", "python-multipart (>=0.0.5,<0.0.7)", "pyyaml (>=5.3.1,<7.0.0)", "ruff (==0.0.138)", "sqlalchemy (>=1.3.18,<1.4.43)", "types-orjson (==3.6.2)", "types-ujson (==5.7.0.1)", "ujson (>=4.0.1,!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0,<6.0.0)"]
 
 [[package]]
+name = "fastapi-filter"
+version = "0.6.1"
+description = "FastAPI filter"
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "fastapi_filter-0.6.1-py3-none-any.whl", hash = "sha256:9ac44717824caf8e12f550de74c47d205ef4f82d5ada7dabfe7c7927069c3a78"},
+    {file = "fastapi_filter-0.6.1.tar.gz", hash = "sha256:5c50d4d2ff6d580f5232ab9a620defde70d10e8c474802172fa693f891b8010f"},
+]
+
+[package.dependencies]
+fastapi = ">=0.78,<1.0"
+pydantic = ">=1.10.0,<2.0.0"
+
+[package.extras]
+all = ["SQLAlchemy (>=1.4.36,<2.1.0)", "mongoengine (>=0.24.1,<0.28.0)"]
+mongoengine = ["mongoengine (>=0.24.1,<0.28.0)"]
+sqlalchemy = ["SQLAlchemy (>=1.4.36,<2.1.0)"]
+
+[[package]]
 name = "fastapi-utils"
 version = "0.2.1"
 description = "Reusable utilities for FastAPI"
@@ -1678,4 +1698,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4"
-content-hash = "79cb7007047e91c38456e818b0ca1c517914ca26adc6f06a65d7a915bc892894"
+content-hash = "527ae6fea5d1d09e4f196fb45a4803dfbff6e0f4ed61665e6427216497983c67"
