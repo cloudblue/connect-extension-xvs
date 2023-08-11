@@ -1,5 +1,6 @@
 import copy
 
+import pytest
 from connect.eaas.core.constants import PROXIED_CONNECT_API_ATTR_NAME
 
 
@@ -91,6 +92,89 @@ def test_get_deployments_empty(
     )
     assert response.status_code == 200
     assert response.json() == []
+
+
+@pytest.mark.parametrize(
+    ('filters', 'res_length'),
+    (
+        ('', 3),  # no filters - all results
+        ('?abra=cadabra', 3),  # just wrong name of field - ignored
+        ('?product_id=PRD-YYY-YYY-YYY', 1),
+        ('?product_id=PRD-XXX-XXX-XXX', 2),
+        ('?product_id=PRD-ZZZ-ZZZ-ZZZ', 0),  # deployment with this product_id doesn't exist
+        ('?hub_id=HB-0000-0000', 2),
+        ('?hub_id=HB-0000-0001', 1),
+        ('?product_id=PRD-XXX-XXX-XXX&hub_id=HB-0000-0000', 1),
+        ('?product_id=PRD-XXX-XXX-XXX&hub_id=HB-0000-0001', 1),
+        ('?product_id=PRD-YYY-YYY-YYY&hub_id=HB-0000-0000', 1),
+        ('?product_id=PRD-YYY-YYY-YYY&hub_id=HB-0000-0001', 0),
+    ),
+)
+def test_get_deployments_w_filter(
+    filters,
+    res_length,
+    mocker,
+    deployment_factory,
+    installation,
+    api_client,
+):
+    deployment_factory(
+        account_id=installation['owner']['id'],
+        product_id='PRD-XXX-XXX-XXX',
+        hub_id='HB-0000-0000',
+    )
+    deployment_factory(
+        account_id=installation['owner']['id'],
+        product_id='PRD-XXX-XXX-XXX',
+        hub_id='HB-0000-0001',
+    )
+    deployment_factory(
+        account_id=installation['owner']['id'],
+        product_id='PRD-YYY-YYY-YYY',
+        hub_id='HB-0000-0000',
+    )
+    listing_data = {
+        'product': {
+            'id': 'PRD-XXX-XXX-XXX',
+            'icon': '/media/VA-000-000/PRD-XXX-XXX-XXX/media/beer.png',
+            'name': 'Bottle of beer',
+            'status': 'published',
+        },
+        'vendor': {
+            'id': 'VA-000-000',
+            'name': 'Vendor account 00 for El Loro',
+            'icon': '/media/VA-000-000/media/icon.png',
+        },
+        'contract': {
+            'marketplace': {
+                'hubs': [
+                    {
+                        'hub': {'id': 'HB-0000-0000', 'name': 'Hub for the best'},
+                    },
+                    {
+                        'hub': {'id': 'HB-0000-0001', 'name': 'Hub for the worst'},
+                    },
+                ],
+            },
+        },
+    }
+    listing_data2 = copy.deepcopy(listing_data)
+    listing_data2['product']['id'] = 'PRD-YYY-YYY-YYY'
+    del listing_data2['contract']['marketplace']['hubs'][1]
+
+    mocker.patch(
+        'connect_ext_ppr.webapp.get_all_listing_info',
+        return_value=[
+            listing_data,
+            listing_data2,
+        ],
+    )
+    response = api_client.get(
+        f'/api/deployments{filters}',
+        installation=installation,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == res_length
 
 
 def test_get_deployment(
