@@ -84,6 +84,10 @@ import Pic from '~components/Pic.vue';
 import cStatus from '~components/cStatus.vue';
 
 import {
+  sync,
+} from '~mixins';
+
+import {
   pathAlt,
   template,
 } from '~utils';
@@ -108,6 +112,8 @@ const prepareRow = template({
 
 
 export default {
+  mixins: [sync([{ prop: 'updating', local: 'localUpdating' }])],
+
   components: {
     cDataTable,
     DetailItem,
@@ -115,8 +121,13 @@ export default {
     cStatus,
   },
 
+  props: {
+    updating: Boolean,
+  },
+
   data() {
     return {
+      localUpdating: false,
       localValue: null,
       headers: [
         {
@@ -160,6 +171,15 @@ export default {
 
   methods: {
     prepareRow,
+  },
+
+  watch: {
+    async localUpdating(v) {
+      if (v) {
+        this.localValue = await getDeploymentsRequests();
+        this.localUpdating = false;
+      }
+    },
   },
 
   async created() {
