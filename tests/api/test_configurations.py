@@ -32,6 +32,38 @@ def test_get_configurations(
     assert data['state'] == ConfigurationStateChoices.inactive
 
 
+@pytest.mark.parametrize(
+    ('pagination', 'expected_amount', 'expected_header'),
+    (
+        ('limit=10&offset=0', 10, 'items 0-9/12'),
+        ('limit=5&offset=10', 2, 'items 10-11/12'),
+        ('limit=5&offset=21', 0, 'items 21-21/12'),
+    ),
+)
+def test_get_configurations_with_pagination(
+    pagination,
+    expected_amount,
+    expected_header,
+    deployment_factory,
+    file_factory,
+    configuration_factory,
+    installation,
+    api_client,
+):
+    deployment = deployment_factory(account_id=installation['owner']['id'])
+    for i in range(12):
+        ppr_file = file_factory(id=f'ML-{i}')
+        configuration_factory(file=ppr_file.id, deployment=deployment.id)
+
+    response = api_client.get(
+        f'/api/deployments/{deployment.id}/configurations?{pagination}',
+        installation=installation,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == expected_amount
+    assert response.headers['Content-Range'] == expected_header
+
+
 def test_get_configurations_empty(
     deployment,
     installation,

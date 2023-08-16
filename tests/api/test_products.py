@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_products(
     deployment_factory,
     installation,
@@ -51,6 +54,39 @@ def test_products(
             },
         },
     ]
+
+
+@pytest.mark.parametrize(
+    ('pagination', 'expected_amount', 'expected_header'),
+    (
+        ('limit=10&offset=0', 10, 'items 0-9/12'),
+        ('limit=6&offset=9', 3, 'items 9-11/12'),
+        ('limit=7&offset=14', 0, 'items 14-14/12'),
+    ),
+)
+def test_products_with_pagination(
+    pagination,
+    expected_amount,
+    expected_header,
+    deployment_factory,
+    installation,
+    api_client,
+    product_factory,
+):
+
+    for i in range(12):
+        product = product_factory(id=f'PRD-000-00{i}', name='Product 1')
+        deployment_factory(
+            account_id=installation['owner']['id'],
+            product_id=product.id,
+            hub_id=f'HB-000-00{i}',
+        )
+
+    response = api_client.get(f'/api/products?{pagination}', installation=installation)
+
+    assert response.status_code == 200
+    assert len(response.json()) == expected_amount
+    assert response.headers['Content-Range'] == expected_header
 
 
 def test_hubs_by_product(

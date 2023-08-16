@@ -63,6 +63,46 @@ def test_list_deployments_requests(
         assert list(events['created'].keys()) == ['at', 'by']
 
 
+@pytest.mark.parametrize(
+    ('pagination', 'expected_amount', 'expected_header'),
+    (
+        ('limit=10&offset=0', 10, 'items 0-9/20'),
+        ('limit=9&offset=18', 2, 'items 18-19/20'),
+        ('limit=5&offset=21', 0, 'items 21-21/20'),
+    ),
+)
+def test_list_deployments_requests_pagination(
+    pagination,
+    expected_amount,
+    expected_header,
+    mocker,
+    deployment_factory,
+    deployment_request_factory,
+    installation,
+    api_client,
+):
+    hub_data = {
+        'id': 'HB-0000-0000',
+        'name': 'Another Hub for the best',
+    }
+    mocker.patch(
+        'connect_ext_ppr.webapp.get_hubs',
+        side_effect=[[hub_data]],
+    )
+
+    for _ in range(20):
+        dep1 = deployment_factory(account_id=installation['owner']['id'])
+        deployment_request_factory(deployment=dep1)
+
+    response = api_client.get(
+        f'/api/deployments/requests?{pagination}',
+        installation=installation,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == expected_amount
+    assert response.headers['Content-Range'] == expected_header
+
+
 def test_get_deployment_request(
     mocker,
     deployment_factory,
