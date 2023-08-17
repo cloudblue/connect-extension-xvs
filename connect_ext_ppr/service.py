@@ -41,7 +41,7 @@ def upsert_account(db, account_data):
         account = Account(id=account_data['id'])
 
     account.name = account_data['name']
-    account.logo = account_data['icon']
+    account.logo = account_data.get('icon')
     db.add(account)
     db.commit()
 

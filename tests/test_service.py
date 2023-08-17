@@ -7,8 +7,9 @@ import pytest
 
 from connect_ext_ppr.models.deployment import Deployment, MarketplaceConfiguration
 from connect_ext_ppr.models.file import File
+from connect_ext_ppr.models.replicas import Account
 from connect_ext_ppr.schemas import FileSchema, PPRVersionCreateSchema
-from connect_ext_ppr.service import add_deployments, create_ppr, get_ppr_new_version
+from connect_ext_ppr.service import add_deployments, create_ppr, get_ppr_new_version, upsert_account
 
 
 def test_add_one_deployments(
@@ -382,3 +383,20 @@ def test_create_ppr_db_error(
     assert ex.value.message == (
         "Object `MFL-6390-1110-0832` already exists, cannot create a new one."
     )
+
+
+@pytest.mark.parametrize(
+    'account_data',
+    (
+        {'id': 'VA-000-000', 'name': 'I am a vendor', 'icon': 'my_avatar.png'},
+        {'id': 'VA-000-000', 'name': 'I am a vendor'},
+    ),
+)
+def test_upsert_account(dbsession, account_data):
+
+    upsert_account(dbsession, account_data)
+    account = dbsession.query(Account).first()
+
+    assert account.id == account_data['id']
+    assert account.name == account_data['name']
+    assert account.logo == account_data.get('icon')
