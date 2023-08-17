@@ -367,6 +367,46 @@ def test_list_deployments_requests_for_deployment(
         assert list(events['created'].keys()) == ['at', 'by']
 
 
+@pytest.mark.parametrize(
+    ('pagination', 'expected_amount', 'expected_header'),
+    (
+        ('limit=10&offset=0', 10, 'items 0-9/12'),
+        ('limit=6&offset=9', 3, 'items 9-11/12'),
+        ('limit=7&offset=14', 0, 'items 14-14/12'),
+    ),
+)
+def test_list_deployments_requests_for_deployment_with_pagination(
+    pagination,
+    expected_amount,
+    expected_header,
+    mocker,
+    deployment_factory,
+    deployment_request_factory,
+    installation,
+    api_client,
+):
+    hub_data = {
+        'id': 'HB-0000-0001',
+        'name': 'Another Hub for the best',
+    }
+    mocker.patch(
+        'connect_ext_ppr.webapp.get_hub',
+        return_value=hub_data,
+    )
+    dep1 = deployment_factory(account_id=installation['owner']['id'], hub_id=hub_data['id'])
+
+    for _ in range(12):
+        deployment_request_factory(deployment=dep1, status='done')
+
+    response = api_client.get(
+        f'/api/deployments/{dep1.id}/requests?{pagination}',
+        installation=installation,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == expected_amount
+    assert response.headers['Content-Range'] == expected_header
+
+
 def test_list_deployment_request_deployment_not_found(
     dbsession,
     deployment_factory,
@@ -391,3 +431,117 @@ def test_list_deployment_request_deployment_not_found(
     assert error == {
         'error_code': 'EXT_001', 'errors': [f'Object `{dep2.id}` not found.'],
     }
+
+
+@pytest.mark.parametrize(
+    ('limit', 'offset', 'expected_amount', 'expected_header'),
+    ((9, 0, 9, 'items 0-8/13'), (5, 10, 3, 'items 10-12/13'), (5, 15, 0, 'items 15-15/13')),
+)
+def test_get_deployments_pagination(
+    limit,
+    offset,
+    expected_amount,
+    expected_header,
+    mocker,
+    deployment_factory,
+    installation,
+    api_client,
+):
+    mocker.patch(
+        'connect_ext_ppr.webapp.get_all_listing_info',
+        return_value=[
+            {
+                'product': {
+                    'id': 'PRD-XXX-XXX-XXX',
+                    'icon': '/media/VA-000-000/PRD-XXX-XXX-XXX/media/beer.png',
+                    'name': 'Bottle of beer',
+                    'status': 'published',
+                },
+                'vendor': {
+                    'id': 'VA-000-000',
+                    'name': 'Vendor account 00 for El Loro',
+                    'icon': '/media/VA-000-000/media/icon.png',
+                },
+                'contract': {
+                    'marketplace': {
+                        'hubs': [
+                            {
+                                'hub': {'id': f'HB-0000-000{i}', 'name': 'Hub for the best'},
+                            }
+                            for i in range(15)
+                        ],
+                    },
+                },
+            },
+        ],
+    )
+
+    for i in range(13):
+        deployment_factory(product_id='PRD-XXX-XXX-XXX', hub_id=f'HB-0000-000{i}')
+
+    response = api_client.get(
+        f'/api/deployments?limit={limit}&offset={offset}',
+        installation=installation,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == expected_amount
+    assert response.headers['Content-Range'] == expected_header
+
+
+@pytest.mark.parametrize(
+    ('filters', 'limit', 'offset', 'expected_amount', 'exepcted_header'),
+    (
+        ('product_id=PRD-XXX-XXX-XXX', 9, 0, 9, 'items 0-8/13'),
+        ('hub_id=HB-0000-0001', 5, 10, 0, 'items 10-10/1'),
+    ),
+)
+def test_get_deployments_pagination_with_filters(
+    filters,
+    limit,
+    offset,
+    expected_amount,
+    exepcted_header,
+    mocker,
+    deployment_factory,
+    installation,
+    api_client,
+):
+    mocker.patch(
+        'connect_ext_ppr.webapp.get_all_listing_info',
+        return_value=[
+            {
+                'product': {
+                    'id': 'PRD-XXX-XXX-XXX',
+                    'icon': '/media/VA-000-000/PRD-XXX-XXX-XXX/media/beer.png',
+                    'name': 'Bottle of beer',
+                    'status': 'published',
+                },
+                'vendor': {
+                    'id': 'VA-000-000',
+                    'name': 'Vendor account 00 for El Loro',
+                    'icon': '/media/VA-000-000/media/icon.png',
+                },
+                'contract': {
+                    'marketplace': {
+                        'hubs': [
+                            {
+                                'hub': {'id': f'HB-0000-000{i}', 'name': 'Hub for the best'},
+                            }
+                            for i in range(15)
+                        ],
+                    },
+                },
+            },
+        ],
+    )
+
+    for i in range(13):
+        deployment_factory(product_id='PRD-XXX-XXX-XXX', hub_id=f'HB-0000-000{i}')
+
+    response = api_client.get(
+        f'/api/deployments?{filters}&limit={limit}&offset={offset}',
+        installation=installation,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == expected_amount
+    assert response.headers['Content-Range'] == exepcted_header

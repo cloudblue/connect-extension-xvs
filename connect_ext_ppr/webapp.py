@@ -48,6 +48,7 @@ from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.task import Task
 from connect_ext_ppr.models.replicas import Product
+from connect_ext_ppr.pagination import apply_pagination, PaginationParams
 from connect_ext_ppr.service import (
     add_deployments,
     add_new_deployment_request,
@@ -182,6 +183,8 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     )
     def list_deployment_requests(
         self,
+        pagination_params: PaginationParams = Depends(),
+        response: Response = None,
         client: ConnectClient = Depends(get_installation_client),
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
@@ -203,6 +206,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         ).filter(
             DeploymentRequest.deployment_id.in_(deployments),
         )
+        deployment_requests = apply_pagination(deployment_requests, db, pagination_params, response)
 
         response_list = []
         for dr in deployment_requests:
@@ -272,6 +276,8 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def list_deployment_request_marketplaces(
         self,
         depl_req_id: str,
+        pagination_params: PaginationParams = Depends(),
+        response: Response = None,
         db: VerboseBaseSession = Depends(get_db),
         client: ConnectClient = Depends(get_installation_client),
         installation: dict = Depends(get_installation),
@@ -282,6 +288,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         marketplaces = db.query(MarketplaceConfiguration).options(
             selectinload(MarketplaceConfiguration.ppr),
         ).filter_by(deployment_request=dr.id)
+        marketplaces = apply_pagination(marketplaces, db, pagination_params, response)
 
         marketplaces_pprs = {m.marketplace: m.ppr for m in marketplaces}
         marketplaces_data = get_marketplaces(client, list(marketplaces_pprs.keys()))
@@ -369,6 +376,8 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def list_requests_for_deployment(
         self,
         deployment_id: str,
+        pagination_params: PaginationParams = Depends(),
+        response: Response = None,
         client: ConnectClient = Depends(get_installation_client),
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
@@ -384,7 +393,8 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             .filter_by(deployment_id=deployment_id)
             .order_by(desc(DeploymentRequest.id))
         )
-        for dr in qs:
+
+        for dr in apply_pagination(qs, db, pagination_params, response):
             response_list.append(get_deployment_request_schema(dr, hub))
         return response_list
 
@@ -396,12 +406,15 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def get_deployments(
         self,
         deployment_filter: DeploymentFilter = FilterDepends(DeploymentFilter),
+        pagination_params: PaginationParams = Depends(),
+        response: Response = None,
         client: ConnectClient = Depends(get_installation_client),
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
     ):
         deployments = db.query(Deployment).filter_by(account_id=installation['owner']['id'])
         deployments = deployment_filter.filter(deployments)
+        deployments = apply_pagination(deployments, db, pagination_params, response)
         listings = get_all_listing_info(client)
         vendors = [li['vendor'] for li in listings]
         hubs = [hub['hub'] for li in listings for hub in li['contract']['marketplace']['hubs']]
@@ -422,17 +435,19 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def get_configurations(
         self,
         deployment_id: str,
+        pagination_params: PaginationParams = Depends(),
+        response: Response = None,
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
     ):
         get_deployment_by_id(deployment_id, db, installation)
 
-        conf_file_list = (
+        conf_file_qs = (
             db.query(Configuration, File)
             .filter_by(deployment=deployment_id)
             .join(File, Configuration.file == File.id)
-            .all()
         )
+        conf_file_list = apply_pagination(conf_file_qs, db, pagination_params, response)
         response_list = []
         for conf, file in conf_file_list:
             response_list.append(
@@ -569,20 +584,21 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def get_pprs(
         self,
         deployment_id: str,
+        pagination_params: PaginationParams = Depends(),
+        response: Response = None,
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
     ):
         get_deployment_by_id(deployment_id, db, installation)
 
-        ppr_file_conf_list = (
+        ppr_file_conf_qs = (
             db.query(PPRVersion, File, Configuration)
             .filter_by(deployment=deployment_id)
             .join(File, PPRVersion.file == File.id)
             .outerjoin(Configuration, PPRVersion.configuration == Configuration.id)
             .order_by(desc(PPRVersion.version))
-            .all()
         )
-
+        ppr_file_conf_list = apply_pagination(ppr_file_conf_qs, db, pagination_params, response)
         response_list = []
         for ppr, file, conf in ppr_file_conf_list:
             response_list.append(
@@ -642,6 +658,8 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def get_marketplaces_by_deployment(
         self,
         deployment_id: str,
+        pagination_params: PaginationParams = Depends(),
+        response: Response = None,
         client: ConnectClient = Depends(get_installation_client),
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
@@ -651,6 +669,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         mkplc_configs = db.query(MarketplaceConfiguration).options(
             selectinload(MarketplaceConfiguration.ppr),
         ).filter_by(deployment_id=deployment_id, active=True)
+        mkplc_configs = apply_pagination(mkplc_configs, db, pagination_params, response)
 
         mkplc_ids = [m.marketplace for m in mkplc_configs]
 
@@ -668,19 +687,23 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     )
     def list_products(
         self,
+        pagination_params: PaginationParams = Depends(),
+        response: Response = None,
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
     ):
         products_ids = db.query(Deployment.product_id).filter_by(
             account_id=installation['owner']['id'],
         ).distinct()
-
-        response_list = []
         products = db.query(Product).filter(Product.id.in_(products_ids)).options(
             selectinload(Product.owner),
         )
+        products = apply_pagination(products, db, pagination_params, response)
+
+        response_list = []
         for product in products:
             response_list.append(get_product_schema(product))
+
         return response_list
 
     @router.get(

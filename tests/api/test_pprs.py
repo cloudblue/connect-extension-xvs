@@ -1,6 +1,8 @@
 import json
 import os
 
+import pytest
+
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 
@@ -91,6 +93,48 @@ def test_get_pprs(
     }
     assert isinstance(events['created']['at'], str)
     assert events['created']['by'] == ppr_version.created_by
+
+
+@pytest.mark.parametrize(
+    ('pagination', 'expected_amount', 'expected_header'),
+    (
+        ('limit=10&offset=0', 10, 'items 0-9/12'),
+        ('limit=6&offset=9', 3, 'items 9-11/12'),
+        ('limit=7&offset=14', 0, 'items 14-14/12'),
+    ),
+)
+def test_get_pprs_pagination(
+    pagination,
+    expected_amount,
+    expected_header,
+    deployment_factory,
+    file_factory,
+    ppr_version_factory,
+    installation,
+    api_client,
+):
+    deployment = deployment_factory()
+
+    for i in range(12):
+        ppr_file = file_factory(
+            id=f'MFL-XX{i}',
+            mime_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        ppr_version_factory(
+            deployment=deployment,
+            file=ppr_file.id,
+            product_version=None,
+            summary=None,
+            description=None,
+        )
+
+    response = api_client.get(
+        f'/api/deployments/{deployment.id}/pprs?{pagination}',
+        installation=installation,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == expected_amount
+    assert response.headers['Content-Range'] == expected_header
 
 
 def test_get_pprs_empty(
