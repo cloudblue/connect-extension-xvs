@@ -18,7 +18,7 @@ from connect_ext_ppr.schemas import (
     HubReferenceSchema,
     NonNullSchema,
     PPRVersionSchema,
-    ProductSchema,
+    ProductReferenceSchema,
     VendorSchema,
 )
 
@@ -70,7 +70,7 @@ def test_deployment_schema(status):
     now = datetime.utcnow()
     serializer = DeploymentSchema(
         id='DPL-000-000-000',
-        product=ProductSchema(
+        product=ProductReferenceSchema(
             id='PRD-000-000-000',
             name='Some',
             icon='/media/VA-000-000/PRD-000-000-000/media/PRD-000-000-000-logo_cLqk6Vm.png',

@@ -35,8 +35,10 @@ from connect_ext_ppr.schemas import (
     MarketplaceSchema,
     PPRVersionReferenceSchema,
     PPRVersionSchema,
+    ProductReferenceSchema,
     ProductSchema,
     TaskSchema,
+    VendorSchema,
 )
 
 
@@ -221,7 +223,7 @@ def get_deployment_schema(deployment, product, vendor, hub):
 
 def get_deployment_reference_schema(deployment, hub):
     product = deployment.product
-    product_schema = ProductSchema(id=product.id, name=product.name, icon=product.logo)
+    product_schema = ProductReferenceSchema(id=product.id, name=product.name, icon=product.logo)
     hub_id = deployment.hub_id
     hub_schema = HubReferenceSchema(id=hub_id, name=hub['name'])
     return DeploymentReferenceSchema(id=deployment.id, product=product_schema, hub=hub_schema)
@@ -380,6 +382,18 @@ def get_ppr_version_schema(ppr, file, conf):
             },
         },
         status=ppr.status,
+    )
+
+
+def get_product_schema(product):
+    vendor = product.owner
+    return ProductSchema(
+        id=product.id,
+        name=product.name,
+        icon=product.logo,
+        owner=VendorSchema(
+            id=vendor.id, name=vendor.name, icon=vendor.logo,
+        ),
     )
 
 

@@ -80,10 +80,17 @@ class VendorSchema(NonNullSchema):
     icon: Optional[str]
 
 
+class ProductReferenceSchema(NonNullSchema):
+    id: str
+    name: str
+    icon: Optional[str]
+
+
 class ProductSchema(NonNullSchema):
     id: str
     name: str
     icon: Optional[str]
+    owner: VendorSchema
 
 
 class HubReferenceSchema(NonNullSchema):
@@ -99,7 +106,7 @@ class HubSchema(NonNullSchema):
 
 class DeploymentSchema(NonNullSchema):
     id: str
-    product: ProductSchema
+    product: ProductReferenceSchema
     hub: HubReferenceSchema
     account_id: str
     owner: VendorSchema
@@ -160,7 +167,7 @@ class PPRVersionReferenceSchema(NonNullSchema):
 
 class DeploymentReferenceSchema(NonNullSchema):
     id: str
-    product: ProductSchema
+    product: ProductReferenceSchema
     hub: HubReferenceSchema
 
 

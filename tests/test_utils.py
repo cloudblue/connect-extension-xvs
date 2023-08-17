@@ -440,3 +440,4 @@ def test_get_all_info_w_marketplace_not_available(
     )
 
     assert get_all_listing_info(connect_client, status='unlisted') == []
+    assert get_all_listing_info(connect_client) == []

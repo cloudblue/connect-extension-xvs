@@ -31,7 +31,7 @@ from connect_ext_ppr.models.deployment import (
 )
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
-from connect_ext_ppr.models.replicas import Product
+from connect_ext_ppr.models.replicas import Account, Product
 from connect_ext_ppr.services.cbc_extension import get_hub_credentials
 from connect_ext_ppr.models.task import Task
 from connect_ext_ppr.utils import get_base_workbook
@@ -88,7 +88,21 @@ def mocked_get_db_ctx(dbsession, mocker):
 
 
 @pytest.fixture
-def product_factory(dbsession):
+def account_factory(dbsession):
+    def _build_account(
+        id,
+        name='Chat GPT',
+        logo='/media/VA-000-000/PRD-000-000-000/media/PRD-000-000-000-logo_cLqk6Vm.png',
+    ):
+        account = Account(id=id, name=name, logo=logo)
+        dbsession.add(account)
+        dbsession.commit()
+        return account
+    return _build_account
+
+
+@pytest.fixture
+def product_factory(dbsession, account_factory):
     def _build_product(
         id=None,
         name='Chat GPT',
@@ -99,6 +113,11 @@ def product_factory(dbsession):
         if not id:
             id = 'PR-{0}'.format(random.randint(10000, 99999))
         product = dbsession.query(Product).filter_by(id=id).first()
+
+        q = dbsession.query(Account).filter_by(id=owner_id)
+        if not dbsession.query(q.exists()).scalar():
+            account_factory(id=owner_id)
+
         if not product:
             product = Product(id=id, name=name, logo=logo, owner_id=owner_id, version=version)
             dbsession.add(product)
@@ -531,7 +550,7 @@ def product():
         'name': 'Product name',
         'icon': 'http://icon.png',
         'version': 2,
-        'owner': {'id': 'VA-000-000'},
+        'owner': {'id': 'VA-000-000', 'name': 'I am a vendor', 'icon': 'my_avatar.png'},
     }
 
 
