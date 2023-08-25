@@ -244,7 +244,7 @@ def ppr_version_factory(dbsession, file_factory):
         status='pending',
     ):
         ppr = PPRVersion(
-            file=file or file_factory().id,
+            file=file or file_factory(id='MFL-{0}'.format(random.randint(10000, 99999))).id,
             deployment=deployment.id,
             configuration=configuration,
             summary=summary or {},
