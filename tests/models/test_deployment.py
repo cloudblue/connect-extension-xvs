@@ -163,3 +163,46 @@ def test_generate_all_next_verbose_id(
         dbsession.refresh(task)
         assert f'TSK-{suffix}-00{index}' == task.id
         index += 1
+
+
+def test_list_deployment_request_marketplaces_filters(
+    mocker,
+    deployment_factory,
+    deployment_request_factory,
+    installation,
+    api_client,
+    marketplace,
+    marketplace_config_factory,
+    ppr_version_factory,
+):
+    m1 = marketplace
+    marketplaces = [m1]
+
+    mocker.patch(
+        'connect_ext_ppr.webapp.get_marketplaces',
+        return_value=marketplaces,
+    )
+    dep1 = deployment_factory(account_id=installation['owner']['id'])
+    ppr = ppr_version_factory(deployment=dep1)
+
+    dr1 = deployment_request_factory(deployment=dep1)
+
+    marketplace_config_factory(deployment_request=dr1, marketplace_id=m1['id'])
+    marketplace_config_factory(deployment_request=dr1, marketplace_id='MP-12344', ppr_id=ppr.id)
+    marketplace_config_factory(deployment_request=dr1, marketplace_id='MP-12345')
+
+    marketplace_config_factory(deployment=dep1, marketplace_id=m1['id'])
+    marketplace_config_factory(deployment=dep1, marketplace_id='MP-12344')
+    marketplace_config_factory(deployment=dep1, marketplace_id='MP-124-114')
+
+    response = api_client.get(
+        f"/api/deployments/requests/{dr1.id}/marketplaces?marketplace={m1['id']}",
+        installation=installation,
+    )
+
+    assert response.status_code == 200
+    assert response.json() == [{
+        'id': m1['id'],
+        'name': m1['name'],
+        'icon': m1['icon'],
+    }], response.json()
