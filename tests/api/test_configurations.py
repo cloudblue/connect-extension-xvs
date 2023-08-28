@@ -64,6 +64,36 @@ def test_get_configurations_with_pagination(
     assert response.headers['Content-Range'] == expected_header
 
 
+@pytest.mark.parametrize(
+    ('filters', 'expected_amount', 'expected_header'),
+    (
+        ('id=CFL-2', 1, 'items 0-0/1'),
+    ),
+)
+def test_get_configurations_with_filters(
+    filters,
+    expected_amount,
+    expected_header,
+    deployment_factory,
+    file_factory,
+    configuration_factory,
+    installation,
+    api_client,
+):
+    deployment = deployment_factory(account_id=installation['owner']['id'])
+    for i in range(12):
+        ppr_file = file_factory(id=f'ML-{i}')
+        configuration_factory(id=f'CFL-{i}', file=ppr_file.id, deployment=deployment.id)
+
+    response = api_client.get(
+        f'/api/deployments/{deployment.id}/configurations?{filters}',
+        installation=installation,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == expected_amount
+    assert response.headers['Content-Range'] == expected_header
+
+
 def test_get_configurations_empty(
     deployment,
     installation,

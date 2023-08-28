@@ -36,7 +36,7 @@ from connect_ext_ppr.db import (
     VerboseBaseSession,
 )
 from connect_ext_ppr.errors import ExtensionHttpError, ExtensionValidationError
-from connect_ext_ppr.filters import DeploymentFilter
+from connect_ext_ppr.filters import ConfigurationFilter, DeploymentFilter
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import (
     Deployment,
@@ -435,6 +435,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def get_configurations(
         self,
         deployment_id: str,
+        conf_filter: ConfigurationFilter = FilterDepends(ConfigurationFilter),
         pagination_params: PaginationParams = Depends(),
         response: Response = None,
         db: VerboseBaseSession = Depends(get_db),
@@ -447,6 +448,10 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             .filter_by(deployment=deployment_id)
             .join(File, Configuration.file == File.id)
         )
+
+        conf_file_qs = conf_filter.filter(conf_file_qs)
+        conf_file_qs = conf_filter.sort(conf_file_qs)
+
         conf_file_list = apply_pagination(conf_file_qs, db, pagination_params, response)
         response_list = []
         for conf, file in conf_file_list:

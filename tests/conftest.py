@@ -693,6 +693,7 @@ def api_client(test_client_factory, dbsession):
 @pytest.fixture
 def configuration_factory(dbsession, deployment_factory, file_factory, user):
     def _build_configuration(
+        id=None,
         file=None,
         deployment=None,
         state='active',
@@ -704,7 +705,11 @@ def configuration_factory(dbsession, deployment_factory, file_factory, user):
             created_by=user,
             updated_by=user,
         )
-        dbsession.set_verbose(conf)
+        if id:
+            conf.id = id
+            dbsession.add(conf)
+        else:
+            dbsession.set_verbose(conf)
         dbsession.commit()
         return conf
     return _build_configuration
