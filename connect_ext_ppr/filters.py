@@ -21,6 +21,8 @@ class PPRVersionFilter(Filter):
     id: Optional[str]
     version: Optional[int]
 
+    order_by: Optional[List[str]]
+
     class Constants(Filter.Constants):
         model = PPRVersion
 
