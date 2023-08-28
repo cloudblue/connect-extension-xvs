@@ -103,6 +103,133 @@ def test_list_deployments_requests_pagination(
     assert response.headers['Content-Range'] == expected_header
 
 
+@pytest.mark.parametrize(
+    ('filters', 'expected_amount', 'expected_header'),
+    (
+        ('', 60, 'items 0-59/60'),
+        ('deployment__product_id=PRD-1', 12, 'items 0-11/12'),
+        ('deployment__hub_id=HB-0000-0002', 15, 'items 0-14/15'),
+        ('status=pending', 20, 'items 0-19/20'),
+        ('delegate_l2=false', 40, 'items 0-39/40'),
+        ('delegate_l2=true', 20, 'items 0-19/20'),
+        ('ppr__version=1', 20, 'items 0-19/20'),
+    ),
+)
+def test_list_deployments_requests_filters(
+    filters,
+    expected_amount,
+    expected_header,
+    mocker,
+    deployment_factory,
+    deployment_request_factory,
+    ppr_version_factory,
+    installation,
+    api_client,
+):
+    hubs_data = [{
+        'id': f'HB-0000-000{i}',
+        'name': 'Another Hub for the best',
+    } for i in range(4)]
+
+    mocker.patch(
+        'connect_ext_ppr.webapp.get_hubs',
+        side_effect=[hubs_data],
+    )
+
+    for i in range(5):
+        for hub in hubs_data:
+            dep1 = deployment_factory(
+                product_id=f'PRD-{i}',
+                account_id=installation['owner']['id'],
+                hub_id=hub['id'],
+            )
+
+            deployment_request_factory(
+                deployment=dep1,
+                status='error',
+                ppr=ppr_version_factory(deployment=dep1, version=1))
+
+            deployment_request_factory(
+                deployment=dep1,
+                status='done',
+                delegate_l2=True,
+                ppr=ppr_version_factory(deployment=dep1, version=2))
+
+            deployment_request_factory(
+                deployment=dep1,
+                status='pending',
+                ppr=ppr_version_factory(deployment=dep1, version=3))
+
+    response = api_client.get(
+        f'/api/deployments/requests?{filters}',
+        installation=installation,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == expected_amount
+    assert response.headers['Content-Range'] == expected_header
+
+
+@pytest.mark.parametrize(
+    ('query_str', 'expected_amount', 'expected_header'),
+    (
+        ('delegate_l2=false&limit=10&offset=10', 10, 'items 10-19/40'),
+        ('delegate_l2=false&limit=10&offset=50', 0, 'items 50-50/40'),
+    ),
+)
+def test_list_deployments_requests_filters_and_paginations(
+    query_str,
+    expected_amount,
+    expected_header,
+    mocker,
+    deployment_factory,
+    deployment_request_factory,
+    ppr_version_factory,
+    installation,
+    api_client,
+):
+    hubs_data = [{
+        'id': f'HB-0000-000{i}',
+        'name': 'Another Hub for the best',
+    } for i in range(4)]
+
+    mocker.patch(
+        'connect_ext_ppr.webapp.get_hubs',
+        side_effect=[hubs_data],
+    )
+
+    for i in range(5):
+        for hub in hubs_data:
+            dep1 = deployment_factory(
+                product_id=f'PRD-{i}',
+                account_id=installation['owner']['id'],
+                hub_id=hub['id'],
+            )
+
+            deployment_request_factory(
+                deployment=dep1,
+                status='error',
+                ppr=ppr_version_factory(deployment=dep1, version=1))
+
+            deployment_request_factory(
+                deployment=dep1,
+                status='done',
+                delegate_l2=True,
+                ppr=ppr_version_factory(deployment=dep1, version=2))
+
+            deployment_request_factory(
+                deployment=dep1,
+                status='pending',
+                ppr=ppr_version_factory(deployment=dep1, version=3))
+
+    response = api_client.get(
+        f'/api/deployments/requests?{query_str}',
+        installation=installation,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == expected_amount
+    assert response.headers['Content-Range'] == expected_header
+
+
 def test_get_deployment_request(
     mocker,
     deployment_factory,

@@ -408,7 +408,6 @@ def test_list_deployments_requests_for_deployment_with_pagination(
 
 
 def test_list_deployment_request_deployment_not_found(
-    dbsession,
     deployment_factory,
     deployment_request_factory,
     installation,

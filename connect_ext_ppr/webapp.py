@@ -36,7 +36,7 @@ from connect_ext_ppr.db import (
     VerboseBaseSession,
 )
 from connect_ext_ppr.errors import ExtensionHttpError, ExtensionValidationError
-from connect_ext_ppr.filters import DeploymentFilter
+from connect_ext_ppr.filters import DeploymentFilter, DeploymentRequestFilter
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import (
     Deployment,
@@ -183,6 +183,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     )
     def list_deployment_requests(
         self,
+        dr_filter: DeploymentRequestFilter = FilterDepends(DeploymentRequestFilter),
         pagination_params: PaginationParams = Depends(),
         response: Response = None,
         client: ConnectClient = Depends(get_installation_client),
@@ -200,12 +201,13 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             account_id=installation['owner']['id'],
         )
 
-        deployment_requests = db.query(DeploymentRequest).options(
-            joinedload(DeploymentRequest.ppr),
-            joinedload(DeploymentRequest.deployment),
+        deployment_requests = db.query(DeploymentRequest).join(
+            DeploymentRequest.deployment, DeploymentRequest.ppr,
         ).filter(
             DeploymentRequest.deployment_id.in_(deployments),
         )
+        deployment_requests = dr_filter.filter(deployment_requests)
+        deployment_requests = dr_filter.sort(deployment_requests)
         deployment_requests = apply_pagination(deployment_requests, db, pagination_params, response)
 
         response_list = []
