@@ -412,6 +412,67 @@ def test_list_deployments_requests_for_deployment_with_pagination(
     assert response.headers['Content-Range'] == expected_header
 
 
+@pytest.mark.parametrize(
+    ('filters', 'expected_amount', 'expected_header'),
+    (
+        ('', 3, 'items 0-2/3'),
+        ('status=pending', 1, 'items 0-0/1'),
+        ('delegate_l2=false', 2, 'items 0-1/2'),
+        ('delegate_l2=true', 1, 'items 0-0/1'),
+        ('ppr__version=1', 1, 'items 0-0/1'),
+    ),
+)
+def test_list_deployment_requests_filters(
+    filters,
+    expected_amount,
+    expected_header,
+    mocker,
+    deployment_factory,
+    deployment_request_factory,
+    ppr_version_factory,
+    installation,
+    api_client,
+):
+    hubs_data = [{
+        'id': 'HB-0000-000',
+        'name': 'Another Hub for the best',
+    }]
+
+    mocker.patch(
+        'connect_ext_ppr.webapp.get_hubs',
+        side_effect=[hubs_data],
+    )
+    dep1 = deployment_factory(
+        product_id='PRD-000-001',
+        account_id=installation['owner']['id'],
+        hub_id=hubs_data[0]['id'],
+    )
+
+    deployment_request_factory(
+        deployment=dep1,
+        status='error',
+        ppr=ppr_version_factory(deployment=dep1, version=1))
+
+    deployment_request_factory(
+        deployment=dep1,
+        status='done',
+        delegate_l2=True,
+        ppr=ppr_version_factory(deployment=dep1, version=2))
+
+    deployment_request_factory(
+        deployment=dep1,
+        status='pending',
+        ppr=ppr_version_factory(deployment=dep1, version=3))
+
+    response = api_client.get(
+        f'/api/deployments/requests?{filters}',
+        installation=installation,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == expected_amount
+    assert response.headers['Content-Range'] == expected_header
+
+
 def test_list_deployment_request_deployment_not_found(
     deployment_factory,
     deployment_request_factory,
