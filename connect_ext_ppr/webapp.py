@@ -37,7 +37,7 @@ from connect_ext_ppr.db import (
 )
 from connect_ext_ppr.errors import ExtensionHttpError, ExtensionValidationError
 from connect_ext_ppr.filters import (
-    DeploymentFilter, DeploymentRequestFilter, MarketplaceConfigurationFilter,
+    DeploymentFilter, DeploymentRequestFilter, MarketplaceConfigurationFilter, PPRVersionFilter,
 )
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import (
@@ -591,6 +591,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def get_pprs(
         self,
         deployment_id: str,
+        ppr_filter: PPRVersionFilter = FilterDepends(PPRVersionFilter),
         pagination_params: PaginationParams = Depends(),
         response: Response = None,
         db: VerboseBaseSession = Depends(get_db),
@@ -605,6 +606,8 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             .outerjoin(Configuration, PPRVersion.configuration == Configuration.id)
             .order_by(desc(PPRVersion.version))
         )
+        ppr_file_conf_qs = ppr_filter.filter(ppr_file_conf_qs)
+        ppr_file_conf_qs = ppr_filter.sort(ppr_file_conf_qs)
         ppr_file_conf_list = apply_pagination(ppr_file_conf_qs, db, pagination_params, response)
         response_list = []
         for ppr, file, conf in ppr_file_conf_list:

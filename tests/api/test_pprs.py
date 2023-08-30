@@ -137,6 +137,59 @@ def test_get_pprs_pagination(
     assert response.headers['Content-Range'] == expected_header
 
 
+@pytest.mark.parametrize(
+    ('filters', 'expected_amount', 'expected_header'),
+    (
+        ('id=PPRFL-123', 1, 'items 0-0/1'),
+        ('version=2', 1, 'items 0-0/1'),
+    ),
+)
+def test_get_pprs_filters(
+    filters,
+    expected_amount,
+    expected_header,
+    deployment_factory,
+    file_factory,
+    ppr_version_factory,
+    installation,
+    api_client,
+):
+    deployment = deployment_factory()
+    ppr_file = file_factory(
+        id='MFL-001',
+        mime_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    ppr_version_factory(
+        id='PPRFL-123',
+        deployment=deployment,
+        file=ppr_file.id,
+        product_version=None,
+        summary=None,
+        description=None,
+    )
+
+    for i in range(12):
+        ppr_file = file_factory(
+            id=f'MFL-XX{i}',
+            mime_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        ppr_version_factory(
+            deployment=deployment,
+            file=ppr_file.id,
+            product_version=None,
+            summary=None,
+            description=None,
+        )
+
+    response = api_client.get(
+        f'/api/deployments/{deployment.id}/pprs?{filters}',
+        installation=installation,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == expected_amount
+    assert response.headers['Content-Range'] == expected_header
+
+
 def test_get_pprs_empty(
     deployment_factory,
     installation,
