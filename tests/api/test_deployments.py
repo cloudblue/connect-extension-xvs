@@ -108,6 +108,8 @@ def test_get_deployments_empty(
         ('?product_id=PRD-XXX-XXX-XXX&hub_id=HB-0000-0001', 1),
         ('?product_id=PRD-YYY-YYY-YYY&hub_id=HB-0000-0000', 1),
         ('?product_id=PRD-YYY-YYY-YYY&hub_id=HB-0000-0001', 0),
+        ('?vendor_id=VA-000-000', 2),
+        ('?status=synced', 1),
     ),
 )
 def test_get_deployments_w_filter(
@@ -131,7 +133,9 @@ def test_get_deployments_w_filter(
     deployment_factory(
         account_id=installation['owner']['id'],
         product_id='PRD-YYY-YYY-YYY',
+        vendor_id='VA-000-001',
         hub_id='HB-0000-0000',
+        status='synced',
     )
     listing_data = {
         'product': {
@@ -160,6 +164,7 @@ def test_get_deployments_w_filter(
     }
     listing_data2 = copy.deepcopy(listing_data)
     listing_data2['product']['id'] = 'PRD-YYY-YYY-YYY'
+    listing_data2['vendor']['id'] = 'VA-000-001'
     del listing_data2['contract']['marketplace']['hubs'][1]
 
     mocker.patch(
