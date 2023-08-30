@@ -36,7 +36,9 @@ from connect_ext_ppr.db import (
     VerboseBaseSession,
 )
 from connect_ext_ppr.errors import ExtensionHttpError, ExtensionValidationError
-from connect_ext_ppr.filters import DeploymentFilter, DeploymentRequestFilter
+from connect_ext_ppr.filters import (
+    DeploymentFilter, DeploymentRequestFilter, MarketplaceConfigurationFilter,
+)
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import (
     Deployment,
@@ -278,6 +280,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def list_deployment_request_marketplaces(
         self,
         depl_req_id: str,
+        m_filter: MarketplaceConfigurationFilter = FilterDepends(MarketplaceConfigurationFilter),
         pagination_params: PaginationParams = Depends(),
         response: Response = None,
         db: VerboseBaseSession = Depends(get_db),
@@ -290,6 +293,8 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         marketplaces = db.query(MarketplaceConfiguration).options(
             selectinload(MarketplaceConfiguration.ppr),
         ).filter_by(deployment_request=dr.id)
+        marketplaces = m_filter.filter(marketplaces)
+        marketplaces = m_filter.sort(marketplaces)
         marketplaces = apply_pagination(marketplaces, db, pagination_params, response)
 
         marketplaces_pprs = {m.marketplace: m.ppr for m in marketplaces}
@@ -660,6 +665,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def get_marketplaces_by_deployment(
         self,
         deployment_id: str,
+        m_filter: MarketplaceConfigurationFilter = FilterDepends(MarketplaceConfigurationFilter),
         pagination_params: PaginationParams = Depends(),
         response: Response = None,
         client: ConnectClient = Depends(get_installation_client),
@@ -671,6 +677,8 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         mkplc_configs = db.query(MarketplaceConfiguration).options(
             selectinload(MarketplaceConfiguration.ppr),
         ).filter_by(deployment_id=deployment_id, active=True)
+        mkplc_configs = m_filter.filter(mkplc_configs)
+        mkplc_configs = m_filter.sort(mkplc_configs)
         mkplc_configs = apply_pagination(mkplc_configs, db, pagination_params, response)
 
         mkplc_ids = [m.marketplace for m in mkplc_configs]

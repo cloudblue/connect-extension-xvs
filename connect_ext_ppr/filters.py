@@ -3,7 +3,9 @@ from typing import List, Optional
 from fastapi_filter import FilterDepends, with_prefix
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
+from connect_ext_ppr.models.deployment import (
+    Deployment, DeploymentRequest, MarketplaceConfiguration,
+)
 from connect_ext_ppr.models.ppr import PPRVersion
 
 
@@ -16,6 +18,7 @@ class DeploymentFilter(Filter):
 
 
 class PPRVersionFilter(Filter):
+    id: Optional[str]
     version: Optional[int]
 
     class Constants(Filter.Constants):
@@ -36,3 +39,13 @@ class DeploymentRequestFilter(Filter):
 
     class Constants(Filter.Constants):
         model = DeploymentRequest
+
+
+class MarketplaceConfigurationFilter(Filter):
+    marketplace: Optional[str]
+    ppr: Optional[PPRVersionFilter] = FilterDepends(with_prefix('ppr', PPRVersionFilter))
+
+    order_by: Optional[List[str]]
+
+    class Constants(Filter.Constants):
+        model = MarketplaceConfiguration
