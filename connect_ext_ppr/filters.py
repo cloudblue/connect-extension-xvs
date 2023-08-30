@@ -30,10 +30,6 @@ class PPRVersionFilter(Filter):
 
 
 class DeploymentRequestFilter(Filter):
-    id: Optional[str]
-    deployment: Optional[DeploymentFilter] = FilterDepends(
-        with_prefix('deployment', DeploymentFilter),
-    )
     status: Optional[str]
     delegate_l2: Optional[bool]
 
@@ -53,3 +49,14 @@ class MarketplaceConfigurationFilter(Filter):
 
     class Constants(Filter.Constants):
         model = MarketplaceConfiguration
+
+
+class DeploymentRequestExtendedFilter(DeploymentRequestFilter):
+    id: Optional[str]
+
+    deployment: Optional[DeploymentFilter] = FilterDepends(
+        with_prefix('deployment', DeploymentFilter),
+    )
+
+    class Constants(Filter.Constants):
+        model = DeploymentRequest

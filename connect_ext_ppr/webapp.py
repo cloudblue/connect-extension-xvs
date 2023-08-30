@@ -37,7 +37,8 @@ from connect_ext_ppr.db import (
 )
 from connect_ext_ppr.errors import ExtensionHttpError, ExtensionValidationError
 from connect_ext_ppr.filters import (
-    DeploymentFilter, DeploymentRequestFilter, MarketplaceConfigurationFilter, PPRVersionFilter,
+    DeploymentFilter, DeploymentRequestExtendedFilter, DeploymentRequestFilter,
+    MarketplaceConfigurationFilter, PPRVersionFilter,
 )
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import (
@@ -185,7 +186,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     )
     def list_deployment_requests(
         self,
-        dr_filter: DeploymentRequestFilter = FilterDepends(DeploymentRequestFilter),
+        dr_filter: DeploymentRequestExtendedFilter = FilterDepends(DeploymentRequestExtendedFilter),
         pagination_params: PaginationParams = Depends(),
         response: Response = None,
         client: ConnectClient = Depends(get_installation_client),
@@ -383,6 +384,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def list_requests_for_deployment(
         self,
         deployment_id: str,
+        dr_filter: DeploymentRequestFilter = FilterDepends(DeploymentRequestFilter),
         pagination_params: PaginationParams = Depends(),
         response: Response = None,
         client: ConnectClient = Depends(get_installation_client),
