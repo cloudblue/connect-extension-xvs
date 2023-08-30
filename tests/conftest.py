@@ -149,6 +149,7 @@ def deployment_factory(dbsession, product_factory):
             account_id='PA-000-000',
             vendor_id='VA-000-000',
             hub_id='HB-0000-0000',
+            status='pending',
     ):
         product = product_factory(id=product_id, owner_id=vendor_id)
         product_id = product.id
@@ -158,6 +159,7 @@ def deployment_factory(dbsession, product_factory):
             account_id=account_id,
             vendor_id=vendor_id,
             hub_id=hub_id,
+            status=status,
         )
         dbsession.set_verbose(dep)
         dbsession.commit()

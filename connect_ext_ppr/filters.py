@@ -12,6 +12,8 @@ from connect_ext_ppr.models.ppr import PPRVersion
 class DeploymentFilter(Filter):
     hub_id: Optional[str]
     product_id: Optional[str]
+    status: Optional[str]
+    vendor_id: Optional[str]
 
     class Constants(Filter.Constants):
         model = Deployment
