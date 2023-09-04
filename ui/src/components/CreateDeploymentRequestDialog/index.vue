@@ -66,7 +66,8 @@ import SummaryTab from './SummaryTab.vue';
 import sync from '~mixins/sync';
 
 import {
-  createDeploymentRequest, getDeployments,
+  createDeploymentRequest,
+  getDeployments,
 } from '@/utils';
 
 
@@ -243,7 +244,7 @@ export default {
     },
 
     goToDetails() {
-      this.$router.push('/');
+      this.$router.push({ name: 'RequestDetails', params: { id: this.createdRequest.id } });
     },
 
     onTabChange(tab) {

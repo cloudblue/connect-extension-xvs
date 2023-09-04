@@ -16,4 +16,9 @@ export default [
     path: '/deployments/:id/:tab(marketplaces|ppr|configuration)?',
     component: () => import(/* webpackChunkName: "deployment-details" */ '@/pages/DeploymentDetails.vue'),
   },
+  {
+    name: 'RequestDetails',
+    path: '/requests/:id/:tab(marketplaces|tasks)?',
+    component: () => import(/* webpackChunkName: "request-details" */ '@/pages/RequestDetails.vue'),
+  },
 ];
