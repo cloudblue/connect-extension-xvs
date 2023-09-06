@@ -21,236 +21,546 @@ button .c-icon {
   color: inherit;
 }
 
-/*!************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/Pic.vue?vue&type=style&index=0&id=7ef515b9&lang=stylus&scoped=true& ***!
-  \************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.image[data-v-7ef515b9] {
+/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cButton.vue?vue&type=style&index=0&id=6548a8c4&lang=stylus& ***!
+  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.c-button {
+  --button-color: 33, 33, 33;
+  --button-computed-color: var(--button-custom-color, var(--button-color));
+  --button-border-color: #e0e0e0;
+  --button-padding: 8px;
+  --button-height: 36px;
+  --button-min-width: 80px;
+  --button-label-size: 14px;
+  --button-label-margin: 8px;
+  --button-label-letter-spacing: 0.6px;
+  --button-icon-margin: 4px;
+  border: none;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--button-height);
+  min-width: var(--button-min-width);
   overflow: hidden;
-  box-sizing: content-box;
+  padding-left: var(--button-padding);
+  padding-right: var(--button-padding);
+  color: rgb(var(--button-computed-color));
+  background-color: transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  vertical-align: bottom;
+  box-sizing: border-box;
   position: relative;
 }
-.image__itself[data-v-7ef515b9] {
+.c-button_fluid {
+  display: flex;
+  width: 100%;
+}
+.c-button__link {
   position: absolute;
+  cursor: pointer;
   top: 0;
-  left: 0;
   right: 0;
   bottom: 0;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-.image__placeholder[data-v-7ef515b9] {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: absolute;
-  top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
 }
-.loader[data-v-7ef515b9] {
+.c-button:hover,
+.c-button_active {
+  background-color: rgba(var(--button-computed-color),0.1);
+}
+.c-button_solid {
+  background-color: rgb(var(--button-computed-color)); /* given color */
+  color: rgb(var(--solid-content-color)); /* calculated */
+}
+.c-button_solid:hover,
+.c-button_solid.c-button_active {
+  background-image: linear-gradient(rgba(255,255,255,0.4), rgba(255,255,255,0.4)), linear-gradient(rgb(var(--button-computed-color)), rgb(var(--button-computed-color)));
+}
+.c-button_outlined {
+  --button-padding: 7px;
+  border: 1px solid var(--button-border-color);
+  background-color: #fff;
+}
+.c-button__label {
+  margin-left: var(--button-label-margin);
+  margin-right: var(--button-label-margin);
+  font-size: var(--button-label-size);
+  line-height: 20px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  flex-shrink: 1;
+  flex-grow: 0;
+}
+.c-button__label_uppercase {
+  text-transform: uppercase;
+  letter-spacing: var(--button-label-letter-spacing);
+}
+.c-button__icon-left,
+.c-button__icon-right {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
+  flex: 0 0 auto;
+}
+.c-button__icon-left .c-icon,
+.c-button__icon-right .c-icon {
+  color: inherit;
+}
+.c-button__icon-left {
+  margin-left: var(--button-icon-margin);
+}
+.c-button__icon-right {
+  margin-right: var(--button-icon-margin);
+}
+.c-button_small {
+  --button-height: 28px;
+  --button-min-width: 64px;
+  --button-padding: 6px;
+  --button-label-size: 12px;
+  --button-label-margin: 4px;
+  --button-label-letter-spacing: 0.5px;
+  --button-icon-margin: 2px;
+}
+.c-button_icon-only {
+  --button-padding: 0;
+  --button-icon-margin: 0;
+  --button-min-width: var(--button-height);
+  width: var(--button-height);
+}
+.c-button_txt-only .c-icon {
+  position: absolute;
+}
+.c-button_rounded {
+  border-radius: 50%;
+}
+.c-button_disabled {
+  color: #bdbdbd;
+  cursor: default;
+  pointer-events: none;
+}
+.c-button_disabled.c-button_solid {
+  background: #f2f2f2;
+}
+.c-button_fluid {
+  display: flex;
+}
+.c-button__label_loading {
+  visibility: hidden;
+}
+.c-button__label a {
+  text-decoration: none;
+  color: inherit;
 }
 
-/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cTabs.vue?vue&type=style&index=0&id=00476590&lang=stylus& ***!
-  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.c-tabs__controls {
-  display: flex;
-  border-bottom: 1px solid #e0e0e0;
-}
-.c-tabs__controls_border_none {
-  border-bottom: none;
-}
-.c-tabs__content {
-  margin-top: 32px;
-}
-.c-tabs__control-tooltip {
-  position: relative;
-  display: flex;
+/*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cAlert.vue?vue&type=style&index=0&id=1ef58eba&lang=stylus& ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.c-alert {
   align-items: center;
-  margin-left: 24px;
-  line-height: 48px;
-  white-space: nowrap;
-  cursor: pointer;
-  color: #212121;
-}
-.c-tabs__control-tooltip:first-child {
-  margin-left: 0;
-}
-a.c-tabs__control-tooltip {
-  text-decoration: none;
-}
-a.c-tabs__control-tooltip:hover {
-  color: var(--theme_accent);
-}
-.c-tabs__control-item {
-  font-weight: 500;
-  text-decoration: none;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-}
-.c-tabs__control-item:after {
-  content: '';
-  height: 3px;
-  position: absolute;
-  right: 0;
-  bottom: -1px;
-  left: 0;
-  transform-origin: bottom;
-  transform: scaleY(0);
-  transition: transform 385ms cubic-bezier(0.4, 0, 0.2, 1);
-  background-color: var(--theme_accent);
-}
-.c-tabs__control-item_active {
-  color: var(--theme_accent);
-}
-.c-tabs__control-item_active:after {
-  transform: scaleX(1);
-}
-.c-tabs__control-item_disabled {
-  color: #bdbdbd !important;
-  cursor: default !important;
-}
-.c-tabs__control-item_height_full {
-  height: 100%;
-}
-.c-tabs__control-item .pic {
+  box-sizing: border-box;
+  display: inline-flex;
+  min-height: 64px;
+  min-width: 240px;
+  max-width: 600px;
+  padding: 16px;
   border-radius: 2px;
+  background-color: rgba(189,189,189,0.15);
+  color: #bdbdbd;
+}
+.c-alert_align-top {
+  align-items: flex-start;
+}
+.c-alert_dense {
+  min-height: 56px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+.c-alert_fluid {
+  display: flex;
+  max-width: none;
+}
+.c-alert_grid {
+  display: grid;
+  grid-template-columns: 32px auto;
+  grid-template-rows: auto;
+  grid-template-areas: "icon text" "x actions";
+}
+.c-alert_error {
+  background-color: rgba(255,106,106,0.2);
+  color: #ff6a6a;
+}
+.c-alert_info {
+  background-color: rgba(var(--theme_accent_rgb),0.15);
+  color: var(--theme_accent);
+}
+.c-alert_success {
+  background-color: rgba(11,176,113,0.15);
+  color: #0bb071;
+}
+.c-alert_warning {
+  background-color: rgba(242,201,76,0.15);
+  color: #f2c94c;
+}
+.c-alert__icon {
+  flex: 0 0 auto;
+  margin-right: 12px;
+  display: flex;
+}
+.c-alert__icon > .c-icon,
+.c-alert__icon > .v-icon {
+  color: currentColor;
+}
+.c-alert_align-top .c-alert__icon {
+  margin-top: -2px;
+}
+.c-alert_grid .c-alert__icon {
+  grid-area: icon;
+}
+.c-alert__text {
+  flex: 1 1 auto;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: left;
+  color: #212121;
+  white-space: break-spaces;
+}
+.c-alert__text:first-letter {
+  text-transform: uppercase;
+}
+.c-alert_grid .c-alert__text {
+  grid-area: text;
+}
+.c-alert__actions {
+  flex: 0 0 auto;
+  margin-right: -4px;
+  margin-left: 24px;
+}
+.c-alert__actions button {
+  margin: -2px 0;
+}
+.c-alert__actions button + .c-alert__actions button {
+  margin-left: 16px;
+}
+.c-alert_dense .c-alert__actions {
+  margin-right: -8px;
+}
+.c-alert_dense .c-alert__actions button {
+  margin-top: -4px;
+  margin-bottom: -4px;
+}
+.c-alert_grid .c-alert__actions {
+  grid-area: actions;
+  margin-left: 0;
 }
 
 /*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cNavBar.vue?vue&type=style&index=0&id=b2fed2fc&lang=stylus& ***!
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cDialog.vue?vue&type=style&index=0&id=0548f84c&lang=stylus& ***!
   \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.navigation-bar {
-  box-sizing: content-box;
+.overlay-enter-active,
+.overlay-leave-active {
+  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.overlay-enter,
+.overlay-leave-to {
+  opacity: 0;
+}
+.window-enter-active,
+.window-leave-active {
+  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transform: scale(1) translate3d(0, 0, 0);
+}
+.window-enter,
+.window-leave-to {
+  transform: scale(0.5) translate3d(0, 0, 0);
+  opacity: 0;
+}
+.c-dialog {
+  z-index: -100;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
   display: flex;
-  align-items: center;
+  transition-property: z-index;
+  transition-duration: 0s;
+  transition-timing-function: step-end;
+  transition-delay: 0.3s;
+}
+.c-dialog_opened {
+  z-index: 1;
+  transition-duration: 0.3s;
+  transition-timing-function: step-start;
+  transition-delay: 0s;
+}
+.c-dialog__overlay {
+  z-index: 3;
+  pointer-events: auto;
+  touch-action: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(33,33,33,0.46);
+}
+.c-dialog__window {
+  z-index: 3;
+  position: relative;
   flex: 0 0 auto;
+  pointer-events: all;
+  touch-action: auto;
+  max-height: 90%;
+  max-width: calc(100% - 48px);
+  margin: auto;
+  outline: none;
+  box-shadow: 0 11px 15px -7px rgba(0,0,0,0.2), 0px 24px 38px 3px rgba(0,0,0,0.14), 0px 9px 46px 8px rgba(0,0,0,0.12);
+  border-radius: 4px;
+  overflow-y: hidden;
+}
+.c-dialog__window_z-shaking {
+  animation-name: z-shake-dialog;
+  animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+  animation-duration: 0.15s;
+}
+.c-dialog__error {
+  margin-bottom: 20px;
+}
+.c-window {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: "h h h h" "s c c r" "s a a r";
+  overflow: auto;
+  background-color: #fff;
+}
+.c-window__header {
+  grid-area: h;
+  min-width: 0;
+  max-width: 100%;
+}
+.c-window__header,
+.c-window__title {
+  user-select: none;
+}
+.c-window__status {
+  margin-left: 8px;
+  color: rgba(var(--theme_contrast_rgb),0.5);
+}
+.c-window__title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   height: 64px;
   padding-left: 24px;
   padding-right: 24px;
-  border-bottom: 1px solid #e0e0e0;
-  background: #f5f5f5;
-}
-.navigation-bar__page-title {
-  font-weight: 500;
-  font-size: 20px;
-  line-height: 24px;
   margin-top: 0;
   margin-bottom: 0;
+  line-height: 24px;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--theme_contrast);
+  background-color: var(--theme_primary);
 }
-.navigation-bar__page-assistive-title {
-  color: #707070;
+.c-window__message .c-alert {
+  border-radius: 0;
 }
-.navigation-bar__back-button + .navigation-bar__page-title-holder,
-.navigation-bar__back-button + .navigation-bar__page-title {
-  margin-left: 32px;
+.c-window__toolbar {
+  border-bottom: 1px solid #e0e0e0;
 }
-.navigation-bar__back-button {
-  margin: 0 -6px;
-  color: #666;
-  padding: 4px;
-}
-.navigation-bar__back-button:hover {
-  background: #e0e0e0;
-}
-.navigation-bar__tabs,
-.navigation-bar__content,
-.navigation-bar__actions {
-  padding-left: 48px;
-}
-.navigation-bar__tabs,
-.navigation-bar__content {
-  display: flex;
-  align-self: stretch;
-}
-.navigation-bar__tabs {
-  flex: 0 0 auto;
-}
-.navigation-bar__content {
-  flex: 1 1 auto;
-}
-.navigation-bar__actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-}
-.page-title {
-  display: flex;
-  align-items: center;
-}
-.page-title__link {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  color: #000;
-  cursor: pointer;
-}
-.actions-holder .actions-slot {
-  display: flex;
-  align-items: center;
-}
-.actions-holder .actions-slot > div {
-  padding-left: 16px;
-}
-.actions-holder__button {
-  margin: 0;
-  min-width: 0;
-}
-.actions-menu__divider {
-  margin-top: 7px;
-  margin-bottom: 8px;
-}
-._mb_2 {
-  margin-bottom: 2px;
-}
-
-/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cView.vue?vue&type=style&index=0&id=7c928137&lang=stylus& ***!
-  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.c-view {
+.c-window__sidebar {
   position: relative;
-  flex: 1 1 100%;
-  display: grid;
-  grid-template-rows: auto auto;
-  grid-template-columns: 1fr;
-  grid-template-areas: "n" "c";
-  overflow: auto;
+  grid-area: s;
+  display: flex;
+  background-color: #f5f5f5;
 }
-.c-view__progress-wrapper {
+.c-window__sidebar:before {
+  content: "";
   position: absolute;
-  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 1px;
+  background-color: #e0e0e0;
+}
+.c-window__right-sidebar {
+  position: relative;
+  grid-area: r;
+  display: flex;
+  border-left: 1px solid #e0e0e0;
+}
+.c-window .c-window__right-sidebar.c-window__scroller {
+  padding: 24px;
+}
+.c-window__scroller {
+  flex: 1 1 100%;
+  overflow-y: auto;
+}
+.c-window .loading-icon {
+  grid-area: c;
+  height: 100%;
+  z-index: inherit;
+  background: rgba(255,255,255,0.6);
+}
+.c-window .loading-icon svg {
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.c-window__content {
+  grid-area: c;
+  padding: 24px;
+}
+.c-window__content_no-frame {
+  padding: 0;
+}
+.c-window__actions {
+  display: flex;
+  grid-area: a;
+  min-height: 52px;
+  align-items: center;
+  justify-content: flex-end;
+  padding-left: 16px;
+  padding-right: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+.c-window__actions_no-divider {
+  border-top-color: transparent;
+}
+.c-window__actions button {
+  margin: 0;
+}
+.c-window__actions button + button {
+  margin-left: 16px;
+}
+.c-right-sidebar {
+  padding-bottom: 16px;
+  width: 320px;
+}
+.c-vertical-tabs {
+  padding-top: 16px;
+  padding-bottom: 16px;
+  width: 220px;
+}
+.c-vertical-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 64px;
+  padding-left: 24px;
+  padding-right: 16px;
+  overflow: hidden;
+  text-decoration: none;
+  color: #212121;
+  user-select: none;
+  transition: background-color 385ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+a.c-vertical-tab {
+  cursor: default;
+}
+.c-vertical-tab:before {
+  content: "";
+  position: absolute;
   right: 0;
   top: 0;
   bottom: 0;
+  width: 3px;
+  transform-origin: right;
+  transform: scaleX(0);
+  transition: transform 385ms cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--theme_accent);
+}
+.c-vertical-tab__content {
+  margin-right: 8px;
+  flex: 1 1;
+  min-width: 0;
+}
+.c-vertical-tab__step-indicator,
+.c-vertical-tab__icon {
+  flex: 0 0 auto;
+}
+.c-vertical-tab__step-indicator {
+  margin-right: 8px;
+}
+.c-vertical-tab__step-indicator:before,
+.c-vertical-tab__step-indicator:after {
+  content: "";
+  position: absolute;
+  left: 36px;
+  z-index: 0;
+  width: 1px;
+  height: 50%;
+  margin-left: -0.5px;
+  background-color: #e0e0e0;
+}
+.c-vertical-tab__step-indicator:after {
+  bottom: -16px;
+}
+.c-vertical-tab__step-indicator:before {
+  top: -16px;
+}
+.c-vertical-tab__step-indicator.step-indicator-filled:before,
+.c-vertical-tab__step-indicator.step-indicator-filled:after {
+  background-color: var(--theme_accent);
+  opacity: 0.15;
+}
+.c-vertical-tab:first-of-type .c-vertical-tab__step-indicator:before,
+.c-vertical-tab:last-of-type .c-vertical-tab__step-indicator:after {
+  content: none;
+}
+.c-vertical-tab_active {
+  background-color: rgba(var(--theme_accent_rgb),0.15);
+  color: var(--theme_accent);
+  font-weight: 500;
+}
+.c-vertical-tab_active:before {
+  transform: scaleX(1);
+}
+.c-vertical-tab_active .assistive-text {
+  color: rgba(var(--theme_accent_rgb),0.75);
+  font-weight: 400;
+}
+.c-vertical-tab_active .step-indicator {
+  background-color: var(--theme_accent);
+  color: var(--theme_contrast);
+}
+.c-vertical-tab_clickable:not(.c-vertical-tab_active):hover {
+  background-color: rgba(33,33,33,0.05);
+}
+a.c-vertical-tab_clickable:not(.c-vertical-tab_active) {
+  cursor: pointer;
+}
+.c-vertical-tab_inactive {
+  color: #707070;
+}
+.c-vertical-tab_inactive .step-indicator {
+  background-color: rgba(189,189,189,0.15);
+  color: #bdbdbd;
+}
+.c-vertical-tab_active .c-vertical-tab__step-indicator:after,
+.c-vertical-tab_active .c-vertical-tab__step-indicator:before {
+  content: none;
+}
+.step-indicator {
   display: flex;
+  width: 24px;
+  height: 24px;
+  border-radius: 100%;
+  background-color: rgba(var(--theme_accent_rgb),0.15);
+  color: var(--theme_accent);
 }
-.c-view__navigation {
-  grid-area: n;
+.step-indicator__text,
+.step-indicator__icon {
+  margin: auto;
 }
-.c-view__content-holder {
-  position: relative;
-  grid-area: c;
+.step-indicator__icon.c-icon {
+  color: currentColor;
 }
-.c-view__content {
-  position: relative;
-  min-height: 100%;
-  box-sizing: border-box;
-  padding-bottom: 64px;
-}
-.c-view__content_padded {
-  padding: 24px 24px 40px;
-}
-.c-view__content:empty,
-.c-view__navigation:empty {
-  display: none;
+.step-indicator__text {
+  color: currentColor;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1;
 }
 
 /*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
@@ -317,6 +627,40 @@ a.c-tabs__control-tooltip:hover {
 }
 .c-menu_attached.c-menu_at-top {
   position: relative;
+}
+
+/*!************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/Pic.vue?vue&type=style&index=0&id=7ef515b9&lang=stylus&scoped=true& ***!
+  \************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.image[data-v-7ef515b9] {
+  overflow: hidden;
+  box-sizing: content-box;
+  position: relative;
+}
+.image__itself[data-v-7ef515b9] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.image__placeholder[data-v-7ef515b9] {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+.loader[data-v-7ef515b9] {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
 }
 
 /*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
@@ -454,137 +798,6 @@ i.nosort[data-v-6bcab16a] {
 }
 .scrollable[data-v-6bcab16a] {
   overflow-y: auto;
-}
-
-/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cButton.vue?vue&type=style&index=0&id=6548a8c4&lang=stylus& ***!
-  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
-.c-button {
-  --button-color: 33, 33, 33;
-  --button-computed-color: var(--button-custom-color, var(--button-color));
-  --button-border-color: #e0e0e0;
-  --button-padding: 8px;
-  --button-height: 36px;
-  --button-min-width: 80px;
-  --button-label-size: 14px;
-  --button-label-margin: 8px;
-  --button-label-letter-spacing: 0.6px;
-  --button-icon-margin: 4px;
-  border: none;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: var(--button-height);
-  min-width: var(--button-min-width);
-  overflow: hidden;
-  padding-left: var(--button-padding);
-  padding-right: var(--button-padding);
-  color: rgb(var(--button-computed-color));
-  background-color: transparent;
-  border-radius: 2px;
-  cursor: pointer;
-  vertical-align: bottom;
-  box-sizing: border-box;
-  position: relative;
-}
-.c-button_fluid {
-  display: flex;
-  width: 100%;
-}
-.c-button__link {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-}
-.c-button:hover,
-.c-button_active {
-  background-color: rgba(var(--button-computed-color),0.1);
-}
-.c-button_solid {
-  background-color: rgb(var(--button-computed-color)); /* given color */
-  color: rgb(var(--solid-content-color)); /* calculated */
-}
-.c-button_solid:hover,
-.c-button_solid.c-button_active {
-  background-image: linear-gradient(rgba(255,255,255,0.4), rgba(255,255,255,0.4)), linear-gradient(rgb(var(--button-computed-color)), rgb(var(--button-computed-color)));
-}
-.c-button_outlined {
-  --button-padding: 7px;
-  border: 1px solid var(--button-border-color);
-  background-color: #fff;
-}
-.c-button__label {
-  margin-left: var(--button-label-margin);
-  margin-right: var(--button-label-margin);
-  font-size: var(--button-label-size);
-  line-height: 20px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  flex-shrink: 1;
-  flex-grow: 0;
-}
-.c-button__label_uppercase {
-  text-transform: uppercase;
-  letter-spacing: var(--button-label-letter-spacing);
-}
-.c-button__icon-left,
-.c-button__icon-right {
-  display: flex;
-  flex: 0 0 auto;
-}
-.c-button__icon-left .c-icon,
-.c-button__icon-right .c-icon {
-  color: inherit;
-}
-.c-button__icon-left {
-  margin-left: var(--button-icon-margin);
-}
-.c-button__icon-right {
-  margin-right: var(--button-icon-margin);
-}
-.c-button_small {
-  --button-height: 28px;
-  --button-min-width: 64px;
-  --button-padding: 6px;
-  --button-label-size: 12px;
-  --button-label-margin: 4px;
-  --button-label-letter-spacing: 0.5px;
-  --button-icon-margin: 2px;
-}
-.c-button_icon-only {
-  --button-padding: 0;
-  --button-icon-margin: 0;
-  --button-min-width: var(--button-height);
-  width: var(--button-height);
-}
-.c-button_txt-only .c-icon {
-  position: absolute;
-}
-.c-button_rounded {
-  border-radius: 50%;
-}
-.c-button_disabled {
-  color: #bdbdbd;
-  cursor: default;
-  pointer-events: none;
-}
-.c-button_disabled.c-button_solid {
-  background: #f2f2f2;
-}
-.c-button_fluid {
-  display: flex;
-}
-.c-button__label_loading {
-  visibility: hidden;
-}
-.c-button__label a {
-  text-decoration: none;
-  color: inherit;
 }
 
 /*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
@@ -1481,6 +1694,481 @@ button + .c-text-field__append-inner > svg[data-v-b5bb9caa]:first-child {
 }
 .c-data-table[data-v-673514a2] .v-snack__content button {
   margin-left: 12px;
+}
+
+/*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cRadio.vue?vue&type=style&index=0&id=3c4bb1d9&lang=stylus&scoped=true& ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.c-radio[data-v-3c4bb1d9] {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.c-radio__box[data-v-3c4bb1d9] {
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.c-radio__input[data-v-3c4bb1d9] {
+  display: none;
+}
+.c-radio__label[data-v-3c4bb1d9] {
+  display: block;
+  margin-left: 8px;
+  user-select: none;
+}
+.c-radio__label_empty[data-v-3c4bb1d9] {
+  display: none;
+}
+.c-radio__label-text[data-v-3c4bb1d9] {
+  margin: 0;
+  font-size: 14px;
+  line-height: 24px;
+}
+
+/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cSearch.vue?vue&type=style&index=0&id=2590bc3a&lang=stylus&scoped=true& ***!
+  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.c-search[data-v-2590bc3a] {
+  height: 44px;
+  width: 100%;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  border: 1px solid #d8d8d8;
+  background-color: #fbfbfb;
+}
+.c-search__icon[data-v-2590bc3a] {
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+.c-search__input[data-v-2590bc3a] {
+  width: auto;
+  flex-grow: 1;
+  outline: none;
+  border: none;
+  background-color: inherit;
+  color: #212121;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+.c-search__input[data-v-2590bc3a]::placeholder {
+  color: #707070;
+}
+
+/*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/RadioTable.vue?vue&type=style&index=0&id=7997df34&lang=stylus&scoped=true& ***!
+  \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.radio-table__title[data-v-7997df34] {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+  margin-bottom: 24px;
+}
+.radio-table__search[data-v-7997df34] {
+  margin-bottom: 12px;
+}
+
+/*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/CreateDeploymentRequestDialog/HubsTab.vue?vue&type=style&index=0&id=0fc2312d&lang=stylus& ***!
+  \**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.hub-tab__detail {
+  margin-top: 0;
+}
+
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cCheckbox.vue?vue&type=style&index=0&id=4cd65356&lang=stylus&scoped=true& ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.c-checkbox[data-v-4cd65356] {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.c-checkbox__box[data-v-4cd65356] {
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.c-checkbox__input[data-v-4cd65356] {
+  display: none;
+}
+.c-checkbox__label[data-v-4cd65356] {
+  display: block;
+  margin-left: 8px;
+  user-select: none;
+}
+.c-checkbox__label_empty[data-v-4cd65356] {
+  display: none;
+}
+.c-checkbox__label-text[data-v-4cd65356] {
+  margin: 0;
+  font-size: 14px;
+  line-height: 24px;
+}
+
+/*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/CheckboxTable.vue?vue&type=style&index=0&id=6b795cba&lang=stylus&scoped=true& ***!
+  \**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.checkbox-table__title[data-v-6b795cba] {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+  margin-bottom: 24px;
+}
+.checkbox-table__search[data-v-6b795cba] {
+  margin-bottom: 12px;
+}
+
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/CreateDeploymentRequestDialog/MarketplacesTab.vue?vue&type=style&index=0&id=23f3dafa&lang=stylus& ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.marketplaces-tab__detail {
+  margin-top: 0;
+}
+
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/CreateDeploymentRequestDialog/ProductsTab.vue?vue&type=style&index=0&id=4402e027&lang=stylus& ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.products-tab__detail {
+  margin-top: 0;
+}
+
+/*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/CreateDeploymentRequestDialog/PprTab.vue?vue&type=style&index=0&id=239e179d&lang=stylus& ***!
+  \*********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.products-tab__detail {
+  margin-top: 0;
+}
+
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cChip.vue?vue&type=style&index=0&id=cf32a144&lang=stylus& ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.c-chip {
+  --c-chip-color: 66, 66, 66;
+  --c-chip-text-color: var(--c-chip-color);
+  --c-chip-icon-color: var(--c-chip-color);
+  display: inline-flex;
+  overflow: hidden;
+  align-items: center;
+  box-sizing: border-box;
+  height: 24px;
+  padding-right: 4px;
+  padding-left: 8px;
+  border-radius: 12px;
+  vertical-align: middle;
+}
+.c-chip__text {
+  overflow: hidden;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: normal;
+  color: rgb(var(--c-chip-text-color));
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  margin-left: 4px;
+  margin-right: 8px;
+}
+.c-chip__icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+.c-chip__icon.c-icon,
+.c-chip__icon.v-icon {
+  color: rgb(var(--c-chip-icon-color));
+}
+.c-chip__close-icon {
+  margin: 0;
+  color: rgb(var(--c-chip-text-color)) !important;
+  width: 14px;
+  height: 14px;
+}
+.c-chip__close-icon:hover {
+  background-color: rgba(var(--c-chip-icon-color),0.15);
+  border-radius: 50%;
+}
+.c-chip_small {
+  height: 16px;
+  padding-left: 4px;
+  padding-right: 4px;
+  border-radius: 8px;
+}
+.c-chip_small .c-chip__text {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 12px;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+.c-chip_small .c-chip__icon {
+  width: 12px;
+  height: 12px;
+  font-size: 12px;
+}
+.c-chip_small .c-chip__close-icon {
+  width: 10px;
+  height: 10px;
+}
+.c-chip_solid {
+  background-color: rgb(var(--c-chip-color));
+  --c-chip-text-color: 255, 255, 255;
+  --c-chip-icon-color: 255, 255, 255;
+}
+.c-chip_outline {
+  border: 1px solid rgb(var(--c-chip-color));
+}
+.c-chip_pale {
+  background-color: rgba(var(--c-chip-color),0.1);
+}
+.c-chip_non-rounded {
+  border-radius: 2px;
+}
+
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/CreateDeploymentRequestDialog/SummaryTab.vue?vue&type=style&index=0&id=a449222e&lang=stylus&scoped=true& ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.summary__title[data-v-a449222e] {
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 500;
+  color: #212121;
+}
+.summary__row[data-v-a449222e] {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 48px;
+  border-bottom: 1px solid #e0e0e0;
+}
+.summary__row[data-v-a449222e]:last-child {
+  border-bottom: none;
+}
+.summary__key[data-v-a449222e] {
+  margin: 0;
+  width: 164px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+.summary__value[data-v-a449222e] {
+  margin: 0;
+}
+.summary__valuep[data-v-a449222e] {
+  font-size: 14px;
+  line-height: 20px;
+}
+.summary .ppr-version[data-v-a449222e],
+.summary .delegate[data-v-a449222e],
+.summary .request-id[data-v-a449222e] {
+  display: flex;
+  align-items: center;
+}
+.summary .ppr-version[data-v-a449222e] :first-child,
+.summary .delegate[data-v-a449222e] :first-child,
+.summary .request-id[data-v-a449222e] :first-child {
+  margin-right: 4px;
+}
+
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cTabs.vue?vue&type=style&index=0&id=00476590&lang=stylus& ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.c-tabs__controls {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+}
+.c-tabs__controls_border_none {
+  border-bottom: none;
+}
+.c-tabs__content {
+  margin-top: 32px;
+}
+.c-tabs__control-tooltip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: 24px;
+  line-height: 48px;
+  white-space: nowrap;
+  cursor: pointer;
+  color: #212121;
+}
+.c-tabs__control-tooltip:first-child {
+  margin-left: 0;
+}
+a.c-tabs__control-tooltip {
+  text-decoration: none;
+}
+a.c-tabs__control-tooltip:hover {
+  color: var(--theme_accent);
+}
+.c-tabs__control-item {
+  font-weight: 500;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+}
+.c-tabs__control-item:after {
+  content: '';
+  height: 3px;
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  transform-origin: bottom;
+  transform: scaleY(0);
+  transition: transform 385ms cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--theme_accent);
+}
+.c-tabs__control-item_active {
+  color: var(--theme_accent);
+}
+.c-tabs__control-item_active:after {
+  transform: scaleX(1);
+}
+.c-tabs__control-item_disabled {
+  color: #bdbdbd !important;
+  cursor: default !important;
+}
+.c-tabs__control-item_height_full {
+  height: 100%;
+}
+.c-tabs__control-item .pic {
+  border-radius: 2px;
+}
+
+/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cNavBar.vue?vue&type=style&index=0&id=b2fed2fc&lang=stylus& ***!
+  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.navigation-bar {
+  box-sizing: content-box;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  height: 64px;
+  padding-left: 24px;
+  padding-right: 24px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f5f5f5;
+}
+.navigation-bar__page-title {
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 24px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.navigation-bar__page-assistive-title {
+  color: #707070;
+}
+.navigation-bar__back-button + .navigation-bar__page-title-holder,
+.navigation-bar__back-button + .navigation-bar__page-title {
+  margin-left: 32px;
+}
+.navigation-bar__back-button {
+  margin: 0 -6px;
+  color: #666;
+  padding: 4px;
+}
+.navigation-bar__back-button:hover {
+  background: #e0e0e0;
+}
+.navigation-bar__tabs,
+.navigation-bar__content,
+.navigation-bar__actions {
+  padding-left: 48px;
+}
+.navigation-bar__tabs,
+.navigation-bar__content {
+  display: flex;
+  align-self: stretch;
+}
+.navigation-bar__tabs {
+  flex: 0 0 auto;
+}
+.navigation-bar__content {
+  flex: 1 1 auto;
+}
+.navigation-bar__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.page-title {
+  display: flex;
+  align-items: center;
+}
+.page-title__link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #000;
+  cursor: pointer;
+}
+.actions-holder .actions-slot {
+  display: flex;
+  align-items: center;
+}
+.actions-holder .actions-slot > div {
+  padding-left: 16px;
+}
+.actions-holder__button {
+  margin: 0;
+  min-width: 0;
+}
+.actions-menu__divider {
+  margin-top: 7px;
+  margin-bottom: 8px;
+}
+._mb_2 {
+  margin-bottom: 2px;
+}
+
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/stylus-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./ui/src/components/cView.vue?vue&type=style&index=0&id=7c928137&lang=stylus& ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+.c-view {
+  position: relative;
+  flex: 1 1 100%;
+  display: grid;
+  grid-template-rows: auto auto;
+  grid-template-columns: 1fr;
+  grid-template-areas: "n" "c";
+  overflow: auto;
+}
+.c-view__progress-wrapper {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+}
+.c-view__navigation {
+  grid-area: n;
+}
+.c-view__content-holder {
+  position: relative;
+  grid-area: c;
+}
+.c-view__content {
+  position: relative;
+  min-height: 100%;
+  box-sizing: border-box;
+  padding-bottom: 64px;
+}
+.c-view__content_padded {
+  padding: 24px 24px 40px;
+}
+.c-view__content:empty,
+.c-view__navigation:empty {
+  display: none;
 }
 
 /*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\

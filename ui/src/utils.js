@@ -5,7 +5,14 @@ All rights reserved.
 import rest from '@/tools/rest';
 
 
-export const getDeployments = () => rest.get('/api/deployments');
+export const getDeployments = ({ hubId, productId } = {}) => {
+  const queryParams = new URLSearchParams();
+
+  if (hubId) queryParams.append('hub_id', hubId);
+  if (productId) queryParams.append('product_id', productId);
+
+  return rest.get(`/api/deployments?${queryParams.toString()}`);
+};
 
 export const getDeployment = (id) => rest.get(`/api/deployments/${id}`);
 
@@ -40,3 +47,11 @@ export const uploadPPR = (deploymentId, {
   },
   description,
 });
+
+export const getProducts = () => rest.get('/api/products');
+
+export const getProductHubs = (productId) => rest.get(`/api/products/${productId}/hubs`);
+
+export const getDeploymentMarketplaces = (deploymentId) => rest.get(`/api/deployments/${deploymentId}/marketplaces`);
+
+export const createDeploymentRequest = (body) => rest.post('/api/deployments/requests', body);
