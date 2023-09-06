@@ -73,10 +73,10 @@ c-view.request-details(
     :tabs="tabs",
   )
     template(#marketplaces="")
-      .marketplaces-tab Marketplaces
+      request-marketplaces-tab(:request-id="requestId")
 
     template(#tasks="")
-      .tasks-tab Tasks
+      request-tasks-tab(:request-id="requestId")
 
 </template>
 
@@ -95,6 +95,8 @@ import cView from '~components/cView.vue';
 import DetailItem from '~components/DetailItem.vue';
 import GridItem from '~components/GridItem.vue';
 import Pic from '~components/Pic.vue';
+import RequestMarketplacesTab from '~components/RequestMarketplacesTab.vue';
+import RequestTasksTab from '~components/RequestTasksTab.vue';
 
 import {
   getDeploymentsRequest,
@@ -115,6 +117,8 @@ export default {
     DetailItem,
     GridItem,
     Pic,
+    RequestMarketplacesTab,
+    RequestTasksTab,
   },
 
   data: () => ({

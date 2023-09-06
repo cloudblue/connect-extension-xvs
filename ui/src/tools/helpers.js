@@ -2,6 +2,8 @@ import {
   googleLanguageBaseline,
 } from '@cloudblueconnect/material-svg/baseline';
 
+import moment from 'moment-timezone';
+
 import {
   T,
   __,
@@ -337,8 +339,28 @@ export const downloader = options => {
   document.body.removeChild(link);
 };
 
+
+/**
+ * Gets a human-readable value for the given ms
+ *
+ * @param ms {number}
+ * @returns {string}
+ */
+export const readableTimeDiff = ms => {
+  if (!ms || typeof ms !== 'number') return '–';
+
+  if (ms < 1000) {
+    return `0s ${Math.trunc(ms)}ms`;
+  }
+
+  const parsedTime = moment.utc(ms);
+
+  return `${parsedTime.hours()}h ${parsedTime.minutes()}m ${parsedTime.seconds()}s`;
+};
+
 export default {
-  isNotEmptyString,
   downloader,
+  isNotEmptyString,
+  readableTimeDiff,
 };
 

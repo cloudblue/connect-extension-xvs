@@ -56,4 +56,8 @@ export const getProductHubs = (productId) => rest.get(`/api/products/${productId
 
 export const getDeploymentMarketplaces = (deploymentId) => rest.get(`/api/deployments/${deploymentId}/marketplaces`);
 
+export const getDeploymentRequestMarketplaces = (requestId) => rest.get(`/api/deployments/requests/${requestId}/marketplaces`);
+
+export const getDeploymentRequestTasks = (requestId) => rest.get(`/api/deployments/requests/${requestId}/tasks`);
+
 export const createDeploymentRequest = (body) => rest.post('/api/deployments/requests', body);
