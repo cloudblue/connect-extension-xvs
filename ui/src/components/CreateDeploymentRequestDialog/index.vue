@@ -28,14 +28,14 @@ c-dialog(
   template(#ppr="")
     ppr-tab(
       v-model="form.ppr",
-      :deployment-id="deployment?.id",
+      :deployment-id="localDeployment?.id",
       @error="setError",
     )
 
   template(#marketplaces="")
     marketplaces-tab(
       v-model="form.marketplaces",
-      :deployment-id="deployment?.id",
+      :deployment-id="localDeployment?.id",
       @error="setError",
     )
 
@@ -100,6 +100,10 @@ export default {
 
   props: {
     value: Boolean,
+    deployment: {
+      type: Object,
+      default: () => null,
+    },
   },
 
   data: () => ({
@@ -107,7 +111,7 @@ export default {
     currentTab: null,
     form: defaultForm(),
     createdRequest: null,
-    deployment: null,
+    localDeployment: null,
     errorText: '',
   }),
 
@@ -225,7 +229,7 @@ export default {
     async createDeploymentRequest() {
       this.createdRequest = await createDeploymentRequest({
         marketplaces: this.form.marketplaces,
-        deployment: { id: this.deployment.id },
+        deployment: { id: this.localDeployment.id },
         ppr: { id: this.form.ppr.id },
         manually: this.form.options.manual,
         delegate_l2: this.form.options.delegate,
@@ -235,7 +239,9 @@ export default {
     },
 
     async fetchDeployment() {
-      [this.deployment] = await getDeployments({
+      if (this.deployment) return;
+
+      [this.localDeployment] = await getDeployments({
         hubId: this.form.hub.id,
         productId: this.form.product.id,
       });
@@ -257,9 +263,16 @@ export default {
   },
 
   watch: {
-    localValue(v) {
+    async localValue(v) {
       if (!v) {
         this.form = defaultForm();
+      } else if (this.deployment) {
+        this.localDeployment = this.deployment;
+        this.form.hub = this.deployment.hub;
+        this.form.product = this.deployment.product;
+
+        await this.$nextTick();
+        this.$refs.dialog.activeTab = 'ppr';
       }
     },
   },

@@ -30,6 +30,8 @@ export const deleteDeploymentConfiguration = (deploymentId, configurationId) => 
 
 export const getDeploymentsRequests = () => rest.get('/api/deployments/requests');
 
+export const getDeploymentRequests = (deploymentId) => rest.get(`/api/deployments/${deploymentId}/requests`);
+
 export const getDeploymentsRequest = (id) => rest.get(`/api/deployments/requests/${id}`);
 
 export const uploadPPR = (deploymentId, {

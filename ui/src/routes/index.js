@@ -13,7 +13,7 @@ export default [
   },
   {
     name: 'DeploymentDetails',
-    path: '/deployments/:id/:tab(marketplaces|ppr|configuration)?',
+    path: '/deployments/:id/:tab(marketplaces|ppr|configuration|requests)?',
     component: () => import(/* webpackChunkName: "deployment-details" */ '@/pages/DeploymentDetails.vue'),
   },
   {
