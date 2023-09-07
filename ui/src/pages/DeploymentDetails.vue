@@ -81,6 +81,9 @@ c-view.deployment-details(
         :account-id="deployment.account_id",
       )
 
+    template(#requests="")
+      deployment-requests-tab(:deployment="deployment")
+
 </template>
 
 <script>
@@ -98,6 +101,7 @@ import Pic from '~components/Pic.vue';
 
 import PprTab from '~components/PprTab.vue';
 import DeploymentConfigurationTab from '~components/DeploymentConfigurationTab.vue';
+import DeploymentRequestsTab from '~components/DeploymentRequestsTab.vue';
 
 import {
   getDeployment,
@@ -111,6 +115,7 @@ export default {
     cTabs,
     cView,
     DeploymentConfigurationTab,
+    DeploymentRequestsTab,
     DetailItem,
     GridItem,
     Pic,
@@ -134,6 +139,7 @@ export default {
       { label: 'Marketplaces', value: 'marketplaces' },
       { label: 'PPR', value: 'ppr' },
       { label: 'Configuration', value: 'configuration' },
+      { label: 'Requests', value: 'requests' },
     ],
   },
 
