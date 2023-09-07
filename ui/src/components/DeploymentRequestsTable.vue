@@ -15,7 +15,7 @@ c-data-table(
           :key="header.value",
         )
           router-link(
-            :to="{ name: 'DeploymentDetails', params: { id: row.requestId } }"
+            :to="{ name: 'RequestDetails', params: { id: row.requestId } }"
           ) {{ row.requestId }}
 
         //- Product column

@@ -105,6 +105,7 @@ export default {
       return {
         id: item.id,
         name: item.name,
+        icon: item.icon,
         externalId: item.external_id,
         appliedPprVersion: item.ppr?.version || 0,
       };

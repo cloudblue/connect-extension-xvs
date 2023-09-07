@@ -30,6 +30,8 @@ export const deleteDeploymentConfiguration = (deploymentId, configurationId) => 
 
 export const getDeploymentsRequests = () => rest.get('/api/deployments/requests');
 
+export const getDeploymentsRequest = (id) => rest.get(`/api/deployments/requests/${id}`);
+
 export const uploadPPR = (deploymentId, {
   id,
   location,
@@ -53,5 +55,9 @@ export const getProducts = () => rest.get('/api/products');
 export const getProductHubs = (productId) => rest.get(`/api/products/${productId}/hubs`);
 
 export const getDeploymentMarketplaces = (deploymentId) => rest.get(`/api/deployments/${deploymentId}/marketplaces`);
+
+export const getDeploymentRequestMarketplaces = (requestId) => rest.get(`/api/deployments/requests/${requestId}/marketplaces`);
+
+export const getDeploymentRequestTasks = (requestId) => rest.get(`/api/deployments/requests/${requestId}/tasks`);
 
 export const createDeploymentRequest = (body) => rest.post('/api/deployments/requests', body);
