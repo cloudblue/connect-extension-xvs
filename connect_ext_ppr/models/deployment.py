@@ -72,6 +72,7 @@ class DeploymentRequest(Model):
         foreign_keys="DeploymentRequest.deployment_id",
         innerjoin=True,
     )
+    marketplaces = relationship('MarketplaceConfiguration', backref='deployment_request', lazy=True)
 
     @transition('status', target=STATUSES.aborting, sources=[STATUSES.pending, STATUSES.processing])
     def aborting(self, by):
@@ -100,8 +101,9 @@ class MarketplaceConfiguration(Model):
     id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     marketplace = db.Column(db.String(16))
     deployment_id = db.Column(db.ForeignKey(Deployment.id), nullable=True)
-    deployment_request = db.Column(db.ForeignKey(DeploymentRequest.id), nullable=True)
+    deployment_request_id = db.Column(db.ForeignKey(DeploymentRequest.id), nullable=True)
     ppr_id = db.Column(db.String, db.ForeignKey(PPRVersion.id))
+    pricelist_id = db.Column(db.String(32), nullable=True)
     active = db.Column(db.Boolean(), default=True)
 
     ppr = relationship('PPRVersion', foreign_keys='MarketplaceConfiguration.ppr_id')

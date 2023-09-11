@@ -24,6 +24,15 @@ from connect_ext_ppr.utils import (
 
 def test_fail_get_all_info_exc(mocker, connect_client):
     mocker.patch(
+        'connect_ext_ppr.utils.get_listings',
+        return_value=[
+            {
+                'product': {'id': 'P-1'},
+                'contract': {'marketplace': {'id': 'MP-1'}},
+            },
+        ],
+    )
+    mocker.patch(
         'connect_ext_ppr.utils.get_marketplaces',
         side_effect=ClientError(),
     )

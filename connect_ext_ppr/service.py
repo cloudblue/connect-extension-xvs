@@ -329,14 +329,11 @@ def add_new_deployment_request(db, dr_data, deployment, account_id, logger):
         db.flush()
         db.refresh(deployment_request)
 
-        marketplaces = [m.id for m in dr_data.marketplaces.choices]
-        if dr_data.marketplaces.all:
-            marketplaces = [m.marketplace for m in deployment.marketplaces]
-
-        for m_id in marketplaces:
+        for mp_data in dr_data.marketplaces:
             mc = MarketplaceConfiguration(
-                deployment_request=deployment_request.id,
-                marketplace=m_id,
+                deployment_request=deployment_request,
+                marketplace=mp_data.id,
+                pricelist_id=mp_data.pricelist.id if mp_data.pricelist else None,
             )
             db.add(mc)
 
@@ -412,11 +409,11 @@ def deactivate_marketplaces(installation, listings, config, logger):
                 update(MarketplaceConfiguration)
                 .where(
                     MarketplaceConfiguration.marketplace == marketplace_id,
-                    MarketplaceConfiguration.deployment_request.in_(
+                    MarketplaceConfiguration.deployment_request_id.in_(
                         [dr.id for dr in deployments_requests],
                     ))
                 .values(active=False)
-                .returning(MarketplaceConfiguration.deployment_request)
+                .returning(MarketplaceConfiguration.deployment_request_id)
             )
 
             result = db.execute(stmt)

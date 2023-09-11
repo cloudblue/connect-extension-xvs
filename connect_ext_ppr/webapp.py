@@ -164,13 +164,14 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             active=True,
             deployment_id=deployment.id,
         )
-        dr_marketplaces = [m.id for m in deployment_request.marketplaces.choices]
-        validate_dr_marketplaces(
-            dr_marketplaces,
-            [m.marketplace for m in dep_marketplaces],
-        )
 
-        validate_marketplaces_ppr(ppr, dr_marketplaces, dep_marketplaces)
+        validate_dr_marketplaces(
+            client=client,
+            product_id=deployment.product_id,
+            dr_marketplaces=deployment_request.marketplaces,
+            dep_marketplaces=dep_marketplaces,
+        )
+        validate_marketplaces_ppr(ppr, deployment_request.marketplaces, dep_marketplaces)
 
         instance = add_new_deployment_request(
             db, deployment_request, deployment, account_id, logger,
@@ -265,14 +266,16 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def list_deployment_request_tasks(
         self,
         depl_req_id: str,
+        pagination_params: PaginationParams = Depends(),
+        response: Response = None,
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
     ):
         dr = get_deployment_request_by_id(depl_req_id, db, installation)
         if dr:
             task_list = []
-            tasks = db.query(Task).filter_by(deployment_request_id=dr.id).order_by(Task.id)
-            for task in tasks:
+            qs = db.query(Task).filter_by(deployment_request_id=dr.id).order_by(Task.id)
+            for task in apply_pagination(qs, db, pagination_params, response):
                 task_list.append(get_task_schema(task))
             return task_list
 
@@ -294,19 +297,24 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         dr = get_deployment_request_by_id(depl_req_id, db, installation)
 
         marketplaces_list = []
-        marketplaces = db.query(MarketplaceConfiguration).options(
-            selectinload(MarketplaceConfiguration.ppr),
-        ).filter_by(deployment_request=dr.id)
-        marketplaces = m_filter.filter(marketplaces)
-        marketplaces = m_filter.sort(marketplaces)
-        marketplaces = apply_pagination(marketplaces, db, pagination_params, response)
 
-        marketplaces_pprs = {m.marketplace: m.ppr for m in marketplaces}
-        marketplaces_data = get_marketplaces(client, list(marketplaces_pprs.keys()))
+        mp_configs = db.query(MarketplaceConfiguration).options(
+            selectinload(MarketplaceConfiguration.ppr),
+        ).filter_by(deployment_request_id=dr.id)
+        mp_configs = m_filter.filter(mp_configs)
+        mp_configs = m_filter.sort(mp_configs)
+        mp_configs = apply_pagination(mp_configs, db, pagination_params, response)
+
+        mp_configs = {m.marketplace: m for m in mp_configs}
+        marketplaces_data = get_marketplaces(client, list(mp_configs.keys()))
 
         for marketplace in marketplaces_data:
             marketplaces_list.append(
-                get_marketplace_schema(marketplace, marketplaces_pprs.get(marketplace['id'])),
+                get_marketplace_schema(
+                    marketplace,
+                    mp_configs[marketplace['id']].ppr,
+                    mp_configs[marketplace['id']].pricelist_id,
+                ),
             )
         return marketplaces_list
 
@@ -694,7 +702,11 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         response_list = []
         for mkplc_config in mkplc_configs:
             m_data = filter_object_list_by_id(marketplaces, mkplc_config.marketplace)
-            response_list.append(get_marketplace_schema(m_data, mkplc_config.ppr))
+            response_list.append(get_marketplace_schema(
+                m_data,
+                mkplc_config.ppr,
+                mkplc_config.pricelist_id,
+            ))
         return response_list
 
     @router.get(

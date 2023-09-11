@@ -274,7 +274,12 @@ def test_get_deployments_marketplaces(
     deployment = deployment_factory(account_id=installation['owner']['id'])
     another_dep = deployment_factory(account_id='PA-123-123')
     ppr = ppr_version_factory(deployment=deployment)
-    marketplace_config_factory(deployment=deployment, marketplace_id=m1['id'], ppr_id=ppr.id)
+    marketplace_config_factory(
+        deployment=deployment,
+        marketplace_id=m1['id'],
+        ppr_id=ppr.id,
+        pricelist_id='BAT-921',
+    )
     marketplace_config_factory(deployment=deployment, marketplace_id=m2['id'])
     marketplace_config_factory(deployment=deployment, marketplace_id='MP-657', active=False)
     marketplace_config_factory(deployment=another_dep, marketplace_id=m3['id'])
@@ -295,6 +300,7 @@ def test_get_deployments_marketplaces(
     ]
 
     expected_response[0].update({'ppr': {'id': ppr.id, 'version': ppr.version}})
+    expected_response[0].update({'pricelist': {'id': 'BAT-921'}})
     assert response.json() == expected_response
 
 
