@@ -210,6 +210,7 @@ class MarketplaceSchema(NonNullSchema):
     external_id: Optional[str]
 
     ppr: Optional[PPRVersionReferenceSchema]
+    pricelist: Optional[PrimaryKeyReference]
 
 
 class TaskSchema(NonNullSchema):
@@ -220,9 +221,14 @@ class TaskSchema(NonNullSchema):
     error_message: Optional[str]
 
 
+class MarketplaceConfigSchema(NonNullSchema):
+    id: str
+    pricelist: Optional[PrimaryKeyReference]
+
+
 class DeploymentRequestCreateSchema(NonNullSchema):
     deployment: PrimaryKeyReference
     ppr: PrimaryKeyReference
     manually: bool
     delegate_l2: Optional[bool]
-    marketplaces: ChoicesSchema
+    marketplaces: Optional[List[MarketplaceConfigSchema]]

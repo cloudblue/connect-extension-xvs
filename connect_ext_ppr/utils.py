@@ -35,6 +35,7 @@ from connect_ext_ppr.schemas import (
     MarketplaceSchema,
     PPRVersionReferenceSchema,
     PPRVersionSchema,
+    PrimaryKeyReference,
     ProductReferenceSchema,
     ProductSchema,
     TaskSchema,
@@ -605,7 +606,7 @@ def process_ppr(wb, product, config_json, items):
     return ws_list, summary
 
 
-def get_marketplace_schema(marketplace, ppr):
+def get_marketplace_schema(marketplace, ppr, pricelist_id):
     mp_schema = MarketplaceSchema(
         id=marketplace['id'],
         name=marketplace['name'],
@@ -614,6 +615,8 @@ def get_marketplace_schema(marketplace, ppr):
     )
     if ppr:
         mp_schema.ppr = PPRVersionReferenceSchema(id=ppr.id, version=ppr.version)
+    if pricelist_id:
+        mp_schema.pricelist = PrimaryKeyReference(id=pricelist_id)
 
     return mp_schema
 

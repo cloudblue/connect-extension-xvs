@@ -2,7 +2,11 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from connect_ext_ppr.db import VerboseSessionError
-from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
+from connect_ext_ppr.models.deployment import (
+    Deployment,
+    DeploymentRequest,
+    MarketplaceConfiguration,
+)
 from connect_ext_ppr.models.replicas import Product
 from connect_ext_ppr.models.task import Task
 
@@ -165,44 +169,61 @@ def test_generate_all_next_verbose_id(
         index += 1
 
 
-def test_list_deployment_request_marketplaces_filters(
-    mocker,
+def test_create_marketplace_configuration_deployment(
+    dbsession,
     deployment_factory,
-    deployment_request_factory,
-    installation,
-    api_client,
-    marketplace,
-    marketplace_config_factory,
-    ppr_version_factory,
 ):
-    m1 = marketplace
-    marketplaces = [m1]
-
-    mocker.patch(
-        'connect_ext_ppr.webapp.get_marketplaces',
-        return_value=marketplaces,
-    )
-    dep1 = deployment_factory(account_id=installation['owner']['id'])
-    ppr = ppr_version_factory(deployment=dep1)
-
-    dr1 = deployment_request_factory(deployment=dep1)
-
-    marketplace_config_factory(deployment_request=dr1, marketplace_id=m1['id'])
-    marketplace_config_factory(deployment_request=dr1, marketplace_id='MP-12344', ppr_id=ppr.id)
-    marketplace_config_factory(deployment_request=dr1, marketplace_id='MP-12345')
-
-    marketplace_config_factory(deployment=dep1, marketplace_id=m1['id'])
-    marketplace_config_factory(deployment=dep1, marketplace_id='MP-12344')
-    marketplace_config_factory(deployment=dep1, marketplace_id='MP-124-114')
-
-    response = api_client.get(
-        f"/api/deployments/requests/{dr1.id}/marketplaces?marketplace={m1['id']}",
-        installation=installation,
+    dep = deployment_factory()
+    mp_conf = MarketplaceConfiguration(
+        deployment=dep,
+        marketplace='US',
     )
 
-    assert response.status_code == 200
-    assert response.json() == [{
-        'id': m1['id'],
-        'name': m1['name'],
-        'icon': m1['icon'],
-    }], response.json()
+    dbsession.commit()
+
+    assert mp_conf.id
+    assert mp_conf.deployment_id == dep.id
+    assert mp_conf.deployment_request is None
+    assert mp_conf.active
+    assert mp_conf.ppr_id is None
+    assert mp_conf.pricelist_id is None
+
+
+def test_create_marketplace_configuration_deployment_req(
+    dbsession,
+    deployment_request_factory,
+):
+    dep_req = deployment_request_factory()
+    mp_conf = MarketplaceConfiguration(
+        deployment_request=dep_req,
+        marketplace='US',
+    )
+
+    dbsession.commit()
+
+    assert mp_conf.id
+    assert mp_conf.deployment_request_id == dep_req.id
+    assert mp_conf.deployment_id is None
+    assert mp_conf.active
+    assert mp_conf.ppr_id is None
+    assert mp_conf.pricelist_id is None
+
+
+def test_create_marketplace_configuration_with_pricelist(
+    dbsession,
+    deployment_request_factory,
+):
+    dep_req = deployment_request_factory()
+    mp_conf = MarketplaceConfiguration(
+        deployment_request=dep_req,
+        marketplace='US',
+        pricelist_id='BAT-1233-1233-1233',
+    )
+
+    dbsession.commit()
+
+    assert mp_conf.id
+    assert mp_conf.deployment_request_id == dep_req.id
+    assert mp_conf.deployment_id is None
+    assert mp_conf.active
+    assert mp_conf.pricelist_id == 'BAT-1233-1233-1233'
