@@ -5,7 +5,7 @@ from io import BufferedReader
 from sqlalchemy.orm import joinedload, selectinload
 
 from connect_ext_ppr.client.exception import ClientError
-from connect_ext_ppr.db import get_db_ctx_manager
+from connect_ext_ppr.db import get_cbc_extension_db, get_db_ctx_manager
 from connect_ext_ppr.models.enums import CBCTaskLogStatus
 from connect_ext_ppr.models.enums import (
     DeploymentRequestStatusChoices,
@@ -16,10 +16,21 @@ from connect_ext_ppr.models.enums import (
 from connect_ext_ppr.models.deployment import DeploymentRequest
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.task import Task
+from connect_ext_ppr.services.cbc_extension import get_hub_credentials
+from connect_ext_ppr.services.cbc_hub import CBCService
 
 
 class TaskException(Exception):
     pass
+
+
+def _get_cbc_service(config, deployment):
+    cbc_db = get_cbc_extension_db(config)
+    hub_credentials = get_hub_credentials(deployment.hub_id, cbc_db)
+    if not hub_credentials:
+        raise TaskException(f'Hub Credentials not found for Hub ID {deployment.hub_id}')
+
+    return CBCService(hub_credentials, False)
 
 
 def _execute_with_retries(function, func_args, num_retries=5):
@@ -71,15 +82,38 @@ def _check_cbc_task_status(cbc_service, tracking_id):
     raise TaskException(f'Something went wrong with task: {tracking_id}')
 
 
-def validate_ppr(deployment_request):
+def validate_ppr(deployment_request, **kwargs):
     return True
 
 
-def apply_ppr_and_delegate_to_marketplaces(deployment_request):
+def check_and_update_product(deployment_request, cbc_service, **kwargs):
+    if not deployment_request.manually:
+
+        product_id = deployment_request.deployment.product_id
+
+        response = _execute_with_retries(
+            cbc_service.get_product_details, func_args={'product_id': product_id},
+        )
+
+        if 'error' in response.keys():
+            raise Exception(response['error'])
+
+        if response.get('isUpdateAvailable'):
+            response = _execute_with_retries(
+                cbc_service.update_product, func_args={'product_id': product_id},
+            )
+
+        if 'error' in response.keys():
+            raise Exception(response['error'])
+
     return True
 
 
-def delegate_to_l2(deployment_request):
+def apply_ppr_and_delegate_to_marketplaces(deployment_request, **kwargs):
+    return True
+
+
+def delegate_to_l2(deployment_request, **kwargs):
     return True
 
 
@@ -90,8 +124,10 @@ TASK_PER_TYPE = {
 }
 
 
-def execute_tasks(db, tasks):
+def execute_tasks(db, config, tasks):
     was_succesfull = False
+    cbc_service = _get_cbc_service(config, tasks[0].deployment_request.deployment)
+
     for task in tasks:
         db.refresh(task, with_for_update=True)
         if task.status == TasksStatusChoices.pending:
@@ -101,7 +137,10 @@ def execute_tasks(db, tasks):
             db.commit()
 
             try:
-                was_succesfull = TASK_PER_TYPE.get(task.type)(task.deployment_request)
+                was_succesfull = TASK_PER_TYPE.get(task.type)(
+                    deployment_request=task.deployment_request,
+                    cbc_service=cbc_service,
+                )
                 task.status = TasksStatusChoices.done
                 if not was_succesfull:
                     task.status = TasksStatusChoices.error
@@ -148,7 +187,7 @@ def main_process(deployment_request_id, config):
             deployment_request_id=deployment_request_id,
         ).order_by(Task.id).all()
 
-        was_succesfull = execute_tasks(db, tasks)
+        was_succesfull = execute_tasks(db, config, tasks)
 
         db.refresh(deployment_request, with_for_update=True)
 
