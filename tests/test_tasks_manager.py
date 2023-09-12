@@ -1,32 +1,77 @@
+import copy
+
 import pytest
 from sqlalchemy import null
 
 from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
 from connect_ext_ppr.models.enums import (
+    CBCTaskLogStatus,
     DeploymentRequestStatusChoices,
     DeploymentStatusChoices,
     TasksStatusChoices,
     TaskTypesChoices,
 )
+from connect_ext_ppr.client.exception import ClientError
 from connect_ext_ppr.models.task import Task
 from connect_ext_ppr.tasks_manager import (
+    _check_cbc_task_status,
+    _send_ppr,
     apply_ppr_and_delegate_to_marketplaces,
     delegate_to_l2,
     main_process,
+    TaskException,
     validate_ppr,
 )
 
 
-def test_apply_ppr_and_delegate_to_marketplaces():
-    assert apply_ppr_and_delegate_to_marketplaces()
+def test_apply_ppr_and_delegate_to_marketplaces(deployment_request_factory):
+    assert apply_ppr_and_delegate_to_marketplaces(deployment_request_factory())
 
 
-def test_delegate_to_l2():
-    assert delegate_to_l2()
+def test_delegate_to_l2(deployment_request_factory):
+    assert delegate_to_l2(deployment_request_factory())
 
 
-def test_validate_ppr():
-    assert validate_ppr()
+def test_validate_ppr(deployment_request_factory):
+    assert validate_ppr(deployment_request_factory())
+
+
+def test__send_ppr(parse_ppr_success_response, sample_ppr_file, mocker):
+    cbc_service = mocker.Mock()
+    cbc_service.parse_ppr.return_value = parse_ppr_success_response
+    cbc_service.apply_ppr.return_value = 100
+    assert _send_ppr(cbc_service, sample_ppr_file)
+
+
+def test__send_ppr_max_retries(sample_ppr_file, mocker):
+    cbc_service = mocker.Mock()
+    cbc_service.parse_ppr.side_effect = ClientError('Some random error')
+    with pytest.raises(TaskException) as ex:
+        _send_ppr(cbc_service, sample_ppr_file)
+        assert str(ex) == 'Some random error'
+
+
+def test__check_cbc_task_status(task_logs_response, mocker):
+    not_started_log = copy.deepcopy(task_logs_response)
+    not_started_log[0]['status'] = CBCTaskLogStatus.not_started
+    cbc_service = mocker.Mock()
+    cbc_service.search_task_logs_by_name.side_effect = [
+        not_started_log,
+        task_logs_response,
+    ]
+    with mocker.patch('connect_ext_ppr.tasks_manager.time.sleep', return_value=None):
+        assert _check_cbc_task_status(cbc_service, 100)
+
+
+def test__check_cbc_task_status_with_max_retries(task_logs_response, mocker):
+    not_started_log = copy.deepcopy(task_logs_response)
+    not_started_log[0]['status'] = CBCTaskLogStatus.not_started
+    cbc_service = mocker.Mock()
+    cbc_service.search_task_logs_by_name.side_effect = ClientError('Some random error')
+    with mocker.patch('connect_ext_ppr.tasks_manager.time.sleep', return_value=None):
+        with pytest.raises(TaskException) as ex:
+            _check_cbc_task_status(cbc_service, 100)
+            assert str(ex) == 'Some random error'
 
 
 def test_main_process(
@@ -144,7 +189,7 @@ def test_main_process_ends_w_error(
     my_mock = mocker.Mock()
 
     def mock_get(key):
-        return lambda: key != type_function_to_mock
+        return lambda dr: key != type_function_to_mock
     my_mock.get = mock_get
 
     mocker.patch('connect_ext_ppr.tasks_manager.TASK_PER_TYPE', my_mock)
@@ -345,7 +390,7 @@ def test_main_process_ends_w_task_exception(
     def mock_get(key):
         if key == type_function_to_mock:
             raise Exception('Unexpected Error')
-        return lambda: True
+        return lambda dr: True
 
     my_mock.get = mock_get
 

@@ -48,3 +48,10 @@ class PPRStatusChoices(str, enum.Enum):
     processing = 'processing'
     ready = 'ready'
     failed = 'failed'
+
+
+class CBCTaskLogStatus(str, enum.Enum):
+    success = 's'
+    running = 'r'
+    failed = 'f'
+    not_started = 'n'

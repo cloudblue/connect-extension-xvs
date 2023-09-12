@@ -168,7 +168,7 @@ def deployment_factory(dbsession, product_factory):
 
 
 @pytest.fixture
-def deployment_request_factory(dbsession):
+def deployment_request_factory(dbsession, deployment_factory):
     def _build_deployment_request(
             deployment=None,
             ppr=None,
@@ -178,7 +178,7 @@ def deployment_request_factory(dbsession):
             finished_at=None,
     ):
         if not deployment:
-            deployment = deployment_factory(id='DPLR-123-123-123')
+            deployment = deployment_factory()
 
         if not ppr:
             ppr = PPRVersion(id=f'PPR-{random.randint(1000, 9999)}', product_version=1)
@@ -216,7 +216,7 @@ def task_factory(dbsession, deployment_request_factory):
         task_id = f'TSK-{suffix}-{task_index}'
         task = Task(
             id=task_id,
-            deployment_request=deployment_request.id,
+            deployment_request_id=deployment_request.id,
             title=f'Title Task {task_index}',
             type=type,
             status=status,

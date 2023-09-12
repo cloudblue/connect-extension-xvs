@@ -268,7 +268,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         dr = get_deployment_request_by_id(depl_req_id, db, installation)
         if dr:
             task_list = []
-            tasks = db.query(Task).filter_by(deployment_request=dr.id).order_by(Task.id)
+            tasks = db.query(Task).filter_by(deployment_request_id=dr.id).order_by(Task.id)
             for task in tasks:
                 task_list.append(get_task_schema(task))
             return task_list

@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import sqlalchemy as db
+from sqlalchemy.orm import relationship
 
 from connect_ext_ppr.db import Model
 from connect_ext_ppr.models.enums import TasksStatusChoices, TaskTypesChoices
@@ -21,7 +22,7 @@ class Task(Model):
         db.Enum(TasksStatusChoices, validate_strings=True),
         default=STATUSES.pending,
     )
-    deployment_request = db.Column(db.ForeignKey(DeploymentRequest.id))
+    deployment_request_id = db.Column(db.ForeignKey(DeploymentRequest.id))
     title = db.Column(db.String(100))
     error_message = db.Column(db.String((4000)))
     type = db.Column(db.Enum(TaskTypesChoices, validate_strings=True))
@@ -32,6 +33,8 @@ class Task(Model):
     finished_at = db.Column(db.DateTime(), nullable=True)
     aborted_at = db.Column(db.DateTime(), nullable=True)
     aborted_by = db.Column(db.String(20), nullable=True)
+
+    deployment_request = relationship(DeploymentRequest, foreign_keys='Task.deployment_request_id')
 
     @transition('status', target=STATUSES.aborted, sources=[STATUSES.pending])
     def abort(self, by):
