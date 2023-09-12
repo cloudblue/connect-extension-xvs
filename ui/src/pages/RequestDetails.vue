@@ -6,6 +6,29 @@ c-view.request-details(
   :current-tab.sync="currentTab",
   :loading="loading"
 )
+  template(
+    #actions="",
+    v-if="isAnyActionVisible",
+  )
+    actions-menu(outline)
+      c-button.list-item(
+        v-if="canAbort",
+        :icon="icons.googleCancelBaseline",
+        :loading="isAbortingRequest",
+        :upper-case="false",
+        color="red",
+        label="Abort",
+        @click="abortRequest",
+      )
+      c-button.list-item(
+        v-if="canRetry",
+        :icon="icons.googleRefreshBaseline",
+        :loading="isRetryingRequest",
+        :upper-case="false",
+        label="Retry",
+        @click="retryRequest",
+      )
+
   .info-container
     .info-column
       grid-item(
@@ -76,18 +99,25 @@ c-view.request-details(
       request-marketplaces-tab(:request-id="requestId")
 
     template(#tasks="")
-      request-tasks-tab(:request-id="requestId")
+      request-tasks-tab(
+        :request-id="requestId",
+        :updating.sync="areTasksUpdating",
+      )
 
 </template>
 
 <script>
 import {
+  googleCancelBaseline,
   googleCheckCircleBaseline,
   googleDescriptionBaseline,
+  googleRefreshBaseline,
   googleRemoveCircleBaseline,
   googleSyncBaseline,
 } from '@cloudblueconnect/material-svg/baseline';
 
+import ActionsMenu from '~components/ActionsMenu.vue';
+import cButton from '~components/cButton.vue';
 import cIcon from '~components/cIcon.vue';
 import cStatus from '~components/cStatus.vue';
 import cTabs from '~components/cTabs.vue';
@@ -99,8 +129,10 @@ import RequestMarketplacesTab from '~components/RequestMarketplacesTab.vue';
 import RequestTasksTab from '~components/RequestTasksTab.vue';
 
 import {
+  abortDeploymentRequest,
   getDeploymentsRequest,
   getPPR,
+  retryDeploymentRequest,
 } from '@/utils';
 
 import {
@@ -110,6 +142,8 @@ import {
 
 export default {
   components: {
+    ActionsMenu,
+    cButton,
     cIcon,
     cStatus,
     cTabs,
@@ -125,12 +159,17 @@ export default {
     currentTab: null,
     loading: true,
     request: null,
+    isAbortingRequest: false,
+    isRetryingRequest: false,
+    areTasksUpdating: false,
   }),
 
   computed: {
     icons: () => ({
+      googleCancelBaseline,
       googleCheckCircleBaseline,
       googleDescriptionBaseline,
+      googleRefreshBaseline,
       googleRemoveCircleBaseline,
       googleSyncBaseline,
     }),
@@ -141,6 +180,10 @@ export default {
       { label: 'Marketplaces', value: 'marketplaces' },
       { label: 'Tasks', value: 'tasks' },
     ],
+
+    canAbort: vm => ['pending', 'processing'].includes(vm.request?.status),
+    canRetry: vm => vm.request?.status === 'error',
+    isAnyActionVisible: vm => vm.canAbort || vm.canRetry,
   },
 
   methods: {
@@ -155,6 +198,16 @@ export default {
 
     downloadPPR() {
       downloader({ url: this.pprFileUrl });
+    },
+
+    async abortRequest() {
+      this.request = await abortDeploymentRequest(this.requestId);
+      this.areTasksUpdating = true;
+    },
+
+    async retryRequest() {
+      this.request = await retryDeploymentRequest(this.requestId);
+      this.areTasksUpdating = true;
     },
   },
 

@@ -98,8 +98,12 @@ import {
   readableTimeDiff,
 } from '~helpers';
 
+import sync from '~mixins/sync';
+
 
 export default {
+  mixins: [sync([{ prop: 'updating', local: 'localUpdating' }])],
+
   components: {
     cButton,
     cDataTable,
@@ -109,6 +113,7 @@ export default {
   },
 
   props: {
+    updating: Boolean,
     requestId: {
       type: String,
       required: true,
@@ -116,6 +121,7 @@ export default {
   },
 
   data: () => ({
+    localUpdating: false,
     loading: true,
     tasks: [],
 
@@ -184,17 +190,27 @@ export default {
       this.currentError = item.errorMessage;
       this.isErrorDialogOpen = true;
     },
+
+    async loadTasks() {
+      this.loading = true;
+      this.tasks = await getDeploymentRequestTasks(this.requestId);
+      this.loading = false;
+      this.localUpdating = false;
+    },
   },
 
   watch: {
     isInfoDialogOpen(v) {
       if (!v) this.currentItem = null;
     },
+
+    localUpdating(v) {
+      if (v) this.loadTasks();
+    },
   },
 
-  async created() {
-    this.tasks = await getDeploymentRequestTasks(this.requestId);
-    this.loading = false;
+  created() {
+    this.loadTasks();
   },
 };
 

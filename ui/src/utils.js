@@ -63,3 +63,7 @@ export const getDeploymentRequestMarketplaces = (requestId) => rest.get(`/api/de
 export const getDeploymentRequestTasks = (requestId) => rest.get(`/api/deployments/requests/${requestId}/tasks`);
 
 export const createDeploymentRequest = (body) => rest.post('/api/deployments/requests', body);
+
+export const abortDeploymentRequest = (id) => rest.post(`/api/deployments/requests/${id}/abort`);
+
+export const retryDeploymentRequest = (id) => rest.post(`/api/deployments/requests/${id}/retry`);
