@@ -106,7 +106,7 @@ export default {
         notResizable: true,
         text: '',
         value: 'radio',
-        width: 80,
+        width: 24,
       },
     ],
 
