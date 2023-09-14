@@ -39,7 +39,7 @@ from connect_ext_ppr.db import (
 from connect_ext_ppr.errors import ExtensionHttpError, ExtensionValidationError
 from connect_ext_ppr.filters import (
     DeploymentFilter, DeploymentRequestExtendedFilter, DeploymentRequestFilter,
-    MarketplaceConfigurationFilter, PPRVersionFilter,
+    MarketplaceConfigurationFilter, PPRVersionFilter, PricingBatchFilter,
 )
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import (
@@ -768,6 +768,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def get_deployment_batches(
         self,
         deployment_id: str,
+        b_filter: PricingBatchFilter = FilterDepends(PricingBatchFilter),
         db: VerboseBaseSession = Depends(get_db),
         client: ConnectClient = Depends(get_installation_client),
         installation: dict = Depends(get_installation),
@@ -778,13 +779,19 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             deployment.hub_id,
         )
 
+        if b_filter.marketplace_id:
+            marketplace_ids = [i for i in marketplace_ids if i == b_filter.marketplace_id]
+
+        if not marketplace_ids:
+            return []
+
         batches = list(client('pricing').batches.filter(
             R().stream.owner.id.eq(deployment.account_id),
             R().stream.context.product.id.eq(deployment.product_id),
             R().stream.context.marketplace.id.in_(marketplace_ids),
             R().test.ne(True),
             R().status.eq('published'),
-        ))
+        ).select('+stream.context'))
 
         return [BatchSchema(**b) for b in batches]
 

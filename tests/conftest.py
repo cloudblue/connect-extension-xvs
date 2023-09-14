@@ -5,7 +5,7 @@
 #
 from contextlib import contextmanager
 import json
-import random
+from secrets import randbelow
 
 import pandas as pd
 import pytest
@@ -111,7 +111,7 @@ def product_factory(dbsession, account_factory):
         version=3,
     ):
         if not id:
-            id = 'PR-{0}'.format(random.randint(10000, 99999))
+            id = f'PR-{randbelow(99999):05d}'
         product = dbsession.query(Product).filter_by(id=id).first()
 
         q = dbsession.query(Account).filter_by(id=owner_id)
@@ -183,7 +183,7 @@ def deployment_request_factory(dbsession, deployment_factory):
             deployment = deployment_factory()
 
         if not ppr:
-            ppr = PPRVersion(id=f'PPR-{random.randint(1000, 9999)}', product_version=1)
+            ppr = PPRVersion(id=f'PPR-{randbelow(9999):04d}', product_version=1)
 
         dep_req = DeploymentRequest(
             deployment_id=deployment.id,
@@ -248,7 +248,7 @@ def ppr_version_factory(dbsession, file_factory):
         status='pending',
     ):
         ppr = PPRVersion(
-            file=file or file_factory(id='MFL-{0}'.format(random.randint(10000, 99999))).id,
+            file=file or file_factory(id=f'MFL-{randbelow(99999):05d}').id,
             deployment=deployment.id,
             configuration=configuration,
             summary=summary or {},

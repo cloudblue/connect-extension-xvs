@@ -63,6 +63,12 @@ class PrimaryKeyReference(BaseModel):
     id: str
 
 
+class ReferenceSchema(NonNullSchema):
+    id: str
+    name: Optional[str]
+    icon: Optional[str]
+
+
 class ChoicesSchema(BaseModel):
     choices: Optional[List[PrimaryKeyReference]] = []
     all: bool
@@ -74,23 +80,11 @@ class ChoicesSchema(BaseModel):
         return values
 
 
-class VendorSchema(NonNullSchema):
-    id: str
-    name: str
-    icon: Optional[str]
-
-
-class ProductReferenceSchema(NonNullSchema):
-    id: str
-    name: str
-    icon: Optional[str]
-
-
 class ProductSchema(NonNullSchema):
     id: str
     name: str
     icon: Optional[str]
-    owner: VendorSchema
+    owner: ReferenceSchema
 
 
 class HubReferenceSchema(NonNullSchema):
@@ -106,10 +100,10 @@ class HubSchema(NonNullSchema):
 
 class DeploymentSchema(NonNullSchema):
     id: str
-    product: ProductReferenceSchema
+    product: ReferenceSchema
     hub: HubReferenceSchema
     account_id: str
-    owner: VendorSchema
+    owner: ReferenceSchema
     last_sync_at: datetime
     status: DeploymentStatusChoices
     events: Events
@@ -167,7 +161,7 @@ class PPRVersionReferenceSchema(NonNullSchema):
 
 class DeploymentReferenceSchema(NonNullSchema):
     id: str
-    product: ProductReferenceSchema
+    product: ReferenceSchema
     hub: HubReferenceSchema
 
 
@@ -184,10 +178,17 @@ class DeploymentRequestSchema(NonNullSchema):
         orm_mode = True
 
 
+class StreamContextSchema(NonNullSchema):
+    account: ReferenceSchema
+    product: ReferenceSchema
+    marketplace: ReferenceSchema
+
+
 class StreamSchema(NonNullSchema):
     id: str
     name: str
     status: str
+    context: StreamContextSchema
 
 
 class BatchSchema(NonNullSchema):

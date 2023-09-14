@@ -228,7 +228,7 @@ export default {
 
     async createDeploymentRequest() {
       this.createdRequest = await createDeploymentRequest({
-        marketplaces: this.form.marketplaces,
+        marketplaces: this.form.marketplaces.choices,
         deployment: { id: this.localDeployment.id },
         ppr: { id: this.form.ppr.id },
         manually: this.form.options.manual,
