@@ -1,5 +1,7 @@
 from typing import List, Optional
 
+
+from pydantic import BaseModel
 from fastapi_filter import FilterDepends, with_prefix
 from fastapi_filter.contrib.sqlalchemy import Filter
 
@@ -60,3 +62,7 @@ class DeploymentRequestExtendedFilter(DeploymentRequestFilter):
 
     class Constants(Filter.Constants):
         model = DeploymentRequest
+
+
+class PricingBatchFilter(BaseModel):
+    marketplace_id: Optional[str]
