@@ -342,26 +342,26 @@ def add_new_deployment_request(db, dr_data, deployment, account_id, logger):
 
         tasks = []
         tasks.append(Task(
-            deployment_request=deployment_request.id,
+            deployment_request_id=deployment_request.id,
             title='PPR Validation',
             type=Task.TYPES.ppr_validation,
             created_by=account_id,
         ))
         tasks.append(Task(
-            deployment_request=deployment_request.id,
+            deployment_request_id=deployment_request.id,
             title='Apply PP and delegate to marketplaces',
             type=Task.TYPES.apply_and_delegate,
             created_by=account_id,
         ))
         if deployment_request.delegate_l2:
             tasks.append(Task(
-                deployment_request=deployment_request.id,
+                deployment_request_id=deployment_request.id,
                 title='Delegate to L2',
                 type=Task.TYPES.delegate_to_l2,
                 created_by=account_id,
             ))
 
-        db.set_all_next_verbose(tasks, 'deployment_request')
+        db.set_all_next_verbose(tasks, 'deployment_request_id')
         db.commit()
         return deployment_request
     except DBAPIError as ex:
@@ -440,7 +440,7 @@ class DeploymentRequestActionHandler:
         tasks = (
             db
             .query(Task)
-            .filter_by(deployment_request=deployment_request.id, status=Task.STATUSES.pending)
+            .filter_by(deployment_request_id=deployment_request.id, status=Task.STATUSES.pending)
             .with_for_update()
         )
         for task in tasks:
@@ -479,7 +479,7 @@ class DeploymentRequestActionHandler:
         tasks = (
             db
             .query(Task)
-            .filter_by(deployment_request=deployment_request.id, status=Task.STATUSES.error)
+            .filter_by(deployment_request_id=deployment_request.id, status=Task.STATUSES.error)
         )
         for task in tasks:
             task.retry()

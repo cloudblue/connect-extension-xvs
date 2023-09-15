@@ -151,10 +151,10 @@ def test_generate_all_next_verbose_id(
         task_factory(deployment_request=dr, task_index=f'00{index}')
 
     tasks = []
-    tasks.append(Task(deployment_request=dr.id))
-    tasks.append(Task(deployment_request=dr.id))
+    tasks.append(Task(deployment_request_id=dr.id))
+    tasks.append(Task(deployment_request_id=dr.id))
 
-    dbsession.set_all_next_verbose(tasks, 'deployment_request')
+    dbsession.set_all_next_verbose(tasks, 'deployment_request_id')
     dbsession.commit()
 
     _, suffix = dr.id.split('-', 1)

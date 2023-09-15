@@ -1,8 +1,12 @@
+import time
 from datetime import datetime
+from io import BufferedReader
 
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
+from connect_ext_ppr.client.exception import ClientError
 from connect_ext_ppr.db import get_db_ctx_manager
+from connect_ext_ppr.models.enums import CBCTaskLogStatus
 from connect_ext_ppr.models.enums import (
     DeploymentRequestStatusChoices,
     DeploymentStatusChoices,
@@ -14,15 +18,68 @@ from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.task import Task
 
 
-def validate_ppr():
+class TaskException(Exception):
+    pass
+
+
+def _execute_with_retries(function, func_args, num_retries=5):
+    """
+    @param function: reference to function to execute
+    @param func_args: dict with the mapping of function's arguments
+    @param num_retries: Max amount of retries
+
+    @return function return value
+    """
+    while num_retries > 0:
+        try:
+            num_retries -= 1
+            return function(**func_args)
+        except ClientError as ex:
+            if num_retries == 0:
+                raise TaskException(str(ex))
+
+
+def _send_ppr(cbc_service, file: BufferedReader):
+    parsed_ppr = _execute_with_retries(cbc_service.parse_ppr, func_args={'file': file})
+
+    if 'error' in parsed_ppr.keys():
+        raise TaskException(parsed_ppr.get('message'))
+
+    tracking_id = _execute_with_retries(cbc_service.apply_ppr, func_args={'parsed_ppr': parsed_ppr})
+
+    if not tracking_id:
+        raise TaskException('Some error ocurred trying to upload ppr.')
+
+    return tracking_id
+
+
+def _check_cbc_task_status(cbc_service, tracking_id):
+    task_log = _execute_with_retries(
+        cbc_service.search_task_logs_by_name, func_args={'partial_name': tracking_id},
+    )
+    # Setting this first default value in case takes time to create it in extenal system.
+    task_log = task_log[0] if task_log else {'status': CBCTaskLogStatus.not_started}
+
+    while task_log['status'] in (CBCTaskLogStatus.not_started, CBCTaskLogStatus.running):
+        time.sleep(10)
+        task_log = _execute_with_retries(
+            cbc_service.search_task_logs_by_name, {'partial_name': tracking_id})[0]
+
+    if task_log['status'] == CBCTaskLogStatus.success:
+        return True
+
+    raise TaskException(f'Something went wrong with task: {tracking_id}')
+
+
+def validate_ppr(deployment_request):
     return True
 
 
-def apply_ppr_and_delegate_to_marketplaces():
+def apply_ppr_and_delegate_to_marketplaces(deployment_request):
     return True
 
 
-def delegate_to_l2():
+def delegate_to_l2(deployment_request):
     return True
 
 
@@ -44,12 +101,17 @@ def execute_tasks(db, tasks):
             db.commit()
 
             try:
-                was_succesfull = TASK_PER_TYPE.get(task.type)()
+                was_succesfull = TASK_PER_TYPE.get(task.type)(task.deployment_request)
                 task.status = TasksStatusChoices.done
                 if not was_succesfull:
                     task.status = TasksStatusChoices.error
+            except TaskException as ex:
+                was_succesfull = False
+                task.error_message = str(ex)
+                task.status = TasksStatusChoices.error
             except Exception:
                 was_succesfull = False
+                task.error_message = 'Unexpected error'
                 task.status = TasksStatusChoices.error
 
             task.finished_at = datetime.utcnow()
@@ -80,8 +142,10 @@ def main_process(deployment_request_id, config):
         db.add(deployment_request)
         db.commit()
 
-        tasks = db.query(Task).filter_by(
-            deployment_request=deployment_request.id,
+        tasks = db.query(Task).options(
+            selectinload(Task.deployment_request),
+        ).filter_by(
+            deployment_request_id=deployment_request_id,
         ).order_by(Task.id).all()
 
         was_succesfull = execute_tasks(db, tasks)
