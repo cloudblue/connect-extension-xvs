@@ -350,6 +350,24 @@ def add_new_deployment_request(db, dr_data, deployment, account_id, logger):
             type=Task.TYPES.apply_and_delegate,
             created_by=account_id,
         ))
+
+        dep_marketplaces = {m.marketplace: m for m in deployment.marketplaces}
+        req_marketplaces = {m.marketplace: m for m in deployment_request.marketplaces}
+
+        for mp_name, marketplace in req_marketplaces.items():
+            if not marketplace.pricelist_id:
+                continue
+
+            if marketplace.pricelist_id == dep_marketplaces[mp_name].pricelist_id:
+                continue
+
+            tasks.append(Task(
+                deployment_request=deployment_request.id,
+                title=f'Apply price list to marketplace {marketplace.marketplace}',
+                marketplace_id=marketplace.id,
+                type=Task.TYPES.apply_pricelist,
+                created_by=account_id,
+            ))
         if deployment_request.delegate_l2:
             tasks.append(Task(
                 deployment_request=deployment_request.id,

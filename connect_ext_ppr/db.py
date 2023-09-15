@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from functools import reduce
 import os
-import random
+from secrets import randbelow
 
 from connect.eaas.core.inject.common import get_config
 from fastapi import Depends
@@ -17,14 +17,14 @@ _ENGINE = None
 _CBC_EXTENSION_ENGINE = None
 
 
-def _get_numeric_string(size):
-    return str(random.randint(1 * 10 ** (size - 1), 1 * 10 ** size - 1))
+def _get_random_number(size):
+    return randbelow(1 * 10 ** size - 1)
 
 
 def _generate_verbose_id(prefix):
     return (
-        f'{prefix}-{_get_numeric_string(3)}'
-        f'-{_get_numeric_string(3)}-{_get_numeric_string(3)}'
+        f'{prefix}-{_get_random_number(3):03d}'
+        f'-{_get_random_number(3):03d}-{_get_random_number(3):03d}'
     )
 
 

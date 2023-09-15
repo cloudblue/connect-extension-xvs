@@ -28,6 +28,7 @@ class TaskTypesChoices(str, enum.Enum):
     ppr_validation = 'ppr_validation'
     apply_and_delegate = 'apply_ppr_and_delegate_to_marketplace'
     delegate_to_l2 = 'delegate_to_l2'
+    apply_pricelist = 'apply_pricelist'
 
 
 class MimeTypeChoices(str, enum.Enum):

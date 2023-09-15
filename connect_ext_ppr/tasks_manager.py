@@ -26,10 +26,17 @@ def delegate_to_l2():
     return True
 
 
+def apply_pricelist():
+    from connect_ext_ppr.services.pricing import fetch_and_validate_batch
+
+    return True
+
+
 TASK_PER_TYPE = {
     TaskTypesChoices.ppr_validation: validate_ppr,
     TaskTypesChoices.apply_and_delegate: apply_ppr_and_delegate_to_marketplaces,
     TaskTypesChoices.delegate_to_l2: delegate_to_l2,
+    TaskTypesChoices.apply_pricelist: apply_pricelist,
 }
 
 

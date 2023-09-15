@@ -414,7 +414,7 @@ def test_create_deployment_request(
 
     marketplace_config_factory(deployment=dep, marketplace_id='MP-124')
     marketplace_config_factory(deployment=dep, marketplace_id='MP-123', ppr_id=ppr.id)
-    marketplace_config_factory(deployment=dep, marketplace_id='MP-234', ppr_id=ppr.id)
+    mp_with_pricelist = marketplace_config_factory(deployment=dep, marketplace_id='MP-234', ppr_id=ppr.id)
 
     mocker.patch('connect_ext_ppr.webapp.get_client_object', side_effect=[hub_data])
     client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
@@ -495,13 +495,16 @@ def test_create_deployment_request(
     ).count() == 1
 
     tasks = dbsession.query(Task).order_by(Task.id)
-    assert tasks.count() == 3
+    assert tasks.count() == 4
     assert tasks[0].id == f'TSK-{deployment_request.id[5:]}-000'
     assert tasks[0].type == Task.TYPES.ppr_validation
     assert tasks[1].id == f'TSK-{deployment_request.id[5:]}-001'
     assert tasks[1].type == Task.TYPES.apply_and_delegate
     assert tasks[2].id == f'TSK-{deployment_request.id[5:]}-002'
-    assert tasks[2].type == Task.TYPES.delegate_to_l2
+    assert tasks[2].type == Task.TYPES.apply_pricelist
+    assert tasks[2].title == 'Apply price list to marketplace MP-234'
+    assert tasks[3].id == f'TSK-{deployment_request.id[5:]}-003'
+    assert tasks[3].type == Task.TYPES.delegate_to_l2
 
 
 def test_create_deployment_request_without_delegation_to_l2(
