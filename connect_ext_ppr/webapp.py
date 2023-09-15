@@ -3,6 +3,7 @@
 # Copyright (c) 2023, Ingram Micro
 # All rights reserved.
 #
+from concurrent.futures import ThreadPoolExecutor
 from logging import Logger, LoggerAdapter
 from typing import List
 
@@ -20,7 +21,7 @@ from connect.eaas.core.inject.synchronous import (
     get_installation_client,
 )
 from connect.eaas.core.extension import WebApplicationBase
-from fastapi import BackgroundTasks, Depends, Request, Response, status
+from fastapi import Depends, Request, Response, status
 from fastapi.responses import JSONResponse
 from fastapi_filter import FilterDepends
 from sqlalchemy import desc, exists
@@ -124,7 +125,9 @@ from connect_ext_ppr.validator import (
     },
 )
 class ConnectExtensionXvsWebApplication(WebApplicationBase):
-    # example route for creation of deployment request
+
+    thread_pool = ThreadPoolExecutor()
+
     @router.post(
         '/deployments/requests',
         summary='Create a new deployment request',
@@ -134,7 +137,6 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def add_dep_request(
         self,
         deployment_request: DeploymentRequestCreateSchema,
-        background_tasks: BackgroundTasks,
         client: ConnectClient = Depends(get_installation_client),
         db: VerboseBaseSession = Depends(get_db),
         installation: dict = Depends(get_installation),
@@ -174,10 +176,11 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             db, deployment_request, deployment, account_id, logger,
         )
 
-        background_tasks.add_task(main_process, instance.id, config)
+        self.thread_pool.submit(main_process, instance.id, config)
 
         hub = get_client_object(client, 'hubs', instance.deployment.hub_id)
-        return get_deployment_request_schema(instance, hub)
+        response = get_deployment_request_schema(instance, hub)
+        return response
 
     @router.get(
         '/deployments/requests',
@@ -333,7 +336,6 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def retry(
         self,
         depl_req_id: str,
-        background_tasks: BackgroundTasks,
         db: VerboseBaseSession = Depends(get_db),
         client: ConnectClient = Depends(get_installation_client),
         installation: dict = Depends(get_installation),
@@ -342,7 +344,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         dr = get_deployment_request_by_id(depl_req_id, db, installation)
         dr = DeploymentRequestActionHandler.retry(db, dr)
 
-        background_tasks.add_task(main_process, dr.id, config)
+        self.thread_pool.submit(main_process, dr.id, config)
 
         hub = get_hub(client, dr.deployment.hub_id)
         return get_deployment_request_schema(dr, hub)
