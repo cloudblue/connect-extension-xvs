@@ -338,8 +338,8 @@ def add_new_deployment_request(db, dr_data, deployment, account_id, logger):
         tasks = []
         tasks.append(Task(
             deployment_request_id=deployment_request.id,
-            title='PPR Validation',
-            type=Task.TYPES.ppr_validation,
+            title='Product check up and update',
+            type=Task.TYPES.product_setup,
             created_by=account_id,
         ))
         tasks.append(Task(

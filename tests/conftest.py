@@ -1152,7 +1152,7 @@ def configuration_json():
 def mock_tasks(mocker):
     mocker.patch(
         'connect_ext_ppr.tasks_manager.TASK_PER_TYPE', return_value={
-            TaskTypesChoices.ppr_validation: lambda: True,
+            TaskTypesChoices.product_setup: lambda: True,
             TaskTypesChoices.apply_and_delegate: lambda: True,
             TaskTypesChoices.delegate_to_l2: lambda: True,
         },
