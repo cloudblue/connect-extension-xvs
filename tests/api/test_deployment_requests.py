@@ -423,11 +423,16 @@ def test_create_deployment_request(
             'all': False,
         },
     }
-    response = api_client.post(
-        '/api/deployments/requests',
-        installation=installation,
-        json=body,
-    )
+
+    with mocker.patch(
+        'connect_ext_ppr.webapp.ConnectExtensionXvsWebApplication.thread_pool.submit',
+        return_value=None,
+    ):
+        response = api_client.post(
+            '/api/deployments/requests',
+            installation=installation,
+            json=body,
+        )
 
     deployment_request = dbsession.query(DeploymentRequest).first()
 
@@ -506,11 +511,15 @@ def test_create_deployment_request_without_delegation_to_l2(
             'all': False,
         },
     }
-    response = api_client.post(
-        '/api/deployments/requests',
-        installation=installation,
-        json=body,
-    )
+    with mocker.patch(
+        'connect_ext_ppr.webapp.ConnectExtensionXvsWebApplication.thread_pool.submit',
+        return_value=None,
+    ):
+        response = api_client.post(
+            '/api/deployments/requests',
+            installation=installation,
+            json=body,
+        )
 
     deployment_request = dbsession.query(DeploymentRequest).first()
 
@@ -583,11 +592,15 @@ def test_create_deployment_request_with_all_marketplaces(
         'manually': True,
         'marketplaces': marketplaces_dict,
     }
-    response = api_client.post(
-        '/api/deployments/requests',
-        installation=installation,
-        json=body,
-    )
+    with mocker.patch(
+        'connect_ext_ppr.webapp.ConnectExtensionXvsWebApplication.thread_pool.submit',
+        return_value=None,
+    ):
+        response = api_client.post(
+            '/api/deployments/requests',
+            installation=installation,
+            json=body,
+        )
 
     deployment_request = dbsession.query(DeploymentRequest).first()
 
@@ -1229,15 +1242,7 @@ def test_abort_deployment_request_not_allow(
     }
 
 
-@pytest.mark.parametrize(
-    'dr_final_status,task_type,task_final_status,',
-    (
-        ('done', ('ppr_validation', 'delegate_to_l2'), 'done'),
-        ('error', (None, None), 'error'),
-    ),
-)
 def test_retry_deployment_request_ok(
-    dbsession,
     mocker,
     deployment_factory,
     deployment_request_factory,
@@ -1245,9 +1250,6 @@ def test_retry_deployment_request_ok(
     api_client,
     task_factory,
     ppr_version_factory,
-    dr_final_status,
-    task_final_status,
-    task_type,
 ):
 
     hub_data = {
@@ -1271,12 +1273,11 @@ def test_retry_deployment_request_ok(
         started_at=started_at,
         finished_at=finished_at,
     )
-    t1_type, t2_type = task_type
     task_factory(
         deployment_request=dr1,
         status='error',
         error_message='An Error!.',
-        type=t1_type,
+        type=Task.TYPES.ppr_validation,
         started_at=started_at,
         finished_at=finished_at,
     )
@@ -1285,15 +1286,18 @@ def test_retry_deployment_request_ok(
         task_index='002',
         status='error',
         error_message='An Error!.',
-        type=t2_type,
+        type=Task.TYPES.apply_and_delegate,
         started_at=started_at,
         finished_at=finished_at,
     )
-
-    response = api_client.post(
-        f'/api/deployments/requests/{dr1.id}/retry',
-        installation=installation,
-    )
+    with mocker.patch(
+        'connect_ext_ppr.webapp.ConnectExtensionXvsWebApplication.thread_pool.submit',
+        return_value=None,
+    ):
+        response = api_client.post(
+            f'/api/deployments/requests/{dr1.id}/retry',
+            installation=installation,
+        )
 
     response_item = response.json()
     events = response_item.pop('events')
@@ -1318,16 +1322,12 @@ def test_retry_deployment_request_ok(
         'delegate_l2': dr1.delegate_l2,
 
     }
-    assert dr1.status == dr_final_status
-    assert isinstance(dr1.started_at, datetime) and dr1.started_at > started_at
-    assert isinstance(dr1.finished_at, datetime) and dr1.finished_at > finished_at
+    assert dr1.status == 'pending'
     assert list(events.keys()) == ['created']
     assert list(events['created'].keys()) == ['at', 'by']
 
 
 def test_retry_deployment_request_not_allow(
-    dbsession,
-    mocker,
     deployment_factory,
     deployment_request_factory,
     installation,
