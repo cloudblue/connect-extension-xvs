@@ -18,8 +18,7 @@ from connect_ext_ppr.schemas import (
     HubReferenceSchema,
     NonNullSchema,
     PPRVersionSchema,
-    ProductReferenceSchema,
-    VendorSchema,
+    ReferenceSchema,
 )
 
 
@@ -70,7 +69,7 @@ def test_deployment_schema(status):
     now = datetime.utcnow()
     serializer = DeploymentSchema(
         id='DPL-000-000-000',
-        product=ProductReferenceSchema(
+        product=ReferenceSchema(
             id='PRD-000-000-000',
             name='Some',
             icon='/media/VA-000-000/PRD-000-000-000/media/PRD-000-000-000-logo_cLqk6Vm.png',
@@ -80,7 +79,7 @@ def test_deployment_schema(status):
             name='Hub Hub',
         ),
         account_id='PA-000-000',
-        owner=VendorSchema(
+        owner=ReferenceSchema(
             id='VA-000-000',
             name='Vendor',
             icon='/media/VA-000-000/media/icon.png',

@@ -124,27 +124,27 @@ def test_handle_listing_processing_unlisted(
 
     assert dbsession.query(MarketplaceConfiguration).filter_by(
         active=True,
-        deployment_request=dep1_dr1.id,
+        deployment_request_id=dep1_dr1.id,
     ).count() == 2
 
     assert dbsession.query(MarketplaceConfiguration).filter_by(
         marketplace=marketplace['id'],
         active=False,
-        deployment_request=dep1_dr2.id,
+        deployment_request_id=dep1_dr2.id,
     ).count() == 1
     assert dbsession.query(MarketplaceConfiguration).filter_by(
         active=True,
-        deployment_request=dep1_dr2.id,
+        deployment_request_id=dep1_dr2.id,
     ).count() == 1
 
     assert dbsession.query(MarketplaceConfiguration).filter_by(
         marketplace=marketplace['id'],
         active=False,
-        deployment_request=dep2_dr1.id,
+        deployment_request_id=dep2_dr1.id,
     ).count() == 1
     assert dbsession.query(MarketplaceConfiguration).filter_by(
         active=True,
-        deployment_request=dep2_dr1.id,
+        deployment_request_id=dep2_dr1.id,
     ).count() == 1
 
 
@@ -212,17 +212,17 @@ def test_handle_listing_processing_unlisted_no_marketplace_removal_in_dr(
 
     assert dbsession.query(MarketplaceConfiguration).filter_by(
         active=True,
-        deployment_request=dep1_dr1.id,
+        deployment_request_id=dep1_dr1.id,
     ).count() == 2
 
     assert dbsession.query(MarketplaceConfiguration).filter_by(
         marketplace=marketplace['id'],
         active=True,
-        deployment_request=dep1_dr2.id,
+        deployment_request_id=dep1_dr2.id,
     ).count() == 1
     assert dbsession.query(MarketplaceConfiguration).filter_by(
         active=True,
-        deployment_request=dep1_dr2.id,
+        deployment_request_id=dep1_dr2.id,
     ).count() == 2
 
 

@@ -35,10 +35,10 @@ from connect_ext_ppr.schemas import (
     MarketplaceSchema,
     PPRVersionReferenceSchema,
     PPRVersionSchema,
-    ProductReferenceSchema,
+    PrimaryKeyReference,
     ProductSchema,
+    ReferenceSchema,
     TaskSchema,
-    VendorSchema,
 )
 
 
@@ -223,7 +223,7 @@ def get_deployment_schema(deployment, product, vendor, hub):
 
 def get_deployment_reference_schema(deployment, hub):
     product = deployment.product
-    product_schema = ProductReferenceSchema(id=product.id, name=product.name, icon=product.logo)
+    product_schema = ReferenceSchema(id=product.id, name=product.name, icon=product.logo)
     hub_id = deployment.hub_id
     hub_schema = HubReferenceSchema(id=hub_id, name=hub['name'])
     return DeploymentReferenceSchema(id=deployment.id, product=product_schema, hub=hub_schema)
@@ -391,7 +391,7 @@ def get_product_schema(product):
         id=product.id,
         name=product.name,
         icon=product.logo,
-        owner=VendorSchema(
+        owner=ReferenceSchema(
             id=vendor.id, name=vendor.name, icon=vendor.logo,
         ),
     )
@@ -605,7 +605,7 @@ def process_ppr(wb, product, config_json, items):
     return ws_list, summary
 
 
-def get_marketplace_schema(marketplace, ppr):
+def get_marketplace_schema(marketplace, ppr, pricelist_id):
     mp_schema = MarketplaceSchema(
         id=marketplace['id'],
         name=marketplace['name'],
@@ -614,6 +614,8 @@ def get_marketplace_schema(marketplace, ppr):
     )
     if ppr:
         mp_schema.ppr = PPRVersionReferenceSchema(id=ppr.id, version=ppr.version)
+    if pricelist_id:
+        mp_schema.pricelist = PrimaryKeyReference(id=pricelist_id)
 
     return mp_schema
 

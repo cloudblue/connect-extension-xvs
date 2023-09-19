@@ -2,6 +2,7 @@ import copy
 from datetime import datetime
 
 import pytest
+from connect.client import R
 from sqlalchemy import null
 
 from connect_ext_ppr.models.deployment import DeploymentRequest, MarketplaceConfiguration
@@ -400,28 +401,47 @@ def test_create_deployment_request(
     ppr_version_factory,
     installation,
     api_client,
+    connect_client,
+    client_mocker_factory,
 ):
     hub_data = {
         'id': 'HB-0000-0001',
         'name': 'Another Hub for the best',
     }
-    mocker.patch('connect_ext_ppr.webapp.get_client_object', side_effect=[hub_data])
 
     dep = deployment_factory(account_id=installation['owner']['id'], hub_id=hub_data['id'])
     ppr = ppr_version_factory(deployment=dep)
 
     marketplace_config_factory(deployment=dep, marketplace_id='MP-124')
     marketplace_config_factory(deployment=dep, marketplace_id='MP-123', ppr_id=ppr.id)
+    marketplace_config_factory(deployment=dep, marketplace_id='MP-234', ppr_id=ppr.id)
+
+    mocker.patch('connect_ext_ppr.webapp.get_client_object', side_effect=[hub_data])
+    client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
+    client_mocker('pricing').batches.filter(
+        R(
+            _op=R.OR,
+            _children=[
+                R().stream.context.marketplace.id.eq('MP-234')
+                & R().id.eq('BAT-111'),
+            ],
+        ),
+        R().stream.context.product.id.eq(dep.product_id),
+        R().status.eq('published'),
+        R().test.ne(True),
+    ).mock(
+        return_value=[{'id': 'BAT-111'}],
+    )
 
     body = {
         'deployment': {'id': dep.id},
         'ppr': {'id': ppr.id},
         'manually': True,
         'delegate_l2': True,
-        'marketplaces': {
-            'choices': [{'id': 'MP-123'}],
-            'all': False,
-        },
+        'marketplaces': [
+            {'id': 'MP-123'},
+            {'id': 'MP-234', 'pricelist': {'id': 'BAT-111'}},
+        ],
     }
 
     with mocker.patch(
@@ -464,7 +484,16 @@ def test_create_deployment_request(
 
     assert dbsession.query(MarketplaceConfiguration).filter_by(
         marketplace='MP-123',
-        deployment_request=deployment_request.id,
+        deployment_request=deployment_request,
+    ).filter(
+        MarketplaceConfiguration.deployment_id.is_(null()),
+        MarketplaceConfiguration.ppr_id.is_(null()),
+    ).count() == 1
+
+    assert dbsession.query(MarketplaceConfiguration).filter_by(
+        marketplace='MP-234',
+        deployment_request=deployment_request,
+        pricelist_id='BAT-111',
     ).filter(
         MarketplaceConfiguration.deployment_id.is_(null()),
         MarketplaceConfiguration.ppr_id.is_(null()),
@@ -506,10 +535,7 @@ def test_create_deployment_request_without_delegation_to_l2(
         'ppr': {'id': ppr.id},
         'manually': True,
         'delegate_l2': False,
-        'marketplaces': {
-            'choices': [{'id': 'MP-123'}],
-            'all': False,
-        },
+        'marketplaces': [{'id': 'MP-123'}],
     }
     with mocker.patch(
         'connect_ext_ppr.webapp.ConnectExtensionXvsWebApplication.thread_pool.submit',
@@ -523,7 +549,7 @@ def test_create_deployment_request_without_delegation_to_l2(
 
     deployment_request = dbsession.query(DeploymentRequest).first()
 
-    assert response.status_code == 201, response.json()
+    assert response.status_code == 201, response.content
     data = response.json()
     events = data.pop('events')
     assert data == {
@@ -557,88 +583,8 @@ def test_create_deployment_request_without_delegation_to_l2(
     assert tasks[1].type == Task.TYPES.apply_and_delegate
 
 
-@pytest.mark.parametrize(
-    'marketplaces_dict',
-    (
-        {'choices': [], 'all': True},
-        {'all': True},
-    ),
-)
-def test_create_deployment_request_with_all_marketplaces(
-    mocker,
-    dbsession,
-    deployment_factory,
-    marketplace_config_factory,
-    ppr_version_factory,
-    installation,
-    api_client,
-    marketplaces_dict,
-):
-    hub_data = {
-        'id': 'HB-0000-0001',
-        'name': 'Another Hub for the best',
-    }
-    mocker.patch('connect_ext_ppr.webapp.get_client_object', side_effect=[hub_data])
-
-    dep = deployment_factory(account_id=installation['owner']['id'], hub_id=hub_data['id'])
-    ppr = ppr_version_factory(deployment=dep)
-
-    marketplace_config_factory(deployment=dep, marketplace_id='MP-124')
-    marketplace_config_factory(deployment=dep, marketplace_id='MP-123', ppr_id=ppr.id)
-
-    body = {
-        'deployment': {'id': dep.id},
-        'ppr': {'id': ppr.id},
-        'manually': True,
-        'marketplaces': marketplaces_dict,
-    }
-    with mocker.patch(
-        'connect_ext_ppr.webapp.ConnectExtensionXvsWebApplication.thread_pool.submit',
-        return_value=None,
-    ):
-        response = api_client.post(
-            '/api/deployments/requests',
-            installation=installation,
-            json=body,
-        )
-
-    deployment_request = dbsession.query(DeploymentRequest).first()
-
-    assert response.status_code == 201, response.json()
-    data = response.json()
-    events = data.pop('events')
-    assert data == {
-        'id': deployment_request.id,
-        'deployment': {
-            'id': dep.id,
-            'product': {
-                'id': dep.product.id,
-                'name': dep.product.name,
-                'icon': dep.product.logo,
-            },
-            'hub': hub_data,
-        },
-        'ppr': {
-            'id': ppr.id,
-            'version': ppr.version,
-        },
-        'status': DeploymentRequest.STATUSES.pending.value,
-        'manually': True,
-        'delegate_l2': False,
-    }
-    assert list(events.keys()) == ['created']
-    assert list(events['created'].keys()) == ['at', 'by']
-    assert events['created']['by'] == installation['owner']['id']
-
-    assert dbsession.query(MarketplaceConfiguration).filter_by(
-        deployment_request=deployment_request.id,
-    ).filter(
-        MarketplaceConfiguration.deployment_id.is_(null()),
-        MarketplaceConfiguration.marketplace.in_(['MP-123', 'MP-124']),
-    ).count() == 2
-
-
 def test_create_deployment_request_invalid_deployment(
+    mocker,
     deployment_factory,
     ppr_version_factory,
     installation,
@@ -655,14 +601,17 @@ def test_create_deployment_request_invalid_deployment(
         },
         'manually': True,
         'delegate_l2': True,
-        'marketplaces': {'all': True},
+        'marketplaces': [],
     }
-
-    response = api_client.post(
-        '/api/deployments/requests',
-        installation=installation,
-        json=body,
-    )
+    with mocker.patch(
+        'connect_ext_ppr.webapp.ConnectExtensionXvsWebApplication.thread_pool.submit',
+        return_value=None,
+    ):
+        response = api_client.post(
+            '/api/deployments/requests',
+            installation=installation,
+            json=body,
+        )
 
     assert response.status_code == 400
     assert response.json()['error_code'] == 'VAL_001'
@@ -681,10 +630,12 @@ def test_create_deployment_request_invalid_ppr(
 
     body = {
         'deployment': {'id': dep.id},
-        'ppr': {'id': ppr.id},
+        'ppr': {
+            'id': ppr.id,
+        },
         'manually': True,
         'delegate_l2': True,
-        'marketplaces': {'all': True},
+        'marketplaces': [],
     }
 
     response = api_client.post(
@@ -696,6 +647,64 @@ def test_create_deployment_request_invalid_ppr(
     assert response.status_code == 400
     assert response.json()['error_code'] == 'VAL_001'
     assert response.json()['errors'] == [f'ppr: {ppr.id} not found.']
+
+
+def test_create_deployment_request_invalid_pricelist(
+    deployment_factory,
+    ppr_version_factory,
+    marketplace_config_factory,
+    installation,
+    api_client,
+    connect_client,
+    client_mocker_factory,
+):
+    dep = deployment_factory(account_id=installation['owner']['id'])
+    ppr = ppr_version_factory(deployment=dep)
+    marketplace_config_factory(deployment=dep, marketplace_id='MP-123', ppr_id=ppr.id)
+    marketplace_config_factory(deployment=dep, marketplace_id='MP-234', ppr_id=ppr.id)
+
+    body = {
+        'deployment': {'id': dep.id},
+        'ppr': {'id': ppr.id},
+        'manually': True,
+        'delegate_l2': True,
+        'marketplaces': [
+            {'id': 'MP-123', 'pricelist': {'id': 'BAT-123'}},
+            {'id': 'MP-234', 'pricelist': {'id': 'BAT-234'}},
+        ],
+    }
+
+    client_mocker = client_mocker_factory(base_url=connect_client.endpoint)
+    client_mocker('pricing').batches.filter(
+        R(
+            _op=R.OR,
+            _children=[
+                (
+                    R().stream.context.marketplace.id.eq('MP-123')
+                    & R().id.eq('BAT-123')
+                ),
+                (
+                    R().stream.context.marketplace.id.eq('MP-234')
+                    & R().id.eq('BAT-234')
+                ),
+            ],
+        ),
+        R().stream.context.product.id.eq(dep.product_id),
+        R().status.eq('published'),
+        R().test.ne(True),
+    ).mock(
+        return_value=[{'id': 'BAT-123'}],
+    )
+
+    response = api_client.post(
+        '/api/deployments/requests',
+        installation=installation,
+        json=body,
+    )
+
+    assert response.status_code == 400
+    assert response.json()['error_code'] == 'VAL_006'
+    assert response.json()['errors'] == ['Pricing batches invalid: BAT-234.']
 
 
 def test_create_deployment_invalid_marketplace(
@@ -726,10 +735,12 @@ def test_create_deployment_invalid_marketplace(
         'ppr': {'id': ppr.id},
         'manually': True,
         'delegate_l2': True,
-        'marketplaces': {
-            'choices': [{'id': 'MP-125'}, {'id': 'MP-123'}, {'id': 'MP-126'}, {'id': 'MP-127'}],
-            'all': False,
-        },
+        'marketplaces': [
+            {'id': 'MP-125'},
+            {'id': 'MP-123'},
+            {'id': 'MP-126'},
+            {'id': 'MP-127'},
+        ],
     }
     response = api_client.post(
         '/api/deployments/requests',
@@ -744,9 +755,9 @@ def test_create_deployment_invalid_marketplace(
     ]
 
 
-@pytest.mark.parametrize('choices', ([], None))
+@pytest.mark.parametrize('marketplaces', ([], None))
 def test_create_deployment_invalid_all_false_w_empty_choices(
-    choices,
+    marketplaces,
     mocker,
     deployment_factory,
     marketplace_config_factory,
@@ -773,10 +784,7 @@ def test_create_deployment_invalid_all_false_w_empty_choices(
         'ppr': {'id': ppr.id},
         'manually': True,
         'delegate_l2': True,
-        'marketplaces': {
-            'choices': choices,
-            'all': False,
-        },
+        'marketplaces': marketplaces,
     }
     response = api_client.post(
         '/api/deployments/requests',
@@ -786,10 +794,10 @@ def test_create_deployment_invalid_all_false_w_empty_choices(
 
     assert response.status_code == 400
     assert response.json()['error_code'] == 'VAL_003'
-    assert response.json()['errors'] == ['At least one choice needs to be specified.']
+    assert response.json()['errors'] == ['At least one marketplace needs to be specified.']
 
 
-def test_create_deployment_invalid_all_false_wo_choices(
+def test_create_deployment_invalid_all_false_wo_marketplaces(
     mocker,
     deployment_factory,
     marketplace_config_factory,
@@ -816,9 +824,7 @@ def test_create_deployment_invalid_all_false_wo_choices(
         'ppr': {'id': ppr.id},
         'manually': True,
         'delegate_l2': True,
-        'marketplaces': {
-            'all': False,
-        },
+        'marketplaces': [],
     }
     response = api_client.post(
         '/api/deployments/requests',
@@ -828,7 +834,7 @@ def test_create_deployment_invalid_all_false_wo_choices(
 
     assert response.status_code == 400
     assert response.json()['error_code'] == 'VAL_003'
-    assert response.json()['errors'] == ['At least one choice needs to be specified.']
+    assert response.json()['errors'] == ['At least one marketplace needs to be specified.']
 
 
 def test_create_deployment_invalid_ppr_for_marketplace(
@@ -860,10 +866,11 @@ def test_create_deployment_invalid_ppr_for_marketplace(
         'ppr': {'id': ppr.id},
         'manually': True,
         'delegate_l2': True,
-        'marketplaces': {
-            'choices': [{'id': 'MP-123'}, {'id': 'MP-126'}, {'id': 'MP-124'}],
-            'all': False,
-        },
+        'marketplaces': [
+            {'id': 'MP-123'},
+            {'id': 'MP-126'},
+            {'id': 'MP-124'},
+        ],
     }
     response = api_client.post(
         '/api/deployments/requests',
@@ -908,10 +915,9 @@ def test_create_deployment_request_w_open_request(
         'ppr': {'id': ppr.id},
         'manually': True,
         'delegate_l2': True,
-        'marketplaces': {
-            'choices': [{'id': 'MP-123'}],
-            'all': False,
-        },
+        'marketplaces': [
+            {'id': 'MP-123'},
+        ],
     }
     response = api_client.post(
         '/api/deployments/requests',
@@ -951,7 +957,12 @@ def test_list_deployment_request_marketplaces(
     dr1 = deployment_request_factory(deployment=dep1)
 
     marketplace_config_factory(deployment_request=dr1, marketplace_id=m1['id'])
-    marketplace_config_factory(deployment_request=dr1, marketplace_id=m2['id'], ppr_id=ppr.id)
+    marketplace_config_factory(
+        deployment_request=dr1,
+        marketplace_id=m2['id'],
+        ppr_id=ppr.id,
+        pricelist_id='BAT-123',
+    )
     marketplace_config_factory(deployment_request=dr1, marketplace_id='MP-12345')
 
     marketplace_config_factory(deployment=dep1, marketplace_id=m1['id'])
@@ -966,6 +977,7 @@ def test_list_deployment_request_marketplaces(
         } for m in marketplaces
     ]
     expected_response[1]['ppr'] = {'id': ppr.id, 'version': ppr.version}
+    expected_response[1]['pricelist'] = {'id': 'BAT-123'}
 
     response = api_client.get(
         f'/api/deployments/requests/{dr1.id}/marketplaces',
