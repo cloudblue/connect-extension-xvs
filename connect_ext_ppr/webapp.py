@@ -39,7 +39,7 @@ from connect_ext_ppr.db import (
 from connect_ext_ppr.errors import ExtensionHttpError, ExtensionValidationError
 from connect_ext_ppr.filters import (
     DeploymentFilter, DeploymentRequestExtendedFilter, DeploymentRequestFilter,
-    MarketplaceConfigurationFilter, PPRVersionFilter, PricingBatchFilter,
+    MarketplaceConfigurationFilter, PPRVersionFilter, PricingBatchFilter, TaskFilter,
 )
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import (
@@ -266,6 +266,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def list_deployment_request_tasks(
         self,
         depl_req_id: str,
+        task_filter: TaskFilter = FilterDepends(TaskFilter),
         pagination_params: PaginationParams = Depends(),
         response: Response = None,
         db: VerboseBaseSession = Depends(get_db),
@@ -275,6 +276,8 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         if dr:
             task_list = []
             qs = db.query(Task).filter_by(deployment_request_id=dr.id).order_by(Task.id)
+            qs = task_filter.filter(qs)
+
             for task in apply_pagination(qs, db, pagination_params, response):
                 task_list.append(get_task_schema(task))
             return task_list
