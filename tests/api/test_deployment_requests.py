@@ -364,6 +364,38 @@ def test_list_deployment_request_tasks(
         assert list(events['created'].keys()) == ['at', 'by']
 
 
+def test_list_deployment_request_tasks_filters(
+    deployment_factory,
+    deployment_request_factory,
+    installation,
+    api_client,
+    task_factory,
+):
+    hub_data = {
+        'id': 'HB-0000-0001',
+        'name': 'Another Hub for the best',
+    }
+    dep1 = deployment_factory(account_id=installation['owner']['id'], hub_id=hub_data['id'])
+    dep2 = deployment_factory(account_id='PA-123-456')
+
+    dr1 = deployment_request_factory(deployment=dep1)
+    deployment_request_factory(deployment=dep1)
+    deployment_request_factory(deployment=dep2)
+
+    task_factory(deployment_request=dr1, status='done')
+    t2 = task_factory(
+        deployment_request=dr1, task_index='002', status='error', error_message='error message',
+    )
+
+    response = api_client.get(
+        f'/api/deployments/requests/{dr1.id}/tasks?status=error',
+        installation=installation,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+    assert response.json()[0]['id'] == t2.id
+
+
 def test_list_deployment_request_tasks_not_found(
     deployment_factory,
     deployment_request_factory,

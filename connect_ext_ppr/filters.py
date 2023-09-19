@@ -9,6 +9,7 @@ from connect_ext_ppr.models.deployment import (
     Deployment, DeploymentRequest, MarketplaceConfiguration,
 )
 from connect_ext_ppr.models.ppr import PPRVersion
+from connect_ext_ppr.models.task import Task
 
 
 class DeploymentFilter(Filter):
@@ -66,3 +67,10 @@ class DeploymentRequestExtendedFilter(DeploymentRequestFilter):
 
 class PricingBatchFilter(BaseModel):
     marketplace_id: Optional[str]
+
+
+class TaskFilter(Filter):
+    status: Optional[str]
+
+    class Constants(Filter.Constants):
+        model = Task
