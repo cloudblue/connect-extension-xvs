@@ -142,6 +142,16 @@ def create_ppr_to_media(client, account_id, deployment_id, filename, content, fi
     return json.loads(media_file)
 
 
+def create_dr_file_to_media(client, account_id, dr_id, filename, content, file_size=None):
+    file_collection = FileCollection.PPR
+    file_type = MimeTypeChoices.application_vnd_ms_xslx
+    media_file = create_media_file(
+        client, account_id, dr_id, file_collection,
+        filename, content, file_type, file_size,
+    )
+    return json.loads(media_file)
+
+
 @connect_error
 def get_file_from_media(client, account_id, deployment_id, media_id, file_collection):
     return namespaced_media_client(
@@ -636,3 +646,17 @@ def _build_summary(summary: dict, indent: int = 0):
 
 def build_summary(summary: dict):
     return SUMMARY_TEMPLATE.format(summary=_build_summary(summary))
+
+
+def get_file_size(file_obj):
+    file_obj.seek(0, os.SEEK_END)
+    file_size = file_obj.tell()
+    file_obj.seek(0)
+    return file_size
+
+
+def process_ppr_file_for_delelegate_l2(sheet_name, ws):
+    if sheet_name == 'OpUnitServicePlans':
+        ws['Published'] = 'TRUE'
+    elif sheet_name == 'ServicePlans':
+        ws['Published'] = 'FALSE'

@@ -527,6 +527,7 @@ BASE_SCHEMA = {
     ],
 }
 PPR_FILE_NAME = "PPR_{product_id}_v{version}_{timestamp}.xlsx"
+PPR_FILE_NAME_DELEGATION_L2 = "{dr_id}-L2Delegation-{ppr_id}-{timestamp}.xlsx"
 DESCRIPTION_TEMPLATE = """
 **Description**
 {description}

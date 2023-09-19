@@ -5,6 +5,7 @@ from io import BufferedReader
 from sqlalchemy.orm import joinedload, selectinload
 
 from connect_ext_ppr.client.exception import ClientError
+from connect_ext_ppr.constants import PPR_FILE_NAME_DELEGATION_L2
 from connect_ext_ppr.db import get_cbc_extension_db, get_db_ctx_manager
 from connect_ext_ppr.models.enums import CBCTaskLogStatus
 from connect_ext_ppr.models.enums import (
@@ -18,6 +19,13 @@ from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.task import Task
 from connect_ext_ppr.services.cbc_extension import get_hub_credentials
 from connect_ext_ppr.services.cbc_hub import CBCService
+from connect_ext_ppr.utils import (
+    create_dr_file_to_media,
+    get_base_workbook,
+    get_file_size,
+    get_ppr_from_media,
+    process_ppr_file_for_delelegate_l2,
+)
 
 
 class TaskException(Exception):
@@ -82,6 +90,51 @@ def _check_cbc_task_status(cbc_service, tracking_id):
     raise TaskException(f'Something went wrong with task: {tracking_id}')
 
 
+def prepare_ppr_file_for_task(
+    connect_client,
+    file_data,
+    file_name_template,
+    deployment_request,
+    deployment,
+    process_func,
+):
+    file, writer, wb = get_base_workbook(file_data)
+
+    try:
+        ws_list = []
+        for sheet_name in wb.sheet_names:
+            ws = wb.parse(sheet_name)
+            process_func(sheet_name, ws)
+            ws.name = sheet_name
+            ws_list.append(ws)
+
+        for ws in ws_list:
+            ws.to_excel(writer, ws.name, index=False)
+        file_obj = open(file.name, 'rb')
+        writer.book.save(file_obj.name)
+
+        file_size = get_file_size(file_obj)
+        file_name = file_name_template.format(
+            dr_id=deployment_request.id,
+            ppr_id=deployment_request.ppr.id,
+            timestamp=datetime.utcnow().strftime("%s"),
+        )
+        create_dr_file_to_media(
+            connect_client,
+            deployment.account_id,
+            deployment_request.id,
+            file_name,
+            file_obj.read(),
+            file_size,
+        )
+
+        file_obj.seek(0)
+        return file_obj
+
+    except (FileNotFoundError, ValueError, KeyError) as e:
+        raise TaskException(f'Error while processing PPR file: {e}')
+
+
 def validate_ppr(deployment_request, **kwargs):
     return True
 
@@ -113,8 +166,31 @@ def apply_ppr_and_delegate_to_marketplaces(deployment_request, **kwargs):
     return True
 
 
-def delegate_to_l2(deployment_request, **kwargs):
-    return True
+def delegate_to_l2(deployment_request, cbc_service, connect_client, **kwargs):
+    if deployment_request.manually:
+        return True
+
+    ppr_file_id = deployment_request.ppr.file
+    deployment = deployment_request.deployment
+    file_data = get_ppr_from_media(
+        connect_client,
+        deployment.account_id,
+        deployment.id,
+        ppr_file_id,
+    )
+
+    file = prepare_ppr_file_for_task(
+        connect_client=connect_client,
+        file_data=file_data,
+        file_name_template=PPR_FILE_NAME_DELEGATION_L2,
+        deployment_request=deployment_request,
+        deployment=deployment,
+        process_func=process_ppr_file_for_delelegate_l2,
+    )
+
+    tracking_id = _send_ppr(cbc_service, file)
+    file.close()
+    return _check_cbc_task_status(cbc_service, tracking_id)
 
 
 TASK_PER_TYPE = {
@@ -124,7 +200,7 @@ TASK_PER_TYPE = {
 }
 
 
-def execute_tasks(db, config, tasks):
+def execute_tasks(db, config, tasks, connect_client):
     was_succesfull = False
     cbc_service = _get_cbc_service(config, tasks[0].deployment_request.deployment)
 
@@ -140,6 +216,7 @@ def execute_tasks(db, config, tasks):
                 was_succesfull = TASK_PER_TYPE.get(task.type)(
                     deployment_request=task.deployment_request,
                     cbc_service=cbc_service,
+                    connect_client=connect_client,
                 )
                 task.status = TasksStatusChoices.done
                 if not was_succesfull:
@@ -162,7 +239,7 @@ def execute_tasks(db, config, tasks):
     return was_succesfull
 
 
-def main_process(deployment_request_id, config):
+def main_process(deployment_request_id, config, connect_client):
 
     with get_db_ctx_manager(config) as db:
         deployment_request = db.query(DeploymentRequest).options(
@@ -187,7 +264,7 @@ def main_process(deployment_request_id, config):
             deployment_request_id=deployment_request_id,
         ).order_by(Task.id).all()
 
-        was_succesfull = execute_tasks(db, config, tasks)
+        was_succesfull = execute_tasks(db, config, tasks, connect_client)
 
         db.refresh(deployment_request, with_for_update=True)
 

@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 
 import pandas as pd
@@ -25,6 +24,7 @@ from connect_ext_ppr.utils import (
     create_ppr_to_media,
     get_base_workbook,
     get_configuration_from_media,
+    get_file_size,
     get_ppr_from_media,
     get_product_items,
     get_user_data_from_auth_token,
@@ -238,9 +238,7 @@ def create_ppr(ppr, user_id, deployment, db, client, logger):
         file_obj = open(file.name, 'rb')
         writer.book.save(file_obj.name)
 
-        file_obj.seek(0, os.SEEK_END)
-        file_size = file_obj.tell()
-        file_obj.seek(0)
+        file_size = get_file_size(file_obj)
         file_name = PPR_FILE_NAME.format(
             product_id=deployment.product_id,
             version=new_version,

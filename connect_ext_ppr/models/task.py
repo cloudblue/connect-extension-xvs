@@ -24,7 +24,7 @@ class Task(Model):
     )
     deployment_request_id = db.Column(db.ForeignKey(DeploymentRequest.id))
     title = db.Column(db.String(100))
-    error_message = db.Column(db.String((4000)))
+    error_message = db.Column(db.String(4000))
     type = db.Column(db.Enum(TaskTypesChoices, validate_strings=True))
 
     created_at = db.Column(db.DateTime(), default=datetime.utcnow)
