@@ -1,6 +1,9 @@
 import copy
 
 import pytest
+
+from unittest.mock import patch
+
 from sqlalchemy import null
 
 from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
@@ -17,11 +20,13 @@ from connect_ext_ppr.tasks_manager import (
     _check_cbc_task_status,
     _send_ppr,
     apply_ppr_and_delegate_to_marketplaces,
+    check_and_update_product,
     delegate_to_l2,
     main_process,
     TaskException,
     validate_ppr,
 )
+from connect_ext_ppr.services.cbc_hub import CBCService
 
 
 def test_apply_ppr_and_delegate_to_marketplaces(deployment_request_factory):
@@ -74,12 +79,127 @@ def test__check_cbc_task_status_with_max_retries(task_logs_response, mocker):
             assert str(ex) == 'Some random error'
 
 
+@patch.object(CBCService, 'update_product')
+@patch.object(CBCService, 'get_product_details')
+@patch.object(CBCService, '__init__')
+def test_check_and_update_product(
+    mock___init__,
+    mock_get_product_details,
+    mock_update_product,
+    product_details,
+    update_product_response,
+    deployment_request_factory,
+):
+
+    mock___init__.return_value = None
+    product_details['isUpdateAvailable'] = True
+    mock_get_product_details.return_value = product_details
+    mock_update_product.return_value = update_product_response
+
+    assert check_and_update_product(
+        deployment_request=deployment_request_factory(), cbc_service=CBCService(),
+    )
+    assert mock_get_product_details.call_count == 1
+    assert mock_update_product.call_count == 1
+
+
+@patch.object(CBCService, 'update_product')
+@patch.object(CBCService, 'get_product_details')
+@patch.object(CBCService, '__init__')
+def test_check_and_update_product_no_update_needed(
+    mock___init__,
+    mock_get_product_details,
+    mock_update_product,
+    product_details,
+    update_product_response,
+    deployment_request_factory,
+):
+
+    mock___init__.return_value = None
+    product_details['isUpdateAvailable'] = False
+    mock_get_product_details.return_value = product_details
+    mock_update_product.return_value = update_product_response
+
+    assert check_and_update_product(
+        deployment_request=deployment_request_factory(), cbc_service=CBCService(),
+    )
+    assert mock_get_product_details.call_count == 1
+    assert mock_update_product.call_count == 0
+
+
+@patch.object(CBCService, 'update_product')
+@patch.object(CBCService, 'get_product_details')
+@patch.object(CBCService, '__init__')
+def test_check_and_update_product_manually(
+    mock___init__,
+    mock_get_product_details,
+    mock_update_product,
+    product_details,
+    update_product_response,
+    deployment_request_factory,
+):
+
+    mock___init__.return_value = None
+    product_details['isUpdateAvailable'] = True
+    mock_get_product_details.return_value = product_details
+    mock_update_product.return_value = update_product_response
+
+    assert check_and_update_product(
+        deployment_request=deployment_request_factory(manually=True), cbc_service=CBCService(),
+    )
+
+    assert mock_get_product_details.call_count == 0
+    assert mock_update_product.call_count == 0
+
+
+@patch.object(CBCService, 'get_product_details')
+@patch.object(CBCService, '__init__')
+def test_check_and_update_product_w_errors_in_get_details(
+    mock___init__,
+    mock_get_product_details,
+    get_product_details_not_found_response,
+    deployment_request_factory,
+):
+    mock___init__.return_value = None
+    mock_get_product_details.return_value = get_product_details_not_found_response
+
+    with pytest.raises(Exception):
+        check_and_update_product(
+            deployment_request=deployment_request_factory(), cbc_service=CBCService(),
+        )
+
+
+@patch.object(CBCService, 'update_product')
+@patch.object(CBCService, 'get_product_details')
+@patch.object(CBCService, '__init__')
+def test_check_and_update_product_w_errors_in_update_product(
+    mock___init__,
+    mock_get_product_details,
+    mock_update_product,
+    product_details,
+    product_not_installed_response,
+    deployment_request_factory,
+):
+    mock___init__.return_value = None
+    product_details['isUpdateAvailable'] = True
+    mock_get_product_details.return_value = product_details
+    mock_update_product.return_value = product_not_installed_response
+
+    with pytest.raises(Exception):
+        check_and_update_product(
+            deployment_request=deployment_request_factory(), cbc_service=CBCService(),
+        )
+
+
+@patch.object(CBCService, '__init__', return_value=None)
 def test_main_process(
+    mock___init__,
     dbsession,
     deployment_factory,
     deployment_request_factory,
     task_factory,
     ppr_version_factory,
+    mocker,
 ):
     dep = deployment_factory()
     ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep)
@@ -87,7 +207,11 @@ def test_main_process(
     task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
     task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
-    assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
+
+    with mocker.patch(
+        'connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService(),
+    ):
+        assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(status=DeploymentStatusChoices.synced).count() == 1
     assert dbsession.query(DeploymentRequest).filter_by(
@@ -100,18 +224,23 @@ def test_main_process(
     ).count() == 3
 
 
+@patch.object(CBCService, '__init__', return_value=None)
 def test_main_process_wo_l2_delegation(
+    _,
     dbsession,
     deployment_factory,
     deployment_request_factory,
     task_factory,
     ppr_version_factory,
+    mocker,
 ):
     dep = deployment_factory()
     ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep)
     dr = deployment_request_factory(deployment=dep, delegate_l2=False, ppr=ppr)
     task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
+
+    mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
     assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(
@@ -127,13 +256,16 @@ def test_main_process_wo_l2_delegation(
     ).count() == 2
 
 
+@patch.object(CBCService, '__init__', return_value=None)
 def test_main_process_deployment_w_new_ppr_version(
+    _,
     dbsession,
     file_factory,
     deployment_factory,
     deployment_request_factory,
     task_factory,
     ppr_version_factory,
+    mocker,
 ):
     ppr_file = file_factory(id='MFL-123')
     dep = deployment_factory()
@@ -144,6 +276,8 @@ def test_main_process_deployment_w_new_ppr_version(
     task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
     task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
+
+    mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
     assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(
@@ -159,6 +293,7 @@ def test_main_process_deployment_w_new_ppr_version(
     ).count() == 3
 
 
+@patch.object(CBCService, '__init__', return_value=None)
 @pytest.mark.parametrize(
     ('type_function_to_mock', 'done_tasks', 'tasks_w_errors', 'pending_tasks'),
     (
@@ -168,6 +303,7 @@ def test_main_process_deployment_w_new_ppr_version(
     ),
 )
 def test_main_process_ends_w_error(
+    _,
     dbsession,
     deployment_factory,
     deployment_request_factory,
@@ -189,9 +325,11 @@ def test_main_process_ends_w_error(
     my_mock = mocker.Mock()
 
     def mock_get(key):
-        return lambda dr: key != type_function_to_mock
+        print(type_function_to_mock)
+        return lambda **kwargs: key != type_function_to_mock
     my_mock.get = mock_get
 
+    mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
     mocker.patch('connect_ext_ppr.tasks_manager.TASK_PER_TYPE', my_mock)
     assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.error
 
@@ -219,6 +357,7 @@ def test_main_process_ends_w_error(
     ).count() == pending_tasks
 
 
+@patch.object(CBCService, '__init__', return_value=None)
 @pytest.mark.parametrize(
     ('task_statuses', 'done_tasks', 'aborted_tasks'),
     (
@@ -240,6 +379,7 @@ def test_main_process_ends_w_error(
     ),
 )
 def test_main_process_w_aborted_tasks(
+    _,
     dbsession,
     deployment_factory,
     deployment_request_factory,
@@ -248,6 +388,7 @@ def test_main_process_w_aborted_tasks(
     task_statuses,
     done_tasks,
     aborted_tasks,
+    mocker,
 ):
     """
         We only process DeploymentRequest that are in Pending status. So in this case we asume that
@@ -287,6 +428,7 @@ def test_main_process_w_aborted_tasks(
         return instance
 
     dbsession.refresh = change_dr_status
+    mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
 
     assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.aborted
 
@@ -305,7 +447,9 @@ def test_main_process_w_aborted_tasks(
     ).count() == aborted_tasks
 
 
+@patch.object(CBCService, '__init__', return_value=None)
 def test_main_process_w_aborted_deployment_request(
+    _,
     dbsession,
     deployment_factory,
     deployment_request_factory,
@@ -358,6 +502,7 @@ def test_main_process_w_aborted_deployment_request(
     ).count() == 3
 
 
+@patch.object(CBCService, '__init__', return_value=None)
 @pytest.mark.parametrize(
     ('type_function_to_mock', 'done_tasks', 'tasks_w_errors', 'pending_tasks'),
     (
@@ -367,6 +512,7 @@ def test_main_process_w_aborted_deployment_request(
     ),
 )
 def test_main_process_ends_w_task_exception(
+    _,
     dbsession,
     deployment_factory,
     deployment_request_factory,
@@ -390,11 +536,12 @@ def test_main_process_ends_w_task_exception(
     def mock_get(key):
         if key == type_function_to_mock:
             raise Exception('Unexpected Error')
-        return lambda dr: True
+        return lambda **kwargs: True
 
     my_mock.get = mock_get
 
     mocker.patch('connect_ext_ppr.tasks_manager.TASK_PER_TYPE', my_mock)
+    mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
     assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.error
 
     assert dbsession.query(Deployment).filter_by(

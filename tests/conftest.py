@@ -178,6 +178,7 @@ def deployment_request_factory(dbsession, deployment_factory):
             status=None,
             started_at=None,
             finished_at=None,
+            manually=False,
     ):
         if not deployment:
             deployment = deployment_factory()
@@ -187,8 +188,10 @@ def deployment_request_factory(dbsession, deployment_factory):
 
         dep_req = DeploymentRequest(
             deployment_id=deployment.id,
+            deployment=deployment,
             ppr_id=ppr.id,
             created_by=deployment.account_id,
+            manually=manually,
             delegate_l2=delegate_l2,
             status=status,
             started_at=started_at,
@@ -196,6 +199,7 @@ def deployment_request_factory(dbsession, deployment_factory):
         )
         dbsession.add(ppr)
         dbsession.set_next_verbose(dep_req, 'deployment_id')
+        dbsession.commit()
         return dep_req
     return _build_deployment_request
 
