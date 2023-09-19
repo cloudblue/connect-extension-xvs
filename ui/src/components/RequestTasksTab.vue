@@ -47,7 +47,7 @@
           )
             .request-tasks-tab__status
               c-status(:status="row.status")
-              template(v-if="row.status === 'failed'")
+              template(v-if="row.status === 'error'")
                 span.request-tasks-tab__dot •
                 a(@click="openErrorDetails(row)") Details
 

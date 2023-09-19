@@ -25,6 +25,17 @@
         slot(name="actions")
 
     .c-view__content-holder
+      .c-view__alert(v-if="showAlert")
+        c-alert(
+          :message="alertMessage",
+          :show-icon="false",
+          dense,
+          fluid,
+          type="error",
+        )
+          template(#message="")
+            slot(name="alert")
+
       .c-view__content(:class="{ 'c-view__content_padded': !noPadded }")
         slot(name="default")
 
@@ -36,7 +47,12 @@ import {
   connectLoaderAnimated,
 } from '@cloudblueconnect/material-svg/animated';
 
+import {
+  googleErrorBaseline,
+} from '@cloudblueconnect/material-svg';
 
+
+import cAlert from '~components/cAlert.vue';
 import cIcon from '~components/cIcon.vue';
 import cNavBar from '~components/cNavBar.vue';
 
@@ -49,6 +65,7 @@ export default {
   ],
 
   components: {
+    cAlert,
     cIcon,
     cNavBar,
   },
@@ -66,10 +83,17 @@ export default {
       type: Array,
       default: () => [],
     },
+
+    showAlert: Boolean,
+    alertMessage: String,
   },
 
   data: () => ({
-    icons: { connectLoaderAnimated },
+    icons: {
+      connectLoaderAnimated,
+      googleErrorBaseline,
+    },
+
     localCurrentTab: null,
   }),
 

@@ -4,7 +4,8 @@ c-view.request-details(
   assistive-title="Request Details",
   :back-route="{ name: 'Dashboard', params: { tab: 'requests' } }",
   :current-tab.sync="currentTab",
-  :loading="loading"
+  :loading="loading",
+  :show-alert="isFailedRequest",
 )
   template(
     #actions="",
@@ -29,6 +30,16 @@ c-view.request-details(
         @click="retryRequest",
       )
 
+  template(#alert="")
+    p.request-details__error
+      | An error occurred while processing this deployment request. Try restarting the deployment
+      | request. If the issue persists, contact your Support team.
+      a(
+        v-if="hasErrorDetails",
+        @click="openErrorDetailsDialog",
+      ) Error details
+
+
   .info-container
     .info-column
       grid-item(
@@ -36,7 +47,11 @@ c-view.request-details(
         label="Status",
       )
         template(#value="")
-          c-status(:status="request.status")
+          .request-details__status
+            c-status(:status="request.status")
+            template(v-if="hasErrorDetails")
+              span.request-details__dot •
+              a(@click="openErrorDetailsDialog") Details
 
       grid-item(
         :column-width="50",
@@ -104,6 +119,12 @@ c-view.request-details(
         :updating.sync="areTasksUpdating",
       )
 
+  error-dialog(
+    v-model="isErrorDialogOpen",
+    :error-message="errorMessages",
+    type="Deployment Request",
+  )
+
 </template>
 
 <script>
@@ -123,6 +144,7 @@ import cStatus from '~components/cStatus.vue';
 import cTabs from '~components/cTabs.vue';
 import cView from '~components/cView.vue';
 import DetailItem from '~components/DetailItem.vue';
+import ErrorDialog from '~components/ErrorDialog.vue';
 import GridItem from '~components/GridItem.vue';
 import Pic from '~components/Pic.vue';
 import RequestMarketplacesTab from '~components/RequestMarketplacesTab.vue';
@@ -130,6 +152,7 @@ import RequestTasksTab from '~components/RequestTasksTab.vue';
 
 import {
   abortDeploymentRequest,
+  getDeploymentRequestFailedTasks,
   getDeploymentsRequest,
   getPPR,
   retryDeploymentRequest,
@@ -149,6 +172,7 @@ export default {
     cTabs,
     cView,
     DetailItem,
+    ErrorDialog,
     GridItem,
     Pic,
     RequestMarketplacesTab,
@@ -162,6 +186,9 @@ export default {
     isAbortingRequest: false,
     isRetryingRequest: false,
     areTasksUpdating: false,
+
+    isErrorDialogOpen: false,
+    errorMessages: '',
   }),
 
   computed: {
@@ -184,11 +211,20 @@ export default {
     canAbort: vm => ['pending', 'processing'].includes(vm.request?.status),
     canRetry: vm => vm.request?.status === 'error',
     isAnyActionVisible: vm => vm.canAbort || vm.canRetry,
+
+    isFailedRequest: vm => vm.request?.status === 'error',
+    hasErrorDetails: vm => Boolean(vm.errorMessages),
   },
 
   methods: {
     async getRequest() {
       this.request = await getDeploymentsRequest(this.requestId);
+      if (this.isFailedRequest) {
+        const tasksWithErrors = await getDeploymentRequestFailedTasks(this.requestId);
+        this.errorMessages = tasksWithErrors.map(task => task.error_message).join('\n');
+      } else {
+        this.errorMessages = '';
+      }
     },
 
     async getPprFileUrl() {
@@ -208,6 +244,10 @@ export default {
     async retryRequest() {
       this.request = await retryDeploymentRequest(this.requestId);
       this.areTasksUpdating = true;
+    },
+
+    openErrorDetailsDialog() {
+      this.isErrorDialogOpen = true;
     },
   },
 
@@ -241,6 +281,25 @@ export default {
 
   &__dot {
     margin: 0 4px;
+  }
+
+  &__error {
+    margin: 0;
+    padding: 0 4px;
+    white-space: initial;
+
+    a {
+      margin-left: 12px;
+    }
+  }
+
+  &__status {
+    display: flex;
+    align-items: center;
+  }
+
+  &__dot {
+    margin: 0 8px;
   }
 }
 </style>
