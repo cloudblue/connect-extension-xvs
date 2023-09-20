@@ -1,7 +1,9 @@
 from copy import deepcopy
+from tempfile import NamedTemporaryFile
 from unittest import TestCase
 from unittest.mock import patch
 
+import openpyxl
 import pytest
 import responses
 from connect.client import ClientError
@@ -10,14 +12,248 @@ from openpyxl import load_workbook
 
 from connect_ext_ppr.services.cbc_hub import CBCService
 from connect_ext_ppr.services.pricing import (
-    determine_dataset,
-    fetch_and_validate_batch,
-    get_reseller_id,
-    identify_marketplaces,
-    identify_reseller_id,
-    prepare_file,
-    process_batch,
+    _determine_dataset,
+    _fetch_and_validate_batch,
+    _get_reseller_id,
+    _identify_reseller_id,
+    _prepare_file,
+    _process_batch,
+    apply_pricelist_to_marketplace,
+    identify_marketplaces, validate_pricelist_batch,
 )
+
+
+@pytest.fixture
+@patch.object(CBCService, 'parse_price_file')
+@patch.object(CBCService, 'prepare_price_proposal')
+@patch.object(CBCService, 'apply_prices')
+@patch.object(CBCService, '__init__')
+def cbc_service(
+    mock___init__,
+    mock_apply_prices,
+    mock_prepare_price_proposal,
+    mock_parse_price_file,
+    parse_price_file_response,
+    price_proposal_response,
+):
+    mock_parse_price_file.return_value = parse_price_file_response
+    mock_prepare_price_proposal.return_value = price_proposal_response
+    mock_apply_prices.return_value = 'Request Accepted.'
+    mock___init__.return_value = None
+
+    return CBCService()
+
+
+@patch('connect_ext_ppr.services.pricing._fetch_batch_output_file')
+def test_validate_pricelist_positive(mock_fetch_file):
+    excel_file = NamedTemporaryFile(suffix='.xlsx')
+    wb = openpyxl.load_workbook('./tests/fixtures/MFL-0000-0000-0000.xlsx')
+    wb.save(excel_file)
+    excel_file.seek(0)
+
+    mock_fetch_file.return_value = (excel_file, 'filename.xlsx')
+
+    validate_pricelist_batch(excel_file, 'BAT-1')
+
+    assert excel_file.closed
+
+
+@pytest.mark.parametrize('col_id,col_name', (
+    (1, 'Billing Period'),
+    (4, 'MPN'),
+    (16, 'Effective Date'),
+))
+@patch('connect_ext_ppr.services.pricing._fetch_batch_output_file')
+def test_validate_pricelist_negative_missed_req_cols(
+    mock_fetch_file,
+    col_id,
+    col_name,
+):
+    excel_file = NamedTemporaryFile(suffix='.xlsx')
+    wb = openpyxl.load_workbook('./tests/fixtures/MFL-0000-0000-0000.xlsx')
+    wb['Data'].delete_cols(col_id)
+    wb.save(excel_file)
+    excel_file.seek(0)
+
+    mock_fetch_file.return_value = (excel_file, 'filename.xlsx')
+
+    with pytest.raises(ClientError) as e:
+        validate_pricelist_batch(excel_file, 'BAT-1')
+
+    assert excel_file.closed
+
+    assert e.value.message == (
+        "Pricing Batch output 'BAT-1' does not "
+        f"contain mandatory column: {col_name}."
+    )
+
+
+@patch('connect_ext_ppr.services.pricing._fetch_batch_output_file')
+def test_validate_pricelist_negative_no_cost_price(mock_fetch_file):
+    excel_file = NamedTemporaryFile(suffix='.xlsx')
+    wb = openpyxl.load_workbook('./tests/fixtures/MFL-0000-0000-0000.xlsx')
+    wb['Data'].delete_cols(7)   # Cost
+    wb['Data'].delete_cols(16)  # Price
+    wb.save(excel_file)
+    excel_file.seek(0)
+
+    mock_fetch_file.return_value = (excel_file, 'filename.xlsx')
+
+    with pytest.raises(ClientError) as e:
+        validate_pricelist_batch(excel_file, 'BAT-1')
+
+    assert e.value.message == (
+        "Pricing Batch output 'BAT-1' does not "
+        "contain either Cost or Price column."
+    )
+
+
+@pytest.mark.parametrize('col_id,col_name', (
+    (12, 'Cost Currency'),
+    (13, 'Price Currency'),
+))
+@patch('connect_ext_ppr.services.pricing._fetch_batch_output_file')
+def test_validate_pricelist_negative_no_cost_price_currency(
+    mock_fetch_file,
+    col_id,
+    col_name,
+):
+    excel_file = NamedTemporaryFile(suffix='.xlsx')
+    wb = openpyxl.load_workbook('./tests/fixtures/MFL-0000-0000-0000.xlsx')
+    wb['Data'].delete_cols(col_id)  # Cost
+    wb.save(excel_file)
+    excel_file.seek(0)
+
+    mock_fetch_file.return_value = (excel_file, 'filename.xlsx')
+
+    with pytest.raises(ClientError) as e:
+        validate_pricelist_batch(excel_file, 'BAT-1')
+
+    assert e.value.message == (
+        "Pricing Batch output 'BAT-1' does not "
+        f"contain mandatory column: {col_name}."
+    )
+
+
+@pytest.mark.parametrize('col_id,col_name,value', (
+    (7, 'Cost', None),
+    (17, 'Price', 'not number'),
+    (4, 'MPN', None),
+))
+@patch('connect_ext_ppr.services.pricing._fetch_batch_output_file')
+def test_validate_pricelist_negative_invalid_value(
+    mock_fetch_file,
+    col_id,
+    col_name,
+    value,
+):
+    excel_file = NamedTemporaryFile(suffix='.xlsx')
+    wb = openpyxl.load_workbook('./tests/fixtures/MFL-0000-0000-0000.xlsx')
+    wb['Data'].cell(row=2, column=col_id).value = value
+    wb.save(excel_file)
+    excel_file.seek(0)
+
+    mock_fetch_file.return_value = (excel_file, 'filename.xlsx')
+
+    with pytest.raises(ClientError) as e:
+        validate_pricelist_batch(excel_file, 'BAT-1')
+
+    assert e.value.message == (
+        "Pricing Batch output 'BAT-1' contains invalid "
+        f"value at column '{col_name}' of row '2'."
+    )
+
+
+@patch('connect_ext_ppr.services.pricing._fetch_batch_output_file')
+def test_validate_pricelist_negative_invalid_effective_date(mock_fetch_file):
+    excel_file = NamedTemporaryFile(suffix='.xlsx')
+    wb = openpyxl.load_workbook('./tests/fixtures/MFL-0000-0000-0000.xlsx')
+    wb['Data'].cell(row=2, column=16).value = 'Not a date'
+    wb.save(excel_file)
+    excel_file.seek(0)
+
+    mock_fetch_file.return_value = (excel_file, 'filename.xlsx')
+
+    with pytest.raises(ClientError) as e:
+        validate_pricelist_batch(excel_file, 'BAT-1')
+
+    assert e.value.message == (
+        "Effective date 'Not a date' is either not "
+        "found or invalid for first row in Batch BAT-1."
+    )
+
+
+def test_apply_pricelist_to_marketplace_positive(
+    mocker,
+    marketplace,
+    cbc_service,
+    batch_output_file,
+    connect_client,
+    client_mocker_factory,
+    deployment_request_factory,
+    marketplace_config_factory,
+):
+    dep_req = deployment_request_factory()
+    mp_conf = marketplace_config_factory('MP-123', deployment_request=dep_req)
+
+    price_excel_file = NamedTemporaryFile(suffix='.xlsx')
+    price_excel_file.read()
+    price_excel_file.seek(0)
+
+    reseller_id_mock = mocker.patch(
+        'connect_ext_ppr.services.pricing._identify_reseller_id',
+        return_value=marketplace['hubs'][0]['external_id'],
+    )
+    prepare_file_mock = mocker.patch(
+        'connect_ext_ppr.services.pricing._prepare_file',
+        return_value=(
+            price_excel_file,
+            'MFL-001.xlsx',
+            {
+                'cost': True,
+                'price': True,
+                'msrp': True,
+                'effective_date': '07/26/2023',
+            },
+        ),
+    )
+    process_batch_mock = mocker.patch(
+        'connect_ext_ppr.services.pricing._process_batch',
+        return_value=None,
+    )
+
+    apply_pricelist_to_marketplace(
+        dep_req,
+        cbc_service,
+        connect_client,
+        mp_conf,
+    )
+
+    reseller_id_mock.assert_called_once_with(
+        client=connect_client,
+        batch_id=mp_conf.pricelist_id,
+        marketplace_id=mp_conf.marketplace,
+        hub_id=dep_req.deployment.hub_id,
+    )
+    prepare_file_mock.assert_called_once_with(
+        client=connect_client,
+        batch_id=mp_conf.pricelist_id,
+    )
+    process_batch_mock.assert_called_once_with(
+        cbc_service=cbc_service,
+        excel_file=price_excel_file,
+        file_name='MFL-001.xlsx',
+        reseller_id=marketplace['hubs'][0]['external_id'],
+        deployment=dep_req.deployment,
+        dataset={
+            'cost': True,
+            'price': True,
+            'msrp': True,
+            'effective_date': '07/26/2023',
+        },
+    )
+
+    assert price_excel_file
 
 
 def test_identify_marketplaces_positive(
@@ -78,8 +314,9 @@ def test_prepare_file_positive(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     )
 
-    file_name, dataset = prepare_file(connect_client, batch_id)
+    excel_file, file_name, dataset = _prepare_file(connect_client, batch_id)
 
+    assert len(excel_file.read())
     assert file_name == f"{batch_file['id']}.xlsx"
     TestCase().assertDictEqual(
         dataset,
@@ -106,7 +343,7 @@ def test_prepare_file_negative_no_batch_file(
     )
 
     with pytest.raises(ClientError):
-        prepare_file(connect_client, batch_id)
+        _prepare_file(connect_client, batch_id)
 
 
 def test_prepare_file_negative_more_than_one_batch_file(
@@ -124,7 +361,7 @@ def test_prepare_file_negative_more_than_one_batch_file(
     )
 
     with pytest.raises(ClientError):
-        prepare_file(connect_client, batch_id)
+        _prepare_file(connect_client, batch_id)
 
 
 def test_fetch_and_validate_batch_positive(
@@ -144,7 +381,7 @@ def test_fetch_and_validate_batch_positive(
         return_value=[batch],
     )
 
-    response = fetch_and_validate_batch(
+    response = _fetch_and_validate_batch(
         connect_client,
         batch_id,
         no_db_deployment,
@@ -169,7 +406,7 @@ def test_fetch_and_validate_batch_negative_no_batch(
     )
 
     with pytest.raises(ClientError):
-        fetch_and_validate_batch(
+        _fetch_and_validate_batch(
             connect_client,
             batch_id,
             None,
@@ -196,7 +433,7 @@ def test_fetch_and_validate_batch_negative_batch_does_not_belong_to_deployment(
     )
 
     with pytest.raises(ClientError):
-        fetch_and_validate_batch(
+        _fetch_and_validate_batch(
             connect_client,
             batch_id,
             deployment,
@@ -224,7 +461,12 @@ def test_identify_reseller_id_positive(
         return_value=[hub],
     )
 
-    reseller_id = identify_reseller_id(connect_client, batch, no_db_deployment)
+    reseller_id = _identify_reseller_id(
+        connect_client,
+        batch['id'],
+        marketplace_id,
+        no_db_deployment.hub_id,
+    )
 
     assert reseller_id == marketplace['hubs'][0]['external_id']
 
@@ -250,7 +492,12 @@ def test_identify_reseller_id_negative_deployment_hub_not_present_in_batch_marke
     )
 
     with pytest.raises(ClientError):
-        identify_reseller_id(connect_client, batch, no_db_deployment)
+        _identify_reseller_id(
+            connect_client,
+            batch['id'],
+            marketplace_id,
+            no_db_deployment.hub_id,
+        )
 
 
 def test_identify_reseller_id_negative_hubs_not_configured_in_batch_marketplace(
@@ -270,7 +517,12 @@ def test_identify_reseller_id_negative_hubs_not_configured_in_batch_marketplace(
     )
 
     with pytest.raises(ClientError):
-        identify_reseller_id(connect_client, batch, no_db_deployment)
+        _identify_reseller_id(
+            connect_client,
+            batch['id'],
+            marketplace_id,
+            no_db_deployment.hub_id,
+        )
 
 
 def test_get_reseller_id_negative_hubs_not_configured(
@@ -279,7 +531,7 @@ def test_get_reseller_id_negative_hubs_not_configured(
     modified_marketplace = deepcopy(marketplace)
     modified_marketplace.pop('hubs')
 
-    reseller_id = get_reseller_id(modified_marketplace, 'HUB-0000-0000')
+    reseller_id = _get_reseller_id(modified_marketplace, 'HUB-0000-0000')
 
     assert reseller_id is None
 
@@ -308,7 +560,12 @@ def test_identify_reseller_id_negative_reseller_id_not_mapped(
     )
 
     with pytest.raises(ClientError):
-        identify_reseller_id(connect_client, batch, no_db_deployment)
+        _identify_reseller_id(
+            connect_client,
+            batch['id'],
+            marketplace_id,
+            no_db_deployment.hub_id,
+        )
 
 
 @patch.object(CBCService, 'parse_price_file')
@@ -322,7 +579,7 @@ def test_process_batch_positive(
     mock_parse_price_file,
     parse_price_file_response,
     price_proposal_response,
-    cbc_db_session,
+    hub_credentials,
     no_db_deployment,
     batch_dataset,
 ):
@@ -333,9 +590,14 @@ def test_process_batch_positive(
     mock_apply_prices.return_value = 'Request Accepted.'
     mock___init__.return_value = None
 
-    data_id = process_batch(
-        cbc_db_session,
-        './tests/fixtures/MFL-0000-0000-0000.xlsx',
+    excel_file = NamedTemporaryFile(suffix='.xlsx')
+    excel_file.write(open('./tests/fixtures/MFL-0000-0000-0000.xlsx', 'rb').read())
+    excel_file.seek(0)
+
+    data_id = _process_batch(
+        CBCService(hub_credentials),
+        excel_file,
+        'MFL-0000-0000-0000.xlsx',
         reseller_id,
         no_db_deployment,
         batch_dataset,
@@ -343,22 +605,57 @@ def test_process_batch_positive(
 
     assert data_id == parse_price_file_response['dataId']
 
-
-def test_process_batch_negative_hub_credential_not_found(
-    cbc_db_session,
-    no_db_deployment,
-):
-    deployment = deepcopy(no_db_deployment)
-    deployment.hub_id = 'HB-0000-0001'
-
-    with pytest.raises(ClientError):
-        process_batch(
-            cbc_db_session,
-            None,
-            None,
-            deployment,
-            None,
-        )
+    assert mock_parse_price_file.call_args[0] == (
+        '10000001',
+        'VA-000-000',
+        excel_file,
+    )
+    assert mock_prepare_price_proposal.call_args[0] == (
+        '10000001',
+        {
+            'status': 'PARSED',
+            'priceListStructure': [
+                'MPN', 'Vendor ID', 'Vendor Name', 'Service Template / Product Line',
+                'Product', 'Billing Period', 'Subscription Period', 'Billing Model',
+                'UOM', 'Lower Limit', 'Effective Date', 'Cost Billing Period',
+                'Cost Currency', 'Cost', 'Price Currency', 'Price', 'MSRP',
+                'Margin', 'Reseller Margin', 'Fee Type', 'Subscriptions',
+                'Seats', 'Active',
+            ],
+            'pricingModel': 'FLAT',
+            'feeType': 'RECURRING',
+            'vendorId': 'VA-000-000',
+            'dataId': 1,
+        },
+        True,
+        True,
+        True,
+        '07/26/2023',
+    )
+    assert mock_apply_prices.call_args[0] == (
+        '10000001',
+        {
+            'status': 'PARSED',
+            'priceListStructure': [
+                'MPN', 'Vendor ID', 'Vendor Name', 'Service Template / Product Line',
+                'Product', 'Billing Period', 'Subscription Period',
+                'Billing Model', 'UOM', 'Lower Limit', 'Effective Date',
+                'Cost Billing Period', 'Cost Currency', 'Cost',
+                'Price Currency', 'Price', 'MSRP', 'Margin',
+                'Reseller Margin', 'Fee Type', 'Subscriptions',
+                'Seats', 'Active',
+            ],
+            'pricingModel': 'FLAT',
+            'feeType': 'RECURRING',
+            'vendorId': 'VA-000-000',
+            'dataId': 1,
+        },
+        True,
+        True,
+        True,
+        '07/26/2023',
+        'MFL-0000-0000-0000.xlsx',
+    )
 
 
 def test_determine_dataset_negative_effective_date_column_not_present():
@@ -367,7 +664,7 @@ def test_determine_dataset_negative_effective_date_column_not_present():
     )
     ws = wb['Data']
     with pytest.raises(ClientError):
-        determine_dataset(ws, 'BAT-000-000-000')
+        _determine_dataset(ws, 'BAT-000-000-000')
 
 
 def test_determine_dataset_negative_empty_effective_date():
@@ -376,7 +673,7 @@ def test_determine_dataset_negative_empty_effective_date():
     )
     ws = wb['Data']
     with pytest.raises(ClientError):
-        determine_dataset(ws, 'BAT-000-000-000')
+        _determine_dataset(ws, 'BAT-000-000-000')
 
 
 def test_determine_dataset_negative_effective_date_wrong_format():
@@ -385,4 +682,4 @@ def test_determine_dataset_negative_effective_date_wrong_format():
     )
     ws = wb['Data']
     with pytest.raises(ClientError):
-        determine_dataset(ws, 'BAT-000-000-000')
+        _determine_dataset(ws, 'BAT-000-000-000')

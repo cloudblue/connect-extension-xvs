@@ -78,19 +78,9 @@ class ExtensionHttpError(ExtensionErrorBase):
         5: "Configuration `{obj_id}` cannot be deleted, because related deployment is not synced.",
         6: "Can not autogenerate a new PPR for deployment {deployment_id}:"
         " There must be one `active` configuration file.",
-        7: "Pricing Batch with ID '{batch_id}' s¡is not found.",
-        8: "More than file found of Pricing Batch '{batch_id}'.",
-        9: "Deployment Hub {hub_id} does not serve Marketplace "
-           "{marketplace_id} associated with the batch {batch_id}",
-        10: "Not able to find out Reseller ID for Marketplace {marketplace_id} and Hub {hub_id}.",
-        11: "Deployment {deployment_id} Product ID {d_product_id} and Batch "
-            "{batch_id} Product ID {b_product_id} does not match.",
+        # Placeholder 7 - 11
         12: "Hub Credentials not found for Hub ID {hub_id}.",
-        13: "Effective Date field not found in Batch {batch_id}.",
-        14: "Effective date {date} is either not found or invalid"
-            " for first row in Batch {batch_id}.",
-        15: 'No Marketplace is linked with Deployment Hub {hub_id}',
-        16: "Pricing Batch '{batch_id}' does not have any file.",
+        # Placeholder 13 - 16
         17: "Cannot create a new request, an open one already exists.",
         18: "Deployment request `{dep_request_id}` can not be retried, newer requests were"
         " created for related deployment `{deployment_id}`: {new_requests}.",
@@ -108,4 +98,28 @@ class ExtensionValidationError(ExtensionErrorBase):
         5: "Transition not allowed: can not set {field_name} from `{source}` to"
         " '{target}', allowed {field_name} sources for '{target}' are '{allowed}'.",
         6: "Pricing batches invalid: {ids}.",
+    }
+
+
+class PriceUpdateError(ExtensionErrorBase):
+    PREFIX = 'PLT'
+    ERRORS = {
+        1: "Pricing Batch with ID '{batch_id}' s¡is not found.",
+        2: "More than file found of Pricing Batch '{batch_id}'.",
+        3: "Deployment Hub {hub_id} does not serve Marketplace "
+           "{marketplace_id} associated with the batch {batch_id}.",
+        4: "Not able to find out Reseller ID for Marketplace {marketplace_id} "
+           "and Hub {hub_id}.",
+        5: "Pricing Batch output '{batch_id}' does not contain "
+           "either Cost or Price column.",
+        6: "Effective date '{date}' is either not found or invalid "
+           "for first row in Batch {batch_id}.",
+        7: "Pricing Batch '{batch_id}' does not have any file.",
+        8: 'No Marketplace is linked with Deployment Hub {hub_id}.',
+        9: "Deployment {deployment_id} Product ID {d_product_id} and Batch "
+           "{batch_id} Product ID {b_product_id} does not match.",
+        10: "Pricing Batch output '{batch_id}' does not contain "
+            "mandatory column: {col_name}.",
+        11: "Pricing Batch output '{batch_id}' contains invalid value at "
+           "column '{column}' of row '{row}'.",
     }

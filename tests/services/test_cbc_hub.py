@@ -5,7 +5,7 @@ from unittest.mock import patch, PropertyMock
 import pytest
 import responses
 
-from connect_ext_ppr.client.exception import ClientError
+from connect_ext_ppr.client.exception import CBCClientError
 from connect_ext_ppr.client.ns import Service
 from connect_ext_ppr.services.cbc_hub import CBCService
 
@@ -88,7 +88,7 @@ def test_get_product_details_not_found(
     )
 
     cbc_service = CBCService(hub_credentials)
-    with pytest.raises(ClientError):
+    with pytest.raises(CBCClientError):
         cbc_service.get_product_details(product_id)
 
 
@@ -159,7 +159,7 @@ def test_install_product_not_found(
     )
 
     cbc_service = CBCService(hub_credentials)
-    with pytest.raises(ClientError):
+    with pytest.raises(CBCClientError):
         cbc_service.install_product(product_id)
 
 
@@ -232,7 +232,7 @@ def test_update_product_negative_product_not_installed(
     )
 
     cbc_service = CBCService(hub_credentials)
-    with pytest.raises(ClientError):
+    with pytest.raises(CBCClientError):
         cbc_service.update_product(product_id)
 
 

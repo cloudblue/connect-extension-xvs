@@ -6,11 +6,9 @@
 from datetime import datetime
 
 from pydantic import BaseModel, Field, root_validator
-from fastapi import status
 
 from typing import Dict, List, Optional, Union
 
-from connect_ext_ppr.errors import ExtensionValidationError
 from connect_ext_ppr.models.enums import (
     ConfigurationStateChoices,
     DeploymentRequestStatusChoices,
@@ -67,17 +65,6 @@ class ReferenceSchema(NonNullSchema):
     id: str
     name: Optional[str]
     icon: Optional[str]
-
-
-class ChoicesSchema(BaseModel):
-    choices: Optional[List[PrimaryKeyReference]] = []
-    all: bool
-
-    @root_validator
-    def check_choices_exists_if_all_is_false(cls, values):
-        if not values.get('all') and not values.get('choices'):
-            raise ExtensionValidationError.VAL_003(status_code=status.HTTP_400_BAD_REQUEST)
-        return values
 
 
 class ProductSchema(NonNullSchema):
@@ -198,10 +185,6 @@ class BatchSchema(NonNullSchema):
     stream: StreamSchema
     test: Optional[bool]
     stream_updated: Optional[bool]
-
-
-class BatchProcessResponseSchema(NonNullSchema):
-    task_info: str
 
 
 class MarketplaceSchema(NonNullSchema):

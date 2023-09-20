@@ -8,7 +8,7 @@ from requests_oauthlib import OAuth1
 
 from connect_ext_ppr.client import CBCClient
 from connect_ext_ppr.client.auth import APSTokenAuth
-from connect_ext_ppr.client.exception import ClientError
+from connect_ext_ppr.client.exception import CBCClientError
 from connect_ext_ppr.models.cbc_extenstion import HubCredential
 
 
@@ -55,7 +55,7 @@ class CBCService:
                 method='GET',
                 path=f'{self.hub_credential.controller_url}/aps',
             )
-        except ClientError:
+        except CBCClientError:
             raise ValueError('hub_credential are not valid!')
 
     @cached_property
@@ -191,6 +191,8 @@ class CBCService:
         headers = {
             'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         }
+
+        file.seek(0)
 
         fcs = self.get_flat_catalog_service(account_id)
         return fcs.flat_catalog.price_import_wizard.action(

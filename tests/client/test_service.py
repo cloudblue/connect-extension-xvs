@@ -3,7 +3,7 @@ from unittest import TestCase
 import pytest
 import responses
 
-from connect_ext_ppr.client.exception import ClientError
+from connect_ext_ppr.client.exception import CBCClientError
 
 
 @responses.activate
@@ -35,7 +35,7 @@ def test_service_discovery_client_error(
         status=401,
     )
 
-    with pytest.raises(ClientError):
+    with pytest.raises(CBCClientError):
         cbc_client(flat_catalog_type).get()
 
 

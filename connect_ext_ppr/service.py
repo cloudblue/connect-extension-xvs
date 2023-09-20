@@ -336,6 +336,7 @@ def add_new_deployment_request(db, dr_data, deployment, account_id, logger):
             db.add(mc)
 
         tasks = []
+
         tasks.append(Task(
             deployment_request_id=deployment_request.id,
             title='Product check up and update',
@@ -348,6 +349,35 @@ def add_new_deployment_request(db, dr_data, deployment, account_id, logger):
             type=Task.TYPES.apply_and_delegate,
             created_by=account_id,
         ))
+
+        dep_marketplaces = {m.marketplace: m for m in deployment.marketplaces}
+        req_marketplaces = {m.marketplace: m for m in deployment_request.marketplaces}
+
+        update_prices = False
+        for mp_name, marketplace in req_marketplaces.items():
+            if (
+                (not marketplace.pricelist_id)
+                or (marketplace.pricelist_id == dep_marketplaces[mp_name].pricelist_id)
+            ):
+                continue
+
+            tasks.append(Task(
+                deployment_request=deployment_request,
+                title=f'Apply price list to marketplace {marketplace.marketplace}',
+                marketplace=marketplace,
+                type=Task.TYPES.apply_pricelist,
+                created_by=account_id,
+            ))
+            update_prices = True
+
+        if update_prices:
+            tasks.insert(0, Task(
+                deployment_request_id=deployment_request.id,
+                title='Validate price lists',
+                type=Task.TYPES.validate_pricelists,
+                created_by=account_id,
+            ))
+
         if deployment_request.delegate_l2:
             tasks.append(Task(
                 deployment_request_id=deployment_request.id,

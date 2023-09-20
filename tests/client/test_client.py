@@ -7,7 +7,7 @@ from requests import Session
 from requests_oauthlib import OAuth1
 
 from connect_ext_ppr.client import CBCClient
-from connect_ext_ppr.client.exception import ClientError
+from connect_ext_ppr.client.exception import CBCClientError
 
 
 @responses.activate
@@ -128,5 +128,5 @@ def test_collection_service_discovery_invalid_type(cbc_client):
 
 @patch.object(Session, 'send', side_effect=Exception('Mock error!'))
 def test_client_get_connection_error(mock_send, cbc_client):
-    with pytest.raises(ClientError):
+    with pytest.raises(CBCClientError):
         cbc_client.get('identifier')
