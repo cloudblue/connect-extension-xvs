@@ -1,7 +1,7 @@
 <template lang="pug">
 .c-alert-holder
   .c-alert(:class="classSettings",)
-    .c-alert__icon
+    .c-alert__icon(v-if="showIcon")
       c-icon(:icon="icon")
 
     .c-alert__text
@@ -54,6 +54,11 @@ export default {
     fluid: Boolean,
 
     grid: Boolean,
+
+    showIcon: {
+      type: Boolean,
+      default: true,
+    },
 
     type: {
       type: String,
