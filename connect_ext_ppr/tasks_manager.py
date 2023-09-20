@@ -9,8 +9,8 @@ from connect_ext_ppr.client.exception import CBCClientError
 from connect_ext_ppr.constants import PPR_FILE_NAME_DELEGATION_L2, PPR_FILE_NAME_UPDATE_MARKETPLACES
 from connect_ext_ppr.db import get_cbc_extension_db, get_cbc_extension_db_engine, get_db_ctx_manager
 from connect_ext_ppr.models.configuration import Configuration
-from connect_ext_ppr.models.enums import CBCTaskLogStatus
 from connect_ext_ppr.models.enums import (
+    CBCTaskLogStatus,
     DeploymentRequestStatusChoices,
     DeploymentStatusChoices,
     TasksStatusChoices,
@@ -390,7 +390,7 @@ TASK_PER_TYPE = {
 }
 
 
-def execute_tasks(db, config, tasks, connect_client):  # noqa: CCR001
+def execute_tasks(db, config, tasks, connect_client, logger):
     was_succesfull = False
     cbc_service = None
 
@@ -416,27 +416,28 @@ def execute_tasks(db, config, tasks, connect_client):  # noqa: CCR001
                     db=db,
                 )
                 task.status = TasksStatusChoices.done
-                if not was_succesfull:
-                    task.status = TasksStatusChoices.error
+
             except TaskException as ex:
                 was_succesfull = False
-                task.error_message = str(ex)
-                task.status = TasksStatusChoices.error
-            except Exception as err:
+                task.error_message = str(ex)[:4000]
+            except Exception as ex:
+                logger.error(f'Task ID: {task.id} - {ex}')
                 was_succesfull = False
-                task.error_message = str(err)
-                task.status = TasksStatusChoices.error
+                task.error_message = 'Something went wrong.'
 
             task.finished_at = datetime.utcnow()
             db.add(task)
-            db.commit()
+
             if not was_succesfull:
+                task.status = TasksStatusChoices.error
+                db.commit()
                 break
+            db.commit()
 
     return was_succesfull
 
 
-def main_process(deployment_request_id, config, connect_client):
+def main_process(deployment_request_id, config, connect_client, logger):
 
     with get_db_ctx_manager(config) as db:
         deployment_request = db.query(DeploymentRequest).options(
@@ -461,7 +462,11 @@ def main_process(deployment_request_id, config, connect_client):
             deployment_request_id=deployment_request_id,
         ).order_by(Task.id).all()
 
-        was_succesfull = execute_tasks(db, config, tasks, connect_client)
+        try:
+            was_succesfull = execute_tasks(db, config, tasks, connect_client, logger)
+        except Exception as ex:
+            was_succesfull = False
+            logger.error(f'DeploymentRequest ID: {deployment_request_id} - {ex}')
 
         db.refresh(deployment_request, with_for_update=True)
 

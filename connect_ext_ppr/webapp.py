@@ -167,7 +167,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             db, deployment_request, deployment, account_id, logger,
         )
 
-        self.thread_pool.submit(main_process, instance.id, config, client)
+        self.thread_pool.submit(main_process, instance.id, config, client, logger)
 
         hub = get_client_object(client, 'hubs', instance.deployment.hub_id)
         response = get_deployment_request_schema(instance, hub)
@@ -341,11 +341,12 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         client: ConnectClient = Depends(get_installation_client),
         installation: dict = Depends(get_installation),
         config: dict = Depends(get_config),
+        logger: Logger = Depends(get_logger),
     ):
         dr = get_deployment_request_by_id(depl_req_id, db, installation)
         dr = DeploymentRequestActionHandler.retry(db, dr)
 
-        self.thread_pool.submit(main_process, dr.id, config, client)
+        self.thread_pool.submit(main_process, dr.id, config, client, logger)
 
         hub = get_hub(client, dr.deployment.hub_id)
         return get_deployment_request_schema(dr, hub)
