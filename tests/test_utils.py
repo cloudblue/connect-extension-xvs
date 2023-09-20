@@ -450,3 +450,9 @@ def test_get_all_info_w_marketplace_not_available(
 
     assert get_all_listing_info(connect_client, status='unlisted') == []
     assert get_all_listing_info(connect_client) == []
+
+
+def check_excel_file_column_values(file, sheet_name, column_name, value):
+    wb = pd.ExcelFile(file)
+    ws1 = wb.parse(sheet_name)
+    return (ws1[column_name] == value).all()

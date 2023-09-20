@@ -1,5 +1,4 @@
 import json
-import os
 
 import pytest
 
@@ -278,9 +277,7 @@ def test_upload_ppr(
 ):
     deployment = deployment_factory()
 
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(current_dir, '..', 'fixtures', 'test_PPR_file.xlsx')
-    with open(file_path, 'rb') as f:
+    with open('./tests/fixtures/test_PPR_file.xlsx', 'rb') as f:
         binary_data = f.read()
     mocker.patch(
         'connect_ext_ppr.service.get_ppr_from_media',
@@ -340,9 +337,7 @@ def test_upload_ppr_invalid(
 ):
     deployment = deployment_factory()
 
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(current_dir, '..', 'fixtures', 'test_PPR_file_invalid.xlsx')
-    with open(file_path, 'rb') as f:
+    with open('./tests/fixtures/test_PPR_file_invalid.xlsx', 'rb') as f:
         binary_data = f.read()
     mocker.patch(
         'connect_ext_ppr.service.get_ppr_from_media',
@@ -408,9 +403,7 @@ def test_post_ppr_new_version(
     assert dbsession.query(PPRVersion).count() == 1
     assert dbsession.query(File).count() == 1
 
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(current_dir, '..', 'fixtures', 'test_PPR_file.xlsx')
-    with open(file_path, 'rb') as f:
+    with open('./tests/fixtures/test_PPR_file.xlsx', 'rb') as f:
         binary_data = f.read()
     mocker.patch(
         'connect_ext_ppr.service.get_ppr_from_media',
@@ -500,9 +493,7 @@ def test_post_ppr_file_already_exists(
     file = file_factory(
         mime_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     )
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(current_dir, '..', 'fixtures', 'test_PPR_file.xlsx')
-    with open(file_path, 'rb') as f:
+    with open('./tests/fixtures/test_PPR_file.xlsx', 'rb') as f:
         binary_data = f.read()
     mocker.patch(
         'connect_ext_ppr.service.get_ppr_from_media',
@@ -545,9 +536,7 @@ def test_generate_ppr(
     deployment = deployment_factory(product_id='PRD-XXX-XXX-XXX')
     configuration = configuration_factory(deployment=deployment.id)
 
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(current_dir, '..', 'fixtures', 'configuration.json')
-    with open(file_path, 'rb') as f:
+    with open('./tests/fixtures/configuration.json', 'rb') as f:
         conf_data = json.load(f)
     mocker.patch(
         'connect_ext_ppr.service.get_configuration_from_media',

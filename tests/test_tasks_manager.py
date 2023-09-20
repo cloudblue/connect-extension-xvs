@@ -1,4 +1,5 @@
 import copy
+from io import BufferedReader
 
 import pytest
 
@@ -28,13 +29,11 @@ from connect_ext_ppr.tasks_manager import (
 )
 from connect_ext_ppr.services.cbc_hub import CBCService
 
+from tests.test_utils import check_excel_file_column_values
+
 
 def test_apply_ppr_and_delegate_to_marketplaces(deployment_request_factory):
     assert apply_ppr_and_delegate_to_marketplaces(deployment_request_factory())
-
-
-def test_delegate_to_l2(deployment_request_factory):
-    assert delegate_to_l2(deployment_request_factory())
 
 
 def test_validate_ppr(deployment_request_factory):
@@ -191,6 +190,148 @@ def test_check_and_update_product_w_errors_in_update_product(
         )
 
 
+@patch.object(CBCService, '__init__')
+def test_delegate_to_l2(
+    mock___init__,
+    connect_client,
+    product_details,
+    update_product_response,
+    deployment_request_factory,
+    mocker,
+):
+    mock___init__.return_value = None
+    cbc_sevice = CBCService()
+    ppr_file_data = open('./tests/fixtures/test_PPR_file_delegate_l2.xlsx', 'rb').read()
+    assert not check_excel_file_column_values(
+        ppr_file_data, 'OpUnitServicePlans', 'Published', True,
+    )
+    assert not check_excel_file_column_values(ppr_file_data, 'ServicePlans', 'Published', False)
+
+    file_sent = null
+
+    def send_ppr_side_effect(*args):
+        nonlocal file_sent
+        file_sent = args[1].read()
+
+    send_ppr_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager._send_ppr',
+        return_value=101,
+        side_effect=send_ppr_side_effect,
+    )
+
+    get_from_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_ppr_from_media',
+        return_value=ppr_file_data,
+    )
+    create_dr_file_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    )
+    check_cbc_task_status_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager._check_cbc_task_status',
+    )
+
+    assert delegate_to_l2(
+        deployment_request=deployment_request_factory(),
+        cbc_service=cbc_sevice,
+        connect_client=connect_client,
+    )
+
+    assert get_from_media_mock.call_count == 1
+    assert create_dr_file_to_media_mock.call_count == 1
+    assert send_ppr_mock.call_count == 1
+    assert check_cbc_task_status_mock.call_count == 1
+
+    assert send_ppr_mock.call_args.args[0] == cbc_sevice
+    ppr_file_arg = send_ppr_mock.call_args.args[1]
+    assert isinstance(ppr_file_arg, BufferedReader)
+    assert check_excel_file_column_values(file_sent, 'OpUnitServicePlans', 'Published', True)
+    assert check_excel_file_column_values(file_sent, 'ServicePlans', 'Published', False)
+
+
+@patch.object(CBCService, '__init__')
+def test_delegate_to_l2_manually(
+    mock___init__,
+    connect_client,
+    product_details,
+    update_product_response,
+    deployment_request_factory,
+    mocker,
+):
+    mock___init__.return_value = None
+    cbc_sevice = CBCService()
+
+    send_ppr_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager._send_ppr',
+    )
+    get_from_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_ppr_from_media',
+    )
+    create_dr_file_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    )
+    check_cbc_task_status_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager._check_cbc_task_status',
+    )
+
+    assert delegate_to_l2(
+        deployment_request=deployment_request_factory(manually=True),
+        cbc_service=cbc_sevice,
+        connect_client=connect_client,
+    )
+
+    assert get_from_media_mock.call_count == 0
+    assert create_dr_file_to_media_mock.call_count == 0
+    assert send_ppr_mock.call_count == 0
+    assert check_cbc_task_status_mock.call_count == 0
+
+
+@patch.object(CBCService, '__init__')
+def test_delegate_to_l2_processing_error(
+    mock___init__,
+    connect_client,
+    product_details,
+    update_product_response,
+    deployment_request_factory,
+    mocker,
+):
+    mock___init__.return_value = None
+    cbc_sevice = CBCService()
+    ppr_file_data = open('./tests/fixtures/test_PPR_file_delegate_l2.xlsx', 'rb').read()
+
+    send_ppr_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager._send_ppr',
+        return_value=101,
+    )
+    get_from_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_ppr_from_media',
+        return_value=ppr_file_data,
+    )
+    process_ppr_file_for_delelegate_l2_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.process_ppr_file_for_delelegate_l2',
+        side_effect=ValueError('Wrong value "Cthulhu"'),
+    )
+    create_dr_file_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    )
+    check_cbc_task_status_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager._check_cbc_task_status',
+    )
+
+    with pytest.raises(TaskException) as e:
+        delegate_to_l2(
+            deployment_request=deployment_request_factory(),
+            cbc_service=cbc_sevice,
+            connect_client=connect_client,
+        )
+    assert str(e.value) == 'Error while processing PPR file: Wrong value "Cthulhu"'
+
+    assert get_from_media_mock.call_count == 1
+    assert process_ppr_file_for_delelegate_l2_mock.call_count == 1
+    assert create_dr_file_to_media_mock.call_count == 0
+    assert send_ppr_mock.call_count == 0
+    assert check_cbc_task_status_mock.call_count == 0
+
+
 @patch.object(CBCService, '__init__', return_value=None)
 def test_main_process(
     mock___init__,
@@ -199,6 +340,8 @@ def test_main_process(
     deployment_request_factory,
     task_factory,
     ppr_version_factory,
+    connect_client,
+    mock_tasks,
     mocker,
 ):
     dep = deployment_factory()
@@ -211,7 +354,7 @@ def test_main_process(
     with mocker.patch(
         'connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService(),
     ):
-        assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
+        assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(status=DeploymentStatusChoices.synced).count() == 1
     assert dbsession.query(DeploymentRequest).filter_by(
@@ -232,6 +375,8 @@ def test_main_process_wo_l2_delegation(
     deployment_request_factory,
     task_factory,
     ppr_version_factory,
+    connect_client,
+    mock_tasks,
     mocker,
 ):
     dep = deployment_factory()
@@ -241,7 +386,7 @@ def test_main_process_wo_l2_delegation(
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
 
     mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
-    assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
+    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -265,6 +410,8 @@ def test_main_process_deployment_w_new_ppr_version(
     deployment_request_factory,
     task_factory,
     ppr_version_factory,
+    connect_client,
+    mock_tasks,
     mocker,
 ):
     ppr_file = file_factory(id='MFL-123')
@@ -278,7 +425,7 @@ def test_main_process_deployment_w_new_ppr_version(
     task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
 
     mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
-    assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.done
+    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -314,6 +461,8 @@ def test_main_process_ends_w_error(
     mocker,
     task_factory,
     ppr_version_factory,
+    connect_client,
+    mock_tasks,
 ):
     dep = deployment_factory()
     ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep, version=1)
@@ -325,13 +474,13 @@ def test_main_process_ends_w_error(
     my_mock = mocker.Mock()
 
     def mock_get(key):
-        print(type_function_to_mock)
         return lambda **kwargs: key != type_function_to_mock
+
     my_mock.get = mock_get
 
     mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
     mocker.patch('connect_ext_ppr.tasks_manager.TASK_PER_TYPE', my_mock)
-    assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.error
+    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.error
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -388,6 +537,8 @@ def test_main_process_w_aborted_tasks(
     task_statuses,
     done_tasks,
     aborted_tasks,
+    connect_client,
+    mock_tasks,
     mocker,
 ):
     """
@@ -430,7 +581,7 @@ def test_main_process_w_aborted_tasks(
     dbsession.refresh = change_dr_status
     mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
 
-    assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.aborted
+    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.aborted
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -455,6 +606,8 @@ def test_main_process_w_aborted_deployment_request(
     deployment_request_factory,
     task_factory,
     ppr_version_factory,
+    connect_client,
+    mock_tasks,
 ):
     """
         We only process DeploymentRequest that are in Pending status. So in this case we asume that
@@ -488,7 +641,7 @@ def test_main_process_w_aborted_deployment_request(
         status=TasksStatusChoices.aborted,
     )
 
-    assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.aborted
+    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.aborted
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -523,6 +676,8 @@ def test_main_process_ends_w_task_exception(
     mocker,
     task_factory,
     ppr_version_factory,
+    connect_client,
+    mock_tasks,
 ):
     dep = deployment_factory()
     ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep, version=1)
@@ -542,7 +697,7 @@ def test_main_process_ends_w_task_exception(
 
     mocker.patch('connect_ext_ppr.tasks_manager.TASK_PER_TYPE', my_mock)
     mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
-    assert main_process(dr.id, {}) == DeploymentRequestStatusChoices.error
+    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.error
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,

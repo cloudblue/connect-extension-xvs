@@ -29,6 +29,7 @@ from connect_ext_ppr.models.deployment import (
     DeploymentRequest,
     MarketplaceConfiguration,
 )
+from connect_ext_ppr.models.enums import TaskTypesChoices
 from connect_ext_ppr.models.file import File
 from connect_ext_ppr.models.ppr import PPRVersion
 from connect_ext_ppr.models.replicas import Account, Product
@@ -145,12 +146,12 @@ def deployment(dbsession, product_factory):
 @pytest.fixture
 def deployment_factory(dbsession, product_factory):
     def _build_deployment(
-            id=None,
-            product_id=None,
-            account_id='PA-000-000',
-            vendor_id='VA-000-000',
-            hub_id='HB-0000-0000',
-            status='pending',
+        id=None,
+        product_id=None,
+        account_id='PA-000-000',
+        vendor_id='VA-000-000',
+        hub_id='HB-0000-0000',
+        status='pending',
     ):
         product = product_factory(id=product_id, owner_id=vendor_id)
         product_id = product.id
@@ -172,13 +173,13 @@ def deployment_factory(dbsession, product_factory):
 @pytest.fixture
 def deployment_request_factory(dbsession, deployment_factory):
     def _build_deployment_request(
-            deployment=None,
-            ppr=None,
-            delegate_l2=False,
-            status=None,
-            started_at=None,
-            finished_at=None,
-            manually=False,
+        deployment=None,
+        ppr=None,
+        delegate_l2=False,
+        status=None,
+        started_at=None,
+        finished_at=None,
+        manually=False,
     ):
         if not deployment:
             deployment = deployment_factory()
@@ -1145,3 +1146,14 @@ def connect_auth_header():
 def configuration_json():
     with open('./tests/fixtures/configuration.json') as json_file:
         return json.load(json_file)
+
+
+@pytest.fixture
+def mock_tasks(mocker):
+    mocker.patch(
+        'connect_ext_ppr.tasks_manager.TASK_PER_TYPE', return_value={
+            TaskTypesChoices.ppr_validation: lambda: True,
+            TaskTypesChoices.apply_and_delegate: lambda: True,
+            TaskTypesChoices.delegate_to_l2: lambda: True,
+        },
+    )
