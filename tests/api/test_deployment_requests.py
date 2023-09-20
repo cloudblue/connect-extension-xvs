@@ -534,7 +534,7 @@ def test_create_deployment_request(
     tasks = dbsession.query(Task).order_by(Task.id)
     assert tasks.count() == 3
     assert tasks[0].id == f'TSK-{deployment_request.id[5:]}-000'
-    assert tasks[0].type == Task.TYPES.ppr_validation
+    assert tasks[0].type == Task.TYPES.product_setup
     assert tasks[1].id == f'TSK-{deployment_request.id[5:]}-001'
     assert tasks[1].type == Task.TYPES.apply_and_delegate
     assert tasks[2].id == f'TSK-{deployment_request.id[5:]}-002'
@@ -610,7 +610,7 @@ def test_create_deployment_request_without_delegation_to_l2(
     tasks = dbsession.query(Task).order_by(Task.id)
     assert tasks.count() == 2
     assert tasks[0].id == f'TSK-{deployment_request.id[5:]}-000'
-    assert tasks[0].type == Task.TYPES.ppr_validation
+    assert tasks[0].type == Task.TYPES.product_setup
     assert tasks[1].id == f'TSK-{deployment_request.id[5:]}-001'
     assert tasks[1].type == Task.TYPES.apply_and_delegate
 
@@ -1321,7 +1321,7 @@ def test_retry_deployment_request_ok(
         deployment_request=dr1,
         status='error',
         error_message='An Error!.',
-        type=Task.TYPES.ppr_validation,
+        type=Task.TYPES.product_setup,
         started_at=started_at,
         finished_at=finished_at,
     )

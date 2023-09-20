@@ -25,7 +25,7 @@ class TasksStatusChoices(str, enum.Enum):
 
 
 class TaskTypesChoices(str, enum.Enum):
-    ppr_validation = 'ppr_validation'
+    product_setup = 'product_setup'
     apply_and_delegate = 'apply_ppr_and_delegate_to_marketplace'
     delegate_to_l2 = 'delegate_to_l2'
 

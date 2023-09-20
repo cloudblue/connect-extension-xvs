@@ -135,10 +135,6 @@ def prepare_ppr_file_for_task(
         raise TaskException(f'Error while processing PPR file: {e}')
 
 
-def validate_ppr(deployment_request, **kwargs):
-    return True
-
-
 def check_and_update_product(deployment_request, cbc_service, **kwargs):
     if not deployment_request.manually:
 
@@ -194,7 +190,7 @@ def delegate_to_l2(deployment_request, cbc_service, connect_client, **kwargs):
 
 
 TASK_PER_TYPE = {
-    TaskTypesChoices.ppr_validation: validate_ppr,
+    TaskTypesChoices.product_setup: check_and_update_product,
     TaskTypesChoices.apply_and_delegate: apply_ppr_and_delegate_to_marketplaces,
     TaskTypesChoices.delegate_to_l2: delegate_to_l2,
 }

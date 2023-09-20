@@ -25,7 +25,6 @@ from connect_ext_ppr.tasks_manager import (
     delegate_to_l2,
     main_process,
     TaskException,
-    validate_ppr,
 )
 from connect_ext_ppr.services.cbc_hub import CBCService
 
@@ -34,10 +33,6 @@ from tests.test_utils import check_excel_file_column_values
 
 def test_apply_ppr_and_delegate_to_marketplaces(deployment_request_factory):
     assert apply_ppr_and_delegate_to_marketplaces(deployment_request_factory())
-
-
-def test_validate_ppr(deployment_request_factory):
-    assert validate_ppr(deployment_request_factory())
 
 
 def test__send_ppr(parse_ppr_success_response, sample_ppr_file, mocker):
@@ -194,8 +189,6 @@ def test_check_and_update_product_w_errors_in_update_product(
 def test_delegate_to_l2(
     mock___init__,
     connect_client,
-    product_details,
-    update_product_response,
     deployment_request_factory,
     mocker,
 ):
@@ -252,8 +245,6 @@ def test_delegate_to_l2(
 def test_delegate_to_l2_manually(
     mock___init__,
     connect_client,
-    product_details,
-    update_product_response,
     deployment_request_factory,
     mocker,
 ):
@@ -289,8 +280,6 @@ def test_delegate_to_l2_manually(
 def test_delegate_to_l2_processing_error(
     mock___init__,
     connect_client,
-    product_details,
-    update_product_response,
     deployment_request_factory,
     mocker,
 ):
@@ -332,9 +321,11 @@ def test_delegate_to_l2_processing_error(
     assert check_cbc_task_status_mock.call_count == 0
 
 
+@patch.object(CBCService, 'get_product_details')
 @patch.object(CBCService, '__init__', return_value=None)
 def test_main_process(
-    mock___init__,
+    _,
+    mock_get_product_details,
     dbsession,
     deployment_factory,
     deployment_request_factory,
@@ -343,18 +334,18 @@ def test_main_process(
     connect_client,
     mock_tasks,
     mocker,
+    product_details,
 ):
+    mock_get_product_details.return_value = product_details
     dep = deployment_factory()
     ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep)
     dr = deployment_request_factory(deployment=dep, delegate_l2=True, ppr=ppr)
-    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
+    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.product_setup)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
     task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
 
-    with mocker.patch(
-        'connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService(),
-    ):
-        assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.done
+    mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
+    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(status=DeploymentStatusChoices.synced).count() == 1
     assert dbsession.query(DeploymentRequest).filter_by(
@@ -367,9 +358,11 @@ def test_main_process(
     ).count() == 3
 
 
+@patch.object(CBCService, 'get_product_details')
 @patch.object(CBCService, '__init__', return_value=None)
 def test_main_process_wo_l2_delegation(
     _,
+    mock_get_product_details,
     dbsession,
     deployment_factory,
     deployment_request_factory,
@@ -378,11 +371,13 @@ def test_main_process_wo_l2_delegation(
     connect_client,
     mock_tasks,
     mocker,
+    product_details,
 ):
+    mock_get_product_details.return_value = product_details
     dep = deployment_factory()
     ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep)
     dr = deployment_request_factory(deployment=dep, delegate_l2=False, ppr=ppr)
-    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
+    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.product_setup)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
 
     mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
@@ -401,9 +396,11 @@ def test_main_process_wo_l2_delegation(
     ).count() == 2
 
 
+@patch.object(CBCService, 'get_product_details')
 @patch.object(CBCService, '__init__', return_value=None)
 def test_main_process_deployment_w_new_ppr_version(
     _,
+    mock_get_product_details,
     dbsession,
     file_factory,
     deployment_factory,
@@ -413,14 +410,16 @@ def test_main_process_deployment_w_new_ppr_version(
     connect_client,
     mock_tasks,
     mocker,
+    product_details,
 ):
+    mock_get_product_details.return_value = product_details
     ppr_file = file_factory(id='MFL-123')
     dep = deployment_factory()
     dr_ppr = ppr_version_factory(
         id='PPR-1234', file=ppr_file.id, product_version=1, deployment=dep)
     ppr_version_factory(id='PPR-123', product_version=2, deployment=dep)
     dr = deployment_request_factory(deployment=dep, delegate_l2=False, ppr=dr_ppr)
-    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
+    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.product_setup)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
     task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
 
@@ -444,7 +443,7 @@ def test_main_process_deployment_w_new_ppr_version(
 @pytest.mark.parametrize(
     ('type_function_to_mock', 'done_tasks', 'tasks_w_errors', 'pending_tasks'),
     (
-        (TaskTypesChoices.ppr_validation, 0, 1, 2),
+        (TaskTypesChoices.product_setup, 0, 1, 2),
         (TaskTypesChoices.apply_and_delegate, 1, 1, 1),
         (TaskTypesChoices.delegate_to_l2, 2, 1, 0),
     ),
@@ -467,7 +466,7 @@ def test_main_process_ends_w_error(
     dep = deployment_factory()
     ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep, version=1)
     dr = deployment_request_factory(deployment=dep, delegate_l2=True, ppr=ppr)
-    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
+    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.product_setup)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
     task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
 
@@ -556,7 +555,7 @@ def test_main_process_w_aborted_tasks(
     task_factory(
         deployment_request=dr,
         task_index='0001',
-        type=TaskTypesChoices.ppr_validation,
+        type=TaskTypesChoices.product_setup,
         status=task_statuses.pop(),
     )
 
@@ -624,7 +623,7 @@ def test_main_process_w_aborted_deployment_request(
     task_factory(
         deployment_request=dr,
         task_index='0001',
-        type=TaskTypesChoices.ppr_validation,
+        type=TaskTypesChoices.product_setup,
         status=TasksStatusChoices.aborted,
     )
 
@@ -659,7 +658,7 @@ def test_main_process_w_aborted_deployment_request(
 @pytest.mark.parametrize(
     ('type_function_to_mock', 'done_tasks', 'tasks_w_errors', 'pending_tasks'),
     (
-        (TaskTypesChoices.ppr_validation, 0, 1, 2),
+        (TaskTypesChoices.product_setup, 0, 1, 2),
         (TaskTypesChoices.apply_and_delegate, 1, 1, 1),
         (TaskTypesChoices.delegate_to_l2, 2, 1, 0),
     ),
@@ -682,7 +681,7 @@ def test_main_process_ends_w_task_exception(
     dep = deployment_factory()
     ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep, version=1)
     dr = deployment_request_factory(deployment=dep, delegate_l2=True, ppr=ppr)
-    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.ppr_validation)
+    task_factory(deployment_request=dr, task_index='0001', type=TaskTypesChoices.product_setup)
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
     task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
 
