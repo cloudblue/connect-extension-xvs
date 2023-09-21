@@ -605,6 +605,7 @@ export default {
   }
 
   &__content {
+    overflow: scroll;
     grid-area: c;
     padding: $edge-gap;
 
