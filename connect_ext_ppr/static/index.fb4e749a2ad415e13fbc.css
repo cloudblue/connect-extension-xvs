@@ -408,6 +408,7 @@ button .c-icon {
   transform: translateY(-50%);
 }
 .c-window__content {
+  overflow: scroll;
   grid-area: c;
   padding: 24px;
 }
