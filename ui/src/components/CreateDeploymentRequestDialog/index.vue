@@ -42,6 +42,14 @@ c-dialog(
   template(#options="")
     options-tab(v-model="form.options")
 
+  template(#pricing="")
+    pricing-tab(
+      v-model="form.pricing",
+      :deployment-id="localDeployment?.id",
+      :marketplaces="form.marketplaces.choices",
+      @error="setError",
+    )
+
   template(#summary="")
     summary-tab(
       :request-id="createdRequest?.id",
@@ -55,10 +63,16 @@ c-dialog(
 </template>
 
 <script>
+import {
+  map,
+  pick,
+} from 'ramda';
+
 import cDialog from '~components/cDialog.vue';
 import HubsTab from './HubsTab.vue';
 import MarketplacesTab from './MarketplacesTab.vue';
 import OptionsTab from './OptionsTab.vue';
+import PricingTab from './PricingTab.vue';
 import ProductsTab from './ProductsTab.vue';
 import PprTab from './PprTab.vue';
 import SummaryTab from './SummaryTab.vue';
@@ -79,6 +93,7 @@ const defaultForm = () => ({
     choices: [],
     all: false,
   },
+  pricing: [],
   options: {
     manual: false,
     delegate: false,
@@ -93,6 +108,7 @@ export default {
     HubsTab,
     MarketplacesTab,
     OptionsTab,
+    PricingTab,
     ProductsTab,
     PprTab,
     SummaryTab,
@@ -140,6 +156,10 @@ export default {
       {
         key: 'options',
         label: 'Options',
+      },
+      {
+        key: 'pricing',
+        label: 'Pricing',
       },
       {
         key: 'summary',
@@ -228,7 +248,7 @@ export default {
 
     async createDeploymentRequest() {
       this.createdRequest = await createDeploymentRequest({
-        marketplaces: this.form.marketplaces.choices,
+        marketplaces: map(pick(['id', 'pricelist']), this.form.marketplaces.choices),
         deployment: { id: this.localDeployment.id },
         ppr: { id: this.form.ppr.id },
         manually: this.form.options.manual,
