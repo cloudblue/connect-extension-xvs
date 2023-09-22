@@ -32,8 +32,8 @@
           )
             c-checkbox(
               v-if="header.value === 'radio'"
-              :value="localValue.includes(row[valueProp])",
-              @input="toggleSelected(row[valueProp])",
+              :value="isChecked(item)",
+              @input="toggleSelected(row)",
             )
             slot(
               v-else,
@@ -44,6 +44,10 @@
 </template>
 
 <script>
+import {
+  includes,
+} from 'ramda';
+
 import cDataTable from '~components/cDataTable.vue';
 import cCheckbox from '~components/cCheckbox.vue';
 import cSearch from '~components/cSearch.vue';
@@ -91,6 +95,7 @@ export default {
     },
 
     search: String,
+    returnObject: Boolean,
   },
 
   data: () => ({
@@ -118,13 +123,21 @@ export default {
   },
 
   methods: {
+    isChecked(item) {
+      return this.returnObject
+        ? includes(item, this.localValue)
+        : includes(item[this.valueProp], this.localValue);
+    },
+
     toggleSelected(value) {
-      const index = this.localValue.indexOf(value);
+      const currentValue = (this.returnObject) ? value : value[this.valueProp];
+
+      const index = this.localValue.indexOf(currentValue);
 
       if (index > -1) {
         this.localValue.splice(index, 1);
       } else {
-        this.localValue.push(value);
+        this.localValue.push(currentValue);
       }
     },
   },
@@ -132,7 +145,8 @@ export default {
   watch: {
     isAllSelected(v) {
       if (v) {
-        this.localValue = this.items.map(item => item[this.valueProp]);
+        this.localValue = (this.returnObject)
+          ? this.items : this.items.map(item => item[this.valueProp]);
       } else {
         this.localValue = [];
       }

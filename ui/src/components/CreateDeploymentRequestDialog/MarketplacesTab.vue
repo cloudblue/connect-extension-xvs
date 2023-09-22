@@ -9,6 +9,7 @@ checkbox-table.marketplaces-tab(
   :is-all-selected.sync="isAllSelected",
   title="Select Marketplaces",
   include-all,
+  return-object,
 )
   template(#marketplace="{ row }")
     detail-item.hub-tab__detail
@@ -117,7 +118,7 @@ export default {
       deep: true,
       immediate: true,
       handler(val) {
-        this.$set(this.localValue, 'choices', val.map(id => ({ id })));
+        this.$set(this.localValue, 'choices', val);
       },
     },
 
