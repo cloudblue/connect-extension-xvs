@@ -30,18 +30,21 @@ createApp({
   'ui-tab': Tab,
   'ui-tabs': Tabs,
   'ui-pad': Pad,
+}).then(toolkit => {
+  const router = new VueRouter({
+    mode: 'hash',
+    routes,
+  });
+
+  Vue.filter('utcToLocal', utcToLocal);
+
+  const app = new Vue({
+    render: h => h(App, {
+      props: { toolkit },
+    }),
+
+    router,
+  });
+
+  app.$mount('#app');
 });
-
-const router = new VueRouter({
-  mode: 'hash',
-  routes,
-});
-
-Vue.filter('utcToLocal', utcToLocal);
-
-const app = new Vue({
-  render: h => h(App),
-  router,
-});
-
-app.$mount('#app');
