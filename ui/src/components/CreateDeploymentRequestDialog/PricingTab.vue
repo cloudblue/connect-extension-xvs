@@ -34,7 +34,7 @@
           template(v-else-if="header.value === 'pricing'")
 
             c-menu(
-              v-if="row.pricelist",
+              v-if="row.batches.length > 0",
               locator="batches-list",
               outline,
               small,
@@ -48,11 +48,17 @@
                   :icon-right="icons.googleArrowDropDownBaseline"
                   mode="outlined",
                 )
-                  .truncate-text.pricing-tab__pricelist(
-                    :title="row.pricelist.name",
-                  ) {{ row.pricelist.name }}
+                  .pricing-tab__pricelist.truncate-text {{ selectedPricelist(row) }}
 
               template(#default="")
+                c-button(
+                  small,
+                  :upper-case="false",
+                  fluid,
+                  @click="resetBatch(row)",
+                )
+                  .assistive-color —
+
                 div(
                   v-for="batch in row.batches",
                   :key="batch.id",
@@ -150,13 +156,29 @@ export default {
         name: item.name,
         icon: item.icon,
         batches: item.batches,
-        pricelist: item.batches[0],
+        pricelist: item.pricelist,
       };
     },
 
+    findMarketplaceInList(id) {
+      return findIndex(propEq(id, 'id'), this.localValue);
+    },
+
     setBatch(batch, marketplace) {
-      const index = findIndex(propEq(marketplace.id, 'id'), this.localValue);
+      const index = this.findMarketplaceInList(marketplace.id);
       this.localValue[index].pricelist = pick(['id', 'name'], batch);
+    },
+
+    resetBatch(marketplace) {
+      const index = this.findMarketplaceInList(marketplace.id);
+      this.localValue[index].pricelist = undefined;
+    },
+
+    selectedPricelist(marketplace) {
+      const index = this.findMarketplaceInList(marketplace.id);
+
+      return this.localValue[index].pricelist
+        ? this.localValue[index].pricelist.name : '—';
     },
   },
 
@@ -194,6 +216,7 @@ export default {
   }
 
   &__pricelist {
+    min-width: 226px;
     max-width: 226px;
   }
 }
