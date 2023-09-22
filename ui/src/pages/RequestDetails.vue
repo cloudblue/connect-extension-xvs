@@ -107,11 +107,12 @@ c-view.request-details(
             span {{ request.delegate_l2 ? 'Delegated' : 'Not delegated' }}
 
   c-tabs(
+    v-if="request",
     :current-tab.sync="currentTab",
     :tabs="tabs",
   )
     template(#marketplaces="")
-      request-marketplaces-tab(:request-id="requestId")
+      request-marketplaces-tab(:request="request")
 
     template(#tasks="")
       request-tasks-tab(

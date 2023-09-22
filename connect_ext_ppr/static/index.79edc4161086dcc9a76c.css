@@ -1842,6 +1842,7 @@ button + .c-text-field__append-inner > svg[data-v-b5bb9caa]:first-child {
   margin-top: 0;
 }
 .pricing-tab__pricelist {
+  min-width: 226px;
   max-width: 226px;
 }
 

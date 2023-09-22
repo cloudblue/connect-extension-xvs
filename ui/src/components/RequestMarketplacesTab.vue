@@ -1,7 +1,7 @@
 <template lang="pug">
 .request-marketplaces-tab
   c-data-table(
-    v-model="marketplaces",
+    v-model="marketplacesWithBatchesInfo",
     :headers="headers",
     :prepare-row="prepareRow",
     :show-loader="loading",
@@ -34,18 +34,46 @@
             :key="header.value",
           )
             span(v-if="row.externalId") {{ row.externalId }}
-            span.assistive-text(v-else) –
+            .assistive-color(v-else) —
+
+          //- Pricing Batch column
+          td.nowrap-cell(
+            v-if="header.value === 'pricelist'",
+            :key="header.value",
+          )
+            detail-item(
+              v-if="row.pricelist",
+              :assistive-text="row.pricelist.id",
+            )
+              template(#body-text="")
+                .truncate-text {{ row.pricelist.name }}
+
+            .assistive-color(v-else) —
+
 
 </template>
 
 <script>
+import {
+  path,
+} from 'ramda';
+
+
 import cDataTable from '~components/cDataTable.vue';
 import DetailItem from '~components/DetailItem.vue';
 import Pic from '~components/Pic.vue';
 
 import {
+  enrich,
+} from '@/tools/utils';
+
+import {
+  getDeploymentBatches,
   getDeploymentRequestMarketplaces,
 } from '@/utils';
+
+
+const enrichByBatchInfo = enrich('id', ['pricelist', 'id'], 'pricelist');
 
 
 export default {
@@ -56,8 +84,8 @@ export default {
   },
 
   props: {
-    requestId: {
-      type: String,
+    request: {
+      type: Object,
       required: true,
     },
   },
@@ -65,12 +93,19 @@ export default {
   data: () => ({
     loading: true,
     marketplaces: [],
+    marketplacesWithBatchesInfo: [],
 
     headers: [
       { text: 'Marketplace', value: 'marketplace' },
       { text: 'External ID', value: 'externalId' },
+      { text: 'Pricing Batch', value: 'pricelist' },
     ],
   }),
+
+  computed: {
+    requestId: path(['request', 'id']),
+    deploymentId: path(['request', 'deployment', 'id']),
+  },
 
   methods: {
     prepareRow(item) {
@@ -81,12 +116,17 @@ export default {
           name: item.name,
           icon: item.icon,
         },
+
+        pricelist: item.pricelist,
       };
     },
   },
 
   async created() {
     this.marketplaces = await getDeploymentRequestMarketplaces(this.requestId);
+    const batches = await getDeploymentBatches(this.deploymentId);
+
+    this.marketplacesWithBatchesInfo = enrichByBatchInfo(batches, this.marketplaces);
     this.loading = false;
   },
 };
