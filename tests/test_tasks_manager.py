@@ -1,4 +1,5 @@
 import copy
+import json
 from io import BufferedReader
 
 import pytest
@@ -6,6 +7,7 @@ import pytest
 from unittest.mock import patch
 
 from connect.client import ClientError
+from requests import Response
 from sqlalchemy import null
 
 from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
@@ -34,8 +36,521 @@ from connect_ext_ppr.services.cbc_hub import CBCService
 from tests.test_utils import check_excel_file_column_values
 
 
-def test_apply_ppr_and_delegate_to_marketplaces(deployment_request_factory):
-    assert apply_ppr_and_delegate_to_marketplaces(deployment_request_factory())
+@patch.object(CBCService, '__init__', return_value=None)
+def test_apply_ppr_and_delegate_to_marketplaces(
+    _,
+    dbsession,
+    deployment_request_factory,
+    deployment_factory,
+    marketplace_config_factory,
+    ppr_version_factory,
+    configuration_factory,
+    connect_client,
+    mocker,
+):
+    ppr_file_data = open('./tests/fixtures/test_PPR_apply_to_marketplaces.xlsx', 'rb').read()
+    ppr_config_file_data = json.load(open('./tests/fixtures/test_PPR_config_file.json'))
+
+    assert not check_excel_file_column_values(
+        ppr_file_data, 'OpUnitServicePlans', 'Published', [False] * 4,
+    )
+    file_sent = null
+
+    def send_ppr_side_effect(*args):
+        nonlocal file_sent
+        file_sent = args[1].read()
+
+    send_ppr_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager._send_ppr',
+        return_value=101,
+        side_effect=send_ppr_side_effect,
+    )
+    get_config_from_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_configuration_from_media',
+        return_value=ppr_config_file_data,
+    )
+
+    get_ppr_from_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_ppr_from_media',
+        return_value=ppr_file_data,
+    )
+
+    create_dr_file_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    )
+    check_cbc_task_status_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager._check_cbc_task_status',
+    )
+
+    cbc_service = CBCService()
+    dep = deployment_factory()
+    configuration_factory(deployment=dep.id)
+    ppr = ppr_version_factory(deployment=dep)
+    ppr2 = ppr_version_factory(deployment=dep)
+    dr = deployment_request_factory(deployment=dep, ppr=ppr2)
+
+    dep_m1 = marketplace_config_factory(deployment=dep, marketplace_id='MP-123')
+    dep_m2 = marketplace_config_factory(deployment=dep, marketplace_id='MP-124', ppr_id=ppr.id)
+    dep_m3 = marketplace_config_factory(deployment=dep, marketplace_id='MP-125', ppr_id=ppr.id)
+
+    # Mapping marketplaces Connect => CBC
+    #    "MP-123": "CO"
+    #    "MP-124": "AT"
+    #    "MP-125": "US"
+
+    dr_m1 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-123')
+    dr_m2 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-124')
+
+    assert apply_ppr_and_delegate_to_marketplaces(dr, cbc_service, connect_client, dbsession)
+
+    dbsession.refresh(dr_m1)
+    dbsession.refresh(dr_m2)
+    dbsession.refresh(dep_m1)
+    dbsession.refresh(dep_m2)
+    dbsession.refresh(dep_m3)
+
+    assert dr_m1.ppr_id == ppr2.id
+    assert dr_m2.ppr_id == ppr2.id
+    assert dep_m1.ppr_id == ppr2.id
+    assert dep_m2.ppr_id == ppr2.id
+    assert dep_m3.ppr_id == ppr.id
+
+    assert get_config_from_media_mock.call_count == 1
+    assert get_ppr_from_media_mock.call_count == 1
+    assert create_dr_file_to_media_mock.call_count == 1
+    assert send_ppr_mock.call_count == 1
+    assert check_cbc_task_status_mock.call_count == 1
+
+    assert send_ppr_mock.call_args.args[0] == cbc_service
+    ppr_file_arg = send_ppr_mock.call_args.args[1]
+    assert isinstance(ppr_file_arg, BufferedReader)
+    assert check_excel_file_column_values(file_sent, 'OpUnitServicePlans', 'Published', [False] * 4)
+    assert check_excel_file_column_values(
+        file_sent, 'ServicePlans', 'Published', [False, True, False, True, True, True],
+    )
+    assert check_excel_file_column_values(
+        file_sent, 'ServicePlans', 'OpUnit_CO', [True, True, True, False, False, False],
+    )
+    assert check_excel_file_column_values(
+        file_sent, 'ServicePlans', 'OpUnit_AT', [True, True, True, False, False, False],
+    )
+    assert check_excel_file_column_values(
+        file_sent, 'ServicePlans', 'OpUnit_US', [False] * 6,
+    )
+
+
+@patch.object(CBCService, '__init__', return_value=None)
+def test_apply_ppr_and_delegate_to_marketplaces_manually(
+    _,
+    dbsession,
+    deployment_request_factory,
+    deployment_factory,
+    marketplace_config_factory,
+    ppr_version_factory,
+    connect_client,
+    mocker,
+):
+
+    get_from_media_mock = mocker.patch('connect_ext_ppr.tasks_manager.get_ppr_from_media')
+    create_dr_file_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    )
+    check_cbc_task_status_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager._check_cbc_task_status',
+    )
+
+    dep = deployment_factory()
+    ppr = ppr_version_factory(deployment=dep)
+    ppr2 = ppr_version_factory(deployment=dep)
+    dr = deployment_request_factory(deployment=dep, ppr=ppr2, manually=True)
+
+    dep_m1 = marketplace_config_factory(deployment=dep, marketplace_id='MP-124')
+    dep_m2 = marketplace_config_factory(deployment=dep, marketplace_id='MP-123', ppr_id=ppr.id)
+    dep_m3 = marketplace_config_factory(deployment=dep, marketplace_id='MP-125', ppr_id=ppr.id)
+
+    dr_m1 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-124')
+    dr_m2 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-123')
+
+    assert apply_ppr_and_delegate_to_marketplaces(dr, CBCService(), connect_client, dbsession)
+
+    dbsession.refresh(dr_m1)
+    dbsession.refresh(dr_m2)
+    dbsession.refresh(dep_m1)
+    dbsession.refresh(dep_m2)
+    dbsession.refresh(dep_m3)
+
+    assert dr_m1.ppr_id == ppr2.id
+    assert dr_m2.ppr_id == ppr2.id
+    assert dep_m1.ppr_id == ppr2.id
+    assert dep_m2.ppr_id == ppr2.id
+    assert dep_m3.ppr_id == ppr.id
+
+    assert get_from_media_mock.call_count == 0
+    assert create_dr_file_to_media_mock.call_count == 0
+    assert check_cbc_task_status_mock.call_count == 0
+
+
+@patch.object(CBCService, '__init__', return_value=None)
+def test_apply_ppr_and_delegate_to_marketplaces_w_marketplace_not_present_in_mapping(
+    _,
+    dbsession,
+    deployment_request_factory,
+    deployment_factory,
+    marketplace_config_factory,
+    ppr_version_factory,
+    configuration_factory,
+    connect_client,
+    mocker,
+):
+    ppr_file_data = open('./tests/fixtures/test_PPR_apply_to_marketplaces.xlsx', 'rb').read()
+    ppr_config_file_data = json.load(open('./tests/fixtures/test_PPR_config_file.json'))
+
+    assert not check_excel_file_column_values(
+        ppr_file_data, 'OpUnitServicePlans', 'Published', [False] * 4,
+    )
+    file_sent = null
+
+    def send_ppr_side_effect(*args):
+        nonlocal file_sent
+        file_sent = args[1].read()
+
+    send_ppr_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager._send_ppr',
+        return_value=101,
+        side_effect=send_ppr_side_effect,
+    )
+    get_config_from_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_configuration_from_media',
+        return_value=ppr_config_file_data,
+    )
+
+    get_ppr_from_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_ppr_from_media',
+        return_value=ppr_file_data,
+    )
+
+    create_dr_file_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    )
+    check_cbc_task_status_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager._check_cbc_task_status',
+    )
+
+    cbc_service = CBCService()
+    dep = deployment_factory()
+    configuration_factory(deployment=dep.id)
+    ppr = ppr_version_factory(deployment=dep)
+    ppr2 = ppr_version_factory(deployment=dep)
+    dr = deployment_request_factory(deployment=dep, ppr=ppr2)
+
+    dep_m1 = marketplace_config_factory(deployment=dep, marketplace_id='MP-123')
+    dep_m2 = marketplace_config_factory(deployment=dep, marketplace_id='MP-124', ppr_id=ppr.id)
+    dep_m3 = marketplace_config_factory(deployment=dep, marketplace_id='MP-125', ppr_id=ppr.id)
+    marketplace_config_factory(deployment=dep, marketplace_id='MP-126')
+
+    # Mapping marketplaces Connect => CBC
+    #    "MP-123": "CO"
+    #    "MP-124": "AT"
+    #    "MP-125": "US"
+
+    dr_m1 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-123')
+    dr_m2 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-124')
+    dr_m3 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-126')
+
+    assert apply_ppr_and_delegate_to_marketplaces(dr, cbc_service, connect_client, dbsession)
+
+    dbsession.refresh(dr_m1)
+    dbsession.refresh(dr_m2)
+    dbsession.refresh(dr_m3)
+    dbsession.refresh(dep_m1)
+    dbsession.refresh(dep_m2)
+    dbsession.refresh(dep_m3)
+
+    assert dr_m1.ppr_id == ppr2.id
+    assert dr_m2.ppr_id == ppr2.id
+    assert dr_m3.ppr_id is None
+    assert dep_m1.ppr_id == ppr2.id
+    assert dep_m2.ppr_id == ppr2.id
+    assert dep_m3.ppr_id == ppr.id
+
+    assert get_config_from_media_mock.call_count == 1
+    assert get_ppr_from_media_mock.call_count == 1
+    assert create_dr_file_to_media_mock.call_count == 1
+    assert send_ppr_mock.call_count == 1
+    assert check_cbc_task_status_mock.call_count == 1
+
+    assert send_ppr_mock.call_args.args[0] == cbc_service
+    ppr_file_arg = send_ppr_mock.call_args.args[1]
+    assert isinstance(ppr_file_arg, BufferedReader)
+    assert check_excel_file_column_values(file_sent, 'OpUnitServicePlans', 'Published', [False] * 4)
+    assert check_excel_file_column_values(
+        file_sent, 'ServicePlans', 'Published', [False, True, False, True, True, True],
+    )
+    assert check_excel_file_column_values(
+        file_sent, 'ServicePlans', 'OpUnit_CO', [True, True, True, False, False, False],
+    )
+    assert check_excel_file_column_values(
+        file_sent, 'ServicePlans', 'OpUnit_AT', [True, True, True, False, False, False],
+    )
+    assert check_excel_file_column_values(
+        file_sent, 'ServicePlans', 'OpUnit_US', [False] * 6,
+    )
+
+
+@patch.object(CBCService, '__init__', return_value=None)
+def test_apply_ppr_and_delegate_to_marketplaces_config_file_not_found(
+    _,
+    dbsession,
+    deployment_request_factory,
+    deployment_factory,
+    marketplace_config_factory,
+    ppr_version_factory,
+    configuration_factory,
+    connect_client,
+    mocker,
+):
+    ppr_file_data = open('./tests/fixtures/test_PPR_apply_to_marketplaces.xlsx', 'rb').read()
+
+    assert not check_excel_file_column_values(
+        ppr_file_data, 'OpUnitServicePlans', 'Published', [False] * 4,
+    )
+
+    response = Response()
+    response.status_code = 404
+
+    mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_ppr_from_media',
+        return_value=ppr_file_data,
+    )
+    get_config_from_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_configuration_from_media',
+        side_effect=ClientError(response=response, message='Not found'),
+    )
+
+    cbc_service = CBCService()
+    dep = deployment_factory()
+    configuration_factory(deployment=dep.id)
+    ppr = ppr_version_factory(deployment=dep)
+    ppr2 = ppr_version_factory(deployment=dep)
+    dr = deployment_request_factory(deployment=dep, ppr=ppr2)
+
+    dep_m1 = marketplace_config_factory(deployment=dep, marketplace_id='MP-123')
+    dep_m2 = marketplace_config_factory(deployment=dep, marketplace_id='MP-124', ppr_id=ppr.id)
+    dep_m3 = marketplace_config_factory(deployment=dep, marketplace_id='MP-125', ppr_id=ppr.id)
+
+    dr_m1 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-123')
+    dr_m2 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-124')
+
+    with pytest.raises(TaskException):
+        apply_ppr_and_delegate_to_marketplaces(dr, cbc_service, connect_client, dbsession)
+
+    dbsession.refresh(dr_m1)
+    dbsession.refresh(dr_m2)
+    dbsession.refresh(dep_m1)
+    dbsession.refresh(dep_m2)
+    dbsession.refresh(dep_m3)
+
+    assert dr_m1.ppr_id is None
+    assert dr_m2.ppr_id is None
+    assert dep_m1.ppr_id is None
+    assert dep_m2.ppr_id == ppr.id
+    assert dep_m3.ppr_id == ppr.id
+
+    assert get_config_from_media_mock.call_count == 1
+
+
+@patch.object(CBCService, '__init__', return_value=None)
+def test_apply_ppr_and_delegate_to_marketplaces_ppr_file_not_found(
+    _,
+    dbsession,
+    deployment_request_factory,
+    deployment_factory,
+    marketplace_config_factory,
+    ppr_version_factory,
+    configuration_factory,
+    connect_client,
+    mocker,
+):
+    ppr_file_data = open('./tests/fixtures/test_PPR_apply_to_marketplaces.xlsx', 'rb').read()
+
+    assert not check_excel_file_column_values(
+        ppr_file_data, 'OpUnitServicePlans', 'Published', [False] * 4,
+    )
+
+    response = Response()
+    response.status_code = 404
+    get_ppr_from_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_ppr_from_media',
+        side_effect=ClientError(response=response, message='Not found'),
+    )
+
+    dep = deployment_factory()
+    configuration_factory(deployment=dep.id)
+    ppr = ppr_version_factory(deployment=dep)
+    ppr2 = ppr_version_factory(deployment=dep)
+    dr = deployment_request_factory(deployment=dep, ppr=ppr2)
+
+    dep_m1 = marketplace_config_factory(deployment=dep, marketplace_id='MP-123')
+    dep_m2 = marketplace_config_factory(deployment=dep, marketplace_id='MP-124', ppr_id=ppr.id)
+    dep_m3 = marketplace_config_factory(deployment=dep, marketplace_id='MP-125', ppr_id=ppr.id)
+
+    dr_m1 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-123')
+    dr_m2 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-124')
+
+    with pytest.raises(TaskException):
+        apply_ppr_and_delegate_to_marketplaces(dr, CBCService(), connect_client, dbsession)
+
+    dbsession.refresh(dr_m1)
+    dbsession.refresh(dr_m2)
+    dbsession.refresh(dep_m1)
+    dbsession.refresh(dep_m2)
+    dbsession.refresh(dep_m3)
+
+    assert dr_m1.ppr_id is None
+    assert dr_m2.ppr_id is None
+    assert dep_m1.ppr_id is None
+    assert dep_m2.ppr_id == ppr.id
+    assert dep_m3.ppr_id == ppr.id
+
+    assert get_ppr_from_media_mock.call_count == 1
+
+
+@patch.object(CBCService, '__init__', return_value=None)
+def test_apply_ppr_and_delegate_to_marketplaces_error_saving_ppr(
+    _,
+    dbsession,
+    deployment_request_factory,
+    deployment_factory,
+    marketplace_config_factory,
+    ppr_version_factory,
+    configuration_factory,
+    connect_client,
+    mocker,
+):
+    ppr_file_data = open('./tests/fixtures/test_PPR_apply_to_marketplaces.xlsx', 'rb').read()
+    ppr_config_file_data = json.load(open('./tests/fixtures/test_PPR_config_file.json'))
+
+    assert not check_excel_file_column_values(
+        ppr_file_data, 'OpUnitServicePlans', 'Published', [False] * 4,
+    )
+
+    get_config_from_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_configuration_from_media',
+        return_value=ppr_config_file_data,
+    )
+
+    get_ppr_from_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_ppr_from_media',
+        return_value=ppr_file_data,
+    )
+    response = Response()
+    response.status_code = 404
+    create_dr_file_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+        side_effect=ClientError(response=response, message='Error on create DR file'),
+    )
+
+    dep = deployment_factory()
+    configuration_factory(deployment=dep.id)
+    ppr = ppr_version_factory(deployment=dep)
+    ppr2 = ppr_version_factory(deployment=dep)
+    dr = deployment_request_factory(deployment=dep, ppr=ppr2)
+
+    dep_m1 = marketplace_config_factory(deployment=dep, marketplace_id='MP-123')
+    dep_m2 = marketplace_config_factory(deployment=dep, marketplace_id='MP-124', ppr_id=ppr.id)
+    dep_m3 = marketplace_config_factory(deployment=dep, marketplace_id='MP-125', ppr_id=ppr.id)
+
+    dr_m1 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-123')
+    dr_m2 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-124')
+
+    with pytest.raises(TaskException):
+        apply_ppr_and_delegate_to_marketplaces(dr, CBCService(), connect_client, dbsession)
+
+    dbsession.refresh(dr_m1)
+    dbsession.refresh(dr_m2)
+    dbsession.refresh(dep_m1)
+    dbsession.refresh(dep_m2)
+    dbsession.refresh(dep_m3)
+
+    assert dr_m1.ppr_id is None
+    assert dr_m2.ppr_id is None
+    assert dep_m1.ppr_id is None
+    assert dep_m2.ppr_id == ppr.id
+    assert dep_m3.ppr_id == ppr.id
+
+    assert get_config_from_media_mock.call_count == 1
+    assert get_ppr_from_media_mock.call_count == 1
+    assert create_dr_file_to_media_mock.call_count == 1
+
+
+@patch.object(CBCService, '__init__', return_value=None)
+def test_apply_ppr_and_delegate_to_marketplaces_error_sending_ppr(
+    _,
+    dbsession,
+    deployment_request_factory,
+    deployment_factory,
+    marketplace_config_factory,
+    ppr_version_factory,
+    configuration_factory,
+    connect_client,
+    mocker,
+):
+    ppr_file_data = open('./tests/fixtures/test_PPR_apply_to_marketplaces.xlsx', 'rb').read()
+    ppr_config_file_data = json.load(open('./tests/fixtures/test_PPR_config_file.json'))
+
+    assert not check_excel_file_column_values(
+        ppr_file_data, 'OpUnitServicePlans', 'Published', [False] * 4,
+    )
+
+    get_config_from_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_configuration_from_media',
+        return_value=ppr_config_file_data,
+    )
+
+    get_ppr_from_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.get_ppr_from_media',
+        return_value=ppr_file_data,
+    )
+
+    create_dr_file_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    )
+    send_ppr_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager._send_ppr',
+        side_effect=TaskException(),
+    )
+    dep = deployment_factory()
+    configuration_factory(deployment=dep.id)
+    ppr = ppr_version_factory(deployment=dep)
+    ppr2 = ppr_version_factory(deployment=dep)
+    dr = deployment_request_factory(deployment=dep, ppr=ppr2)
+
+    dep_m1 = marketplace_config_factory(deployment=dep, marketplace_id='MP-123')
+    dep_m2 = marketplace_config_factory(deployment=dep, marketplace_id='MP-124', ppr_id=ppr.id)
+    dep_m3 = marketplace_config_factory(deployment=dep, marketplace_id='MP-125', ppr_id=ppr.id)
+
+    dr_m1 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-123')
+    dr_m2 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-124')
+
+    with pytest.raises(TaskException):
+        apply_ppr_and_delegate_to_marketplaces(dr, CBCService(), connect_client, dbsession)
+
+    dbsession.refresh(dr_m1)
+    dbsession.refresh(dr_m2)
+    dbsession.refresh(dep_m1)
+    dbsession.refresh(dep_m2)
+    dbsession.refresh(dep_m3)
+
+    assert dr_m1.ppr_id is None
+    assert dr_m2.ppr_id is None
+    assert dep_m1.ppr_id is None
+    assert dep_m2.ppr_id == ppr.id
+    assert dep_m3.ppr_id == ppr.id
+
+    assert get_config_from_media_mock.call_count == 1
+    assert get_ppr_from_media_mock.call_count == 1
+    assert create_dr_file_to_media_mock.call_count == 1
+    assert send_ppr_mock.call_count == 1
 
 
 def test__send_ppr(parse_ppr_success_response, sample_ppr_file, mocker):
@@ -199,9 +714,11 @@ def test_delegate_to_l2(
     cbc_sevice = CBCService()
     ppr_file_data = open('./tests/fixtures/test_PPR_file_delegate_l2.xlsx', 'rb').read()
     assert not check_excel_file_column_values(
-        ppr_file_data, 'OpUnitServicePlans', 'Published', True,
+        ppr_file_data, 'OpUnitServicePlans', 'Published', [True] * 6,
     )
-    assert not check_excel_file_column_values(ppr_file_data, 'ServicePlans', 'Published', False)
+    assert not check_excel_file_column_values(
+        ppr_file_data, 'ServicePlans', 'Published', [False] * 6,
+    )
 
     file_sent = null
 
@@ -240,8 +757,8 @@ def test_delegate_to_l2(
     assert send_ppr_mock.call_args.args[0] == cbc_sevice
     ppr_file_arg = send_ppr_mock.call_args.args[1]
     assert isinstance(ppr_file_arg, BufferedReader)
-    assert check_excel_file_column_values(file_sent, 'OpUnitServicePlans', 'Published', True)
-    assert check_excel_file_column_values(file_sent, 'ServicePlans', 'Published', False)
+    assert check_excel_file_column_values(file_sent, 'OpUnitServicePlans', 'Published', [True] * 6)
+    assert check_excel_file_column_values(file_sent, 'ServicePlans', 'Published', [False] * 6)
 
 
 @patch.object(CBCService, '__init__')
@@ -477,7 +994,6 @@ def test_main_process_ends_w_error(
 
     def mock_get(key):
         return lambda **kwargs: key != type_function_to_mock
-
     my_mock.get = mock_get
 
     mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())

@@ -682,3 +682,73 @@ def execute_with_retry(function, exception_class, args=None, kwargs=None, num_re
         except exception_class:
             if num_retries == 0:
                 raise
+
+
+def get_mps_to_update_for_apply_ppr_and_delegate_to_marketplaces(
+    ppr_file_data,
+    config_json,
+    dr_marketplaces,
+):
+    """Gets list of marketplaces to update, using the DR, config and PPR file data
+
+    :param dr_marketplaces: list of DeploymentRequest models
+    :param config_json: dict with configuration data
+    :param ppr_file_data: body of PPR file
+    :rtype dict
+    """
+    wb = pd.ExcelFile(ppr_file_data)
+    ws = wb.parse('ServicePlans')
+
+    marketplace_mapping = config_json.get('marketplace_mapping', {})
+    cbc_marketplace_ids_dict = {}
+    for dr_marketplace in dr_marketplaces:
+        if cbc_marketplace_id := marketplace_mapping.get(dr_marketplace.marketplace):
+            cbc_marketplace_ids_dict[cbc_marketplace_id] = dr_marketplace.marketplace
+
+    cbc_mp_ids_found = set()
+    for col in ws.columns.tolist():
+        if col.startswith('OpUnit_'):
+            cbc_marketplace_id = col.split('_', 1)[1]
+            cbc_mp_ids_found.add(cbc_marketplace_id)
+
+    marketplaces_to_update_dict = {
+        cbc_marketplace_ids_dict[cbc_id]: f'OpUnit_{cbc_id}' for cbc_id in cbc_marketplace_ids_dict
+        if cbc_id in cbc_mp_ids_found
+    }
+    # {'MP-06811': 'OpUnit_DE', ...}
+    return marketplaces_to_update_dict
+
+
+def process_service_plans_for_apply_ppr_and_delegate_to_marketplaces(
+    ws,
+    columns_to_keep,
+):
+    """Fills with 'False' columns that are not used in current task
+
+    :param ws: PPR file worksheet
+    :param columns_to_keep: set of names of columns to keep
+    """
+    for col in ws.columns.tolist():
+        if col.startswith('OpUnit_') and col not in columns_to_keep:
+            ws[col] = 'FALSE'
+
+
+def process_ppr_file_for_apply_ppr_and_delegate_to_marketplaces(
+    sheet_name,
+    ws,
+    columns_to_keep,
+):
+    """Processes PPR file's sheet depending on it's name
+
+    :param sheet_name: name of current sheet of PPR file
+    :param ws: body of PPR file worksheet
+    :param columns_to_keep: set of names of columns to keep
+    """
+    if sheet_name == 'ServicePlans':
+        process_service_plans_for_apply_ppr_and_delegate_to_marketplaces(
+            ws,
+            columns_to_keep,
+        )
+
+    elif sheet_name == 'OpUnitServicePlans':
+        ws['Published'] = 'FALSE'
