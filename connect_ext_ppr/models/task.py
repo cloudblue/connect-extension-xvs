@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 
 from connect_ext_ppr.db import Model
 from connect_ext_ppr.models.enums import TasksStatusChoices, TaskTypesChoices
-from connect_ext_ppr.models.deployment import DeploymentRequest
+from connect_ext_ppr.models.deployment import DeploymentRequest, MarketplaceConfiguration
 from connect_ext_ppr.models.models_utils import transition
 
 
@@ -23,6 +23,7 @@ class Task(Model):
         default=STATUSES.pending,
     )
     deployment_request_id = db.Column(db.ForeignKey(DeploymentRequest.id))
+    marketplace_id = db.Column(db.ForeignKey(MarketplaceConfiguration.id), nullable=True)
     title = db.Column(db.String(100))
     error_message = db.Column(db.String(4000))
     type = db.Column(db.Enum(TaskTypesChoices, validate_strings=True))
@@ -35,6 +36,7 @@ class Task(Model):
     aborted_by = db.Column(db.String(20), nullable=True)
 
     deployment_request = relationship(DeploymentRequest, foreign_keys='Task.deployment_request_id')
+    marketplace = relationship(MarketplaceConfiguration, foreign_keys='Task.marketplace_id')
 
     @transition('status', target=STATUSES.aborted, sources=[STATUSES.pending])
     def abort(self, by):

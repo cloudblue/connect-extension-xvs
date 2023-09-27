@@ -38,10 +38,10 @@ def validate_dr_marketplaces(client, product_id, dr_marketplaces, dep_marketplac
             format_kwargs={'field': 'marketplace'},
         )
 
-    mp_configs = {mp.id: mp for mp in dr_marketplaces}
-    dep_ids = {mp.marketplace for mp in dep_marketplaces}
+    req_mp_configs = {mp.id: mp for mp in dr_marketplaces}
+    dep_mp_configs = {mp.marketplace: mp for mp in dep_marketplaces}
 
-    diff = list(mp_configs.keys() - dep_ids)
+    diff = list(req_mp_configs.keys() - dep_mp_configs.keys())
     if diff:
         diff.sort()
         raise ExtensionValidationError.VAL_002(
@@ -52,14 +52,14 @@ def validate_dr_marketplaces(client, product_id, dr_marketplaces, dep_marketplac
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    validate_pricelist_ids(client, product_id, mp_configs)
+    validate_pricelist_ids(client, product_id, req_mp_configs, dep_mp_configs)
 
 
-def validate_pricelist_ids(client, product_id, mp_configs):
+def validate_pricelist_ids(client, product_id, req_mp_configs, dep_mp_configs):
     rql_filters = []
     pricelist_ids = set()
-    for mp_id, config in mp_configs.items():
-        if config.pricelist:
+    for mp_id, config in req_mp_configs.items():
+        if config.pricelist and config.pricelist.id != dep_mp_configs[mp_id].pricelist_id:
             pricelist_ids.add(config.pricelist.id)
             rql_filters.append(
                 R().stream.context.marketplace.id.eq(mp_id)

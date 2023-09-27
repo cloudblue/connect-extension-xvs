@@ -5,6 +5,7 @@ import pytest
 
 from unittest.mock import patch
 
+from connect.client import ClientError
 from sqlalchemy import null
 
 from connect_ext_ppr.models.deployment import Deployment, DeploymentRequest
@@ -15,16 +16,18 @@ from connect_ext_ppr.models.enums import (
     TasksStatusChoices,
     TaskTypesChoices,
 )
-from connect_ext_ppr.client.exception import ClientError
+from connect_ext_ppr.client.exception import CBCClientError
 from connect_ext_ppr.models.task import Task
 from connect_ext_ppr.tasks_manager import (
     _check_cbc_task_status,
     _send_ppr,
     apply_ppr_and_delegate_to_marketplaces,
+    apply_pricelist_task,
     check_and_update_product,
     delegate_to_l2,
     main_process,
     TaskException,
+    validate_pricelists_task,
 )
 from connect_ext_ppr.services.cbc_hub import CBCService
 
@@ -44,7 +47,7 @@ def test__send_ppr(parse_ppr_success_response, sample_ppr_file, mocker):
 
 def test__send_ppr_max_retries(sample_ppr_file, mocker):
     cbc_service = mocker.Mock()
-    cbc_service.parse_ppr.side_effect = ClientError('Some random error')
+    cbc_service.parse_ppr.side_effect = CBCClientError('Some random error')
     with pytest.raises(TaskException) as ex:
         _send_ppr(cbc_service, sample_ppr_file)
         assert str(ex) == 'Some random error'
@@ -66,7 +69,7 @@ def test__check_cbc_task_status_with_max_retries(task_logs_response, mocker):
     not_started_log = copy.deepcopy(task_logs_response)
     not_started_log[0]['status'] = CBCTaskLogStatus.not_started
     cbc_service = mocker.Mock()
-    cbc_service.search_task_logs_by_name.side_effect = ClientError('Some random error')
+    cbc_service.search_task_logs_by_name.side_effect = CBCClientError('Some random error')
     with mocker.patch('connect_ext_ppr.tasks_manager.time.sleep', return_value=None):
         with pytest.raises(TaskException) as ex:
             _check_cbc_task_status(cbc_service, 100)
@@ -505,6 +508,27 @@ def test_main_process_ends_w_error(
     ).count() == pending_tasks
 
 
+def test_main_process_wo_hub_credentials(
+    deployment_factory,
+    deployment_request_factory,
+    ppr_version_factory,
+    task_factory,
+    connect_client,
+    mocker,
+):
+    dep = deployment_factory()
+    ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep, version=1)
+    dr = deployment_request_factory(deployment=dep, delegate_l2=True, ppr=ppr)
+    task = task_factory(
+        deployment_request=dr, task_index='0001', type=TaskTypesChoices.product_setup,
+    )
+    mocker.patch('connect_ext_ppr.client.utils.get_hub_credentials', return_value=None)
+    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.error
+
+    assert task.status == TasksStatusChoices.error
+    assert task.error_message == 'Hub Credentials not found for Hub ID HB-0000-0000.'
+
+
 @patch.object(CBCService, '__init__', return_value=None)
 @pytest.mark.parametrize(
     ('task_statuses', 'done_tasks', 'aborted_tasks'),
@@ -720,3 +744,212 @@ def test_main_process_ends_w_task_exception(
         Task.started_at.is_(null()),
         Task.finished_at.is_(null()),
     ).count() == pending_tasks
+
+
+def test_validate_pricelists_task_ok(
+    deployment_factory,
+    deployment_request_factory,
+    marketplace_config_factory,
+    mocker,
+):
+    validate_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.validate_pricelist_batch',
+    )
+
+    dep = deployment_factory()
+    dep_req = deployment_request_factory(deployment=dep)
+
+    marketplace_config_factory(
+        deployment=dep, marketplace_id='MP-1', pricelist_id='BAT-1',
+    )
+    marketplace_config_factory(
+        deployment=dep, marketplace_id='MP-2', pricelist_id=None,
+    )
+    marketplace_config_factory(
+        deployment=dep, marketplace_id='MP-3', pricelist_id='BAT-OLD',
+    )
+    marketplace_config_factory(
+        deployment=dep, marketplace_id='MP-4', pricelist_id=None,
+    )
+
+    # already applied. skip
+    marketplace_config_factory(
+        deployment_request=dep_req, marketplace_id='MP-1', pricelist_id='BAT-1',
+    )
+    # price list is not set. skip
+    marketplace_config_factory(
+        deployment_request=dep_req, marketplace_id='MP-2', pricelist_id=None,
+    )
+    marketplace_config_factory(
+        deployment_request=dep_req, marketplace_id='MP-3', pricelist_id='BAT-3',
+    )
+    marketplace_config_factory(
+        deployment_request=dep_req, marketplace_id='MP-4', pricelist_id='BAT-4',
+    )
+
+    validate_pricelists_task(dep_req, mocker.MagicMock())
+
+    assert validate_mock.call_count == 2
+    assert {
+        validate_mock.call_args_list[0][0][1],
+        validate_mock.call_args_list[1][0][1],
+    } == {'BAT-3', 'BAT-4'}
+
+
+def test_validate_pricelists_task_validation_failed(
+    deployment_factory,
+    deployment_request_factory,
+    marketplace_config_factory,
+    mocker,
+):
+    validate_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.validate_pricelist_batch',
+        side_effect=ClientError(message='Not valid.', status_code='VAL-001'),
+    )
+
+    dep = deployment_factory()
+    dep_req = deployment_request_factory(deployment=dep)
+
+    marketplace_config_factory(
+        deployment=dep, marketplace_id='MP-3', pricelist_id='BAT-OLD',
+    )
+    marketplace_config_factory(
+        deployment=dep, marketplace_id='MP-4', pricelist_id=None,
+    )
+
+    marketplace_config_factory(
+        deployment_request=dep_req, marketplace_id='MP-3', pricelist_id='BAT-3',
+    )
+    marketplace_config_factory(
+        deployment_request=dep_req, marketplace_id='MP-4', pricelist_id='BAT-4',
+    )
+
+    with pytest.raises(TaskException) as e:
+        validate_pricelists_task(dep_req, mocker.MagicMock())
+
+    assert str(e.value) == (
+        'Price list BAT-3 of marketplace MP-3 validation failed: Not valid.'
+    )
+
+    assert validate_mock.call_count == 1
+
+
+def test_apply_pricelist_task_ok(
+    deployment_factory,
+    deployment_request_factory,
+    marketplace_config_factory,
+    mocker,
+    dbsession,
+):
+    apply_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.apply_pricelist_to_marketplace',
+    )
+
+    dep = deployment_factory()
+    dep_req = deployment_request_factory(deployment=dep)
+
+    dep_mp = marketplace_config_factory(
+        deployment=dep, marketplace_id='MP-1', pricelist_id='BAT-0',
+    )
+    req_mp = marketplace_config_factory(
+        deployment_request=dep_req, marketplace_id='MP-1', pricelist_id='BAT-1',
+    )
+
+    cbc_service = mocker.MagicMock()
+    connect_client = mocker.MagicMock()
+
+    apply_pricelist_task(
+        dep_req,
+        cbc_service,
+        connect_client,
+        req_mp,
+        dbsession,
+    )
+
+    assert apply_mock.called_once_with(
+        dep_req,
+        cbc_service,
+        connect_client,
+        req_mp,
+    )
+
+    dbsession.refresh(dep_mp)
+
+    assert dep_mp.pricelist_id == req_mp.pricelist_id
+
+
+def test_apply_pricelist_task_ok_manual(
+    deployment_factory,
+    deployment_request_factory,
+    marketplace_config_factory,
+    mocker,
+    dbsession,
+):
+    apply_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.apply_pricelist_to_marketplace',
+    )
+
+    dep = deployment_factory()
+    dep_req = deployment_request_factory(deployment=dep, manually=True)
+
+    dep_mp = marketplace_config_factory(
+        deployment=dep, marketplace_id='MP-1', pricelist_id='BAT-0',
+    )
+    req_mp = marketplace_config_factory(
+        deployment_request=dep_req, marketplace_id='MP-1', pricelist_id='BAT-1',
+    )
+
+    cbc_service = mocker.MagicMock()
+    connect_client = mocker.MagicMock()
+
+    apply_pricelist_task(
+        dep_req,
+        cbc_service,
+        connect_client,
+        req_mp,
+        dbsession,
+    )
+
+    assert apply_mock.call_count == 0
+    assert dep_mp.pricelist_id == req_mp.pricelist_id
+
+
+def test_apply_pricelist_task_error(
+    deployment_factory,
+    deployment_request_factory,
+    marketplace_config_factory,
+    mocker,
+    dbsession,
+):
+    mocker.patch(
+        'connect_ext_ppr.tasks_manager.apply_pricelist_to_marketplace',
+        side_effect=ClientError(
+            message='olala',
+            status_code='VAL-1',
+        ),
+    )
+
+    dep = deployment_factory()
+    dep_req = deployment_request_factory(deployment=dep)
+
+    dep_mp = marketplace_config_factory(
+        deployment=dep, marketplace_id='MP-1', pricelist_id='BAT-0',
+    )
+    req_mp = marketplace_config_factory(
+        deployment_request=dep_req, marketplace_id='MP-1', pricelist_id='BAT-1',
+    )
+
+    cbc_service = mocker.MagicMock()
+    connect_client = mocker.MagicMock()
+
+    with pytest.raises(TaskException) as e:
+        apply_pricelist_task(
+            dep_req,
+            cbc_service,
+            connect_client,
+            req_mp,
+            dbsession,
+        )
+
+    assert str(e.value) == 'Error while processing pricelist: olala'
+    assert dep_mp.pricelist_id == 'BAT-0'

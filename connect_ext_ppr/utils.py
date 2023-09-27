@@ -660,3 +660,25 @@ def process_ppr_file_for_delelegate_l2(sheet_name, ws):
         ws['Published'] = 'TRUE'
     elif sheet_name == 'ServicePlans':
         ws['Published'] = 'FALSE'
+
+
+def execute_with_retry(function, exception_class, args=None, kwargs=None, num_retries=5):
+    """
+    @param function: reference to function to execute
+    @param exception_class: retry the function call if this exception occurred
+    @param args: list with function's arguments
+    @param kwargs: dict function's named arguments
+    @param num_retries: Max amount of retries
+
+    @return function return value
+    """
+    while num_retries > 0:
+        try:
+            num_retries -= 1
+            return function(
+                *(args or []),
+                **(kwargs or {}),
+            )
+        except exception_class:
+            if num_retries == 0:
+                raise

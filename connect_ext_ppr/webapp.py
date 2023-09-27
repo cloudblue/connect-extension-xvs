@@ -4,7 +4,7 @@
 # All rights reserved.
 #
 from concurrent.futures import ThreadPoolExecutor
-from logging import Logger, LoggerAdapter
+from logging import Logger
 from typing import List
 
 from connect.client import ConnectClient
@@ -22,16 +22,13 @@ from connect.eaas.core.inject.synchronous import (
 )
 from connect.eaas.core.extension import WebApplicationBase
 from fastapi import Depends, Request, Response, status
-from fastapi.responses import JSONResponse
 from fastapi_filter import FilterDepends
 from sqlalchemy import desc, exists
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import joinedload, selectinload, Session
+from sqlalchemy.orm import joinedload, selectinload
 
-from connect_ext_ppr.client.exception import ClientError
 from connect_ext_ppr.db import (
     create_db,
-    get_cbc_extension_db,
     get_config,
     get_db,
     VerboseBaseSession,
@@ -62,7 +59,6 @@ from connect_ext_ppr.service import (
     validate_configuration,
 )
 from connect_ext_ppr.schemas import (
-    BatchProcessResponseSchema,
     BatchSchema,
     ConfigurationCreateSchema,
     ConfigurationSchema,
@@ -76,13 +72,7 @@ from connect_ext_ppr.schemas import (
     ProductSchema,
     TaskSchema,
 )
-from connect_ext_ppr.services.pricing import (
-    fetch_and_validate_batch,
-    identify_marketplaces,
-    identify_reseller_id,
-    prepare_file,
-    process_batch,
-)
+from connect_ext_ppr.services.pricing import identify_marketplaces
 from connect_ext_ppr.tasks_manager import main_process
 from connect_ext_ppr.utils import (
     _get_extension_client,
@@ -797,46 +787,6 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         ).select('+stream.context'))
 
         return [BatchSchema(**b) for b in batches]
-
-    @router.post(
-        '/deployments/{deployment_id}/pricing/batches/{batch_id}/process',
-        summary='Process Pricing Batch for Deployment',
-        response_model=BatchProcessResponseSchema,
-    )
-    def process_pricing_batch(
-        self,
-        deployment_id: str,
-        batch_id: str,
-        client: ConnectClient = Depends(get_installation_client),
-        db: VerboseBaseSession = Depends(get_db),
-        cbc_db: Session = Depends(get_cbc_extension_db),
-        installation: dict = Depends(get_installation),
-        logger: LoggerAdapter = Depends(get_logger),
-    ):
-        try:
-            deployment = get_deployment_by_id(deployment_id, db, installation)
-            batch = fetch_and_validate_batch(client, batch_id, deployment)
-            reseller_id = identify_reseller_id(client, batch, deployment)
-            file_name, dataset = prepare_file(client, batch_id)
-
-            data_id = process_batch(
-                cbc_db,
-                file_name,
-                reseller_id,
-                deployment,
-                dataset,
-            )
-
-            response = BatchProcessResponseSchema(
-                task_info=f'/flat-catalog/price-import-wizard/{data_id}/set-prices',
-            )
-            return JSONResponse(
-                status_code=202,
-                content=response.dict(),
-            )
-        except ClientError as e:
-            logger.exception(f'Error while uploading price file for {batch_id}')
-            return JSONResponse(status_code=400, content=e.json if e.json else {})
 
     @classmethod
     def on_startup(cls, logger, config):

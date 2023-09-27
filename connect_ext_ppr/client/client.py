@@ -10,7 +10,7 @@ from requests import (
 from requests_oauthlib import OAuth1
 
 from connect_ext_ppr.client.auth import APSTokenAuth
-from connect_ext_ppr.client.exception import ClientError
+from connect_ext_ppr.client.exception import CBCClientError
 from connect_ext_ppr.client.ns import (
     Collection,
     Resource,
@@ -88,13 +88,13 @@ class CBCClient:
 
             except Exception as e:
                 if response is not None:
-                    raise ClientError(
+                    raise CBCClientError(
                         message=f'{type(e).__name__} : {str(e)}',
                         response=response,
                         cause=e,
                     )
                 else:
-                    raise ClientError(
+                    raise CBCClientError(
                         message=f'{type(e).__name__} : {str(e)}',
                         cause=e,
                     )

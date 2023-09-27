@@ -220,7 +220,7 @@ def get_cbc_extension_db(engine: Engine = Depends(get_cbc_extension_db_engine)):
     )
     db: Session = SessionMaker(bind=engine)
     try:
-        yield db
+        return db
     finally:
         db.close()
 

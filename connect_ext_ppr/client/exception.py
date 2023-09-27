@@ -3,7 +3,7 @@ from json import JSONDecodeError
 from requests import Response
 
 
-class ClientError(RuntimeError):
+class CBCClientError(RuntimeError):
     def __init__(
             self,
             message: str,
