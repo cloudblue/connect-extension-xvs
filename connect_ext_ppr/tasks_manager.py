@@ -6,8 +6,9 @@ from connect.client import ClientError
 from sqlalchemy.orm import joinedload, selectinload
 
 from connect_ext_ppr.client.exception import CBCClientError
-from connect_ext_ppr.constants import PPR_FILE_NAME_DELEGATION_L2
+from connect_ext_ppr.constants import PPR_FILE_NAME_DELEGATION_L2, PPR_FILE_NAME_UPDATE_MARKETPLACES
 from connect_ext_ppr.db import get_cbc_extension_db, get_cbc_extension_db_engine, get_db_ctx_manager
+from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.enums import CBCTaskLogStatus
 from connect_ext_ppr.models.enums import (
     DeploymentRequestStatusChoices,
@@ -27,8 +28,11 @@ from connect_ext_ppr.utils import (
     create_dr_file_to_media,
     execute_with_retry,
     get_base_workbook,
+    get_configuration_from_media,
     get_file_size,
+    get_mps_to_update_for_apply_ppr_and_delegate_to_marketplaces,
     get_ppr_from_media,
+    process_ppr_file_for_apply_ppr_and_delegate_to_marketplaces,
     process_ppr_file_for_delelegate_l2,
 )
 
@@ -106,14 +110,27 @@ def prepare_ppr_file_for_task(
     deployment_request,
     deployment,
     process_func,
+    **process_args,
 ):
+    """Process PPR file and save a processed copy to Media before tasks: delegate to l2,
+    apply to marketplaces.
+
+    :param connect_client: Connect client
+    :param file_data: Body of PPR file
+    :param file_name_template: Template to create file name in Media
+    :param deployment_request: DeploymentRequest model
+    :param deployment: Deployment model
+    :param process_func: function, that will be applied to the file
+    :rtype bool
+    :raises TaskException
+    """
     file, writer, wb = get_base_workbook(file_data)
 
     try:
         ws_list = []
         for sheet_name in wb.sheet_names:
             ws = wb.parse(sheet_name)
-            process_func(sheet_name, ws)
+            process_func(sheet_name, ws, **process_args)
             ws.name = sheet_name
             ws_list.append(ws)
 
@@ -142,6 +159,8 @@ def prepare_ppr_file_for_task(
 
     except (FileNotFoundError, ValueError, KeyError) as e:
         raise TaskException(f'Error while processing PPR file: {e}')
+    except ClientError as e:
+        raise TaskException(f'Error while connecting to Connect: {e.message}')
 
 
 def check_and_update_product(deployment_request, cbc_service, **kwargs):
@@ -167,7 +186,84 @@ def check_and_update_product(deployment_request, cbc_service, **kwargs):
     return True
 
 
-def apply_ppr_and_delegate_to_marketplaces(deployment_request, **kwargs):
+def apply_ppr_and_delegate_to_marketplaces(
+    deployment_request,
+    cbc_service,
+    connect_client,
+    db,
+    **kwargs,
+):
+    """Task sends PPR to the Commerce and updates marketplaces in DB
+
+    :param deployment_request: DeploymentRequest model
+    :param cbc_service: CBC service
+    :param connect_client: Connect client
+    :param db: dbsession
+    :rtype bool
+    :raises TaskException
+    """
+    dr_marketplaces = db.query(MarketplaceConfiguration).filter_by(
+        active=True,
+        deployment_request_id=deployment_request.id,
+    ).all()
+    dep_marketplaces = db.query(MarketplaceConfiguration).filter_by(
+        active=True,
+        deployment_id=deployment_request.deployment_id,
+    ).filter(
+        MarketplaceConfiguration.marketplace.in_([m.marketplace for m in dr_marketplaces]),
+    ).all()
+    marketplaces_to_update_dict = {m.marketplace: None for m in dr_marketplaces}
+
+    if not deployment_request.manually:
+        ppr_file_id = deployment_request.ppr.file
+        deployment = deployment_request.deployment
+        configuration = (
+            db.query(Configuration)
+            .filter_by(
+                deployment=deployment.id,
+                state=Configuration.STATE.active,
+            )
+            .one_or_none()
+        )
+        try:
+            file_data = get_ppr_from_media(
+                connect_client,
+                deployment.account_id,
+                deployment.id,
+                ppr_file_id,
+            )
+            config_json = get_configuration_from_media(
+                connect_client, deployment.account_id, deployment.id, configuration.file,
+            )
+        except ClientError as e:
+            raise TaskException(f'Error while connecting to Connect: {e.message}')
+
+        marketplaces_to_update_dict = get_mps_to_update_for_apply_ppr_and_delegate_to_marketplaces(
+            ppr_file_data=file_data,
+            config_json=config_json,
+            dr_marketplaces=dr_marketplaces,
+        )
+
+        file = prepare_ppr_file_for_task(
+            connect_client=connect_client,
+            file_data=file_data,
+            file_name_template=PPR_FILE_NAME_UPDATE_MARKETPLACES,
+            deployment_request=deployment_request,
+            deployment=deployment,
+            process_func=process_ppr_file_for_apply_ppr_and_delegate_to_marketplaces,
+            columns_to_keep=marketplaces_to_update_dict.values(),
+        )
+
+        tracking_id = _send_ppr(cbc_service, file)
+        file.close()
+        _check_cbc_task_status(cbc_service, tracking_id)
+
+    for marketplace in dr_marketplaces + dep_marketplaces:
+        if marketplace.marketplace in marketplaces_to_update_dict:
+            marketplace.ppr_id = deployment_request.ppr_id
+            db.add(marketplace)
+
+    db.commit()
     return True
 
 
@@ -248,17 +344,28 @@ def validate_pricelists_task(
 
 
 def delegate_to_l2(deployment_request, cbc_service, connect_client, **kwargs):
+    """Task delegates PPR to L2 in Commerce
+
+    :param deployment_request: DeploymentRequest model
+    :param cbc_service: CBC service
+    :param connect_client: Connect client
+    :rtype bool
+    :raises TaskException
+    """
     if deployment_request.manually:
         return True
 
     ppr_file_id = deployment_request.ppr.file
     deployment = deployment_request.deployment
-    file_data = get_ppr_from_media(
-        connect_client,
-        deployment.account_id,
-        deployment.id,
-        ppr_file_id,
-    )
+    try:
+        file_data = get_ppr_from_media(
+            connect_client,
+            deployment.account_id,
+            deployment.id,
+            ppr_file_id,
+        )
+    except ClientError as e:
+        raise TaskException(f'Error while connecting to Connect: {e.message}')
 
     file = prepare_ppr_file_for_task(
         connect_client=connect_client,
