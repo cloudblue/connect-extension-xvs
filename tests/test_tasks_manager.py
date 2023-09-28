@@ -855,6 +855,7 @@ def test_main_process(
     mock_tasks,
     mocker,
     product_details,
+    logger,
 ):
     mock_get_product_details.return_value = product_details
     dep = deployment_factory()
@@ -865,7 +866,7 @@ def test_main_process(
     task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
 
     mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
-    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.done
+    assert main_process(dr.id, {}, connect_client, logger) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(status=DeploymentStatusChoices.synced).count() == 1
     assert dbsession.query(DeploymentRequest).filter_by(
@@ -892,6 +893,7 @@ def test_main_process_wo_l2_delegation(
     mock_tasks,
     mocker,
     product_details,
+    logger,
 ):
     mock_get_product_details.return_value = product_details
     dep = deployment_factory()
@@ -901,7 +903,7 @@ def test_main_process_wo_l2_delegation(
     task_factory(deployment_request=dr, task_index='0002', type=TaskTypesChoices.apply_and_delegate)
 
     mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
-    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.done
+    assert main_process(dr.id, {}, connect_client, logger) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -931,6 +933,7 @@ def test_main_process_deployment_w_new_ppr_version(
     mock_tasks,
     mocker,
     product_details,
+    logger,
 ):
     mock_get_product_details.return_value = product_details
     ppr_file = file_factory(id='MFL-123')
@@ -944,7 +947,7 @@ def test_main_process_deployment_w_new_ppr_version(
     task_factory(deployment_request=dr, task_index='0003', type=TaskTypesChoices.delegate_to_l2)
 
     mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
-    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.done
+    assert main_process(dr.id, {}, connect_client, logger) == DeploymentRequestStatusChoices.done
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -981,7 +984,7 @@ def test_main_process_ends_w_error(
     task_factory,
     ppr_version_factory,
     connect_client,
-    mock_tasks,
+    logger,
 ):
     dep = deployment_factory()
     ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep, version=1)
@@ -993,12 +996,13 @@ def test_main_process_ends_w_error(
     my_mock = mocker.Mock()
 
     def mock_get(key):
+        print(key, ' :', key != type_function_to_mock)
         return lambda **kwargs: key != type_function_to_mock
     my_mock.get = mock_get
 
     mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
     mocker.patch('connect_ext_ppr.tasks_manager.TASK_PER_TYPE', my_mock)
-    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.error
+    assert main_process(dr.id, {}, connect_client, logger) == DeploymentRequestStatusChoices.error
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -1031,6 +1035,7 @@ def test_main_process_wo_hub_credentials(
     task_factory,
     connect_client,
     mocker,
+    logger,
 ):
     dep = deployment_factory()
     ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep, version=1)
@@ -1039,7 +1044,7 @@ def test_main_process_wo_hub_credentials(
         deployment_request=dr, task_index='0001', type=TaskTypesChoices.product_setup,
     )
     mocker.patch('connect_ext_ppr.client.utils.get_hub_credentials', return_value=None)
-    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.error
+    assert main_process(dr.id, {}, connect_client, logger) == DeploymentRequestStatusChoices.error
 
     assert task.status == TasksStatusChoices.error
     assert task.error_message == 'Hub Credentials not found for Hub ID HB-0000-0000.'
@@ -1079,6 +1084,7 @@ def test_main_process_w_aborted_tasks(
     connect_client,
     mock_tasks,
     mocker,
+    logger,
 ):
     """
         We only process DeploymentRequest that are in Pending status. So in this case we asume that
@@ -1120,7 +1126,7 @@ def test_main_process_w_aborted_tasks(
     dbsession.refresh = change_dr_status
     mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
 
-    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.aborted
+    assert main_process(dr.id, {}, connect_client, logger) == DeploymentRequestStatusChoices.aborted
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -1147,6 +1153,7 @@ def test_main_process_w_aborted_deployment_request(
     ppr_version_factory,
     connect_client,
     mock_tasks,
+    logger,
 ):
     """
         We only process DeploymentRequest that are in Pending status. So in this case we asume that
@@ -1180,7 +1187,7 @@ def test_main_process_w_aborted_deployment_request(
         status=TasksStatusChoices.aborted,
     )
 
-    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.aborted
+    assert main_process(dr.id, {}, connect_client, logger) == DeploymentRequestStatusChoices.aborted
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
@@ -1216,7 +1223,7 @@ def test_main_process_ends_w_task_exception(
     task_factory,
     ppr_version_factory,
     connect_client,
-    mock_tasks,
+    logger,
 ):
     dep = deployment_factory()
     ppr = ppr_version_factory(id='PPR-123', product_version=1, deployment=dep, version=1)
@@ -1236,7 +1243,7 @@ def test_main_process_ends_w_task_exception(
 
     mocker.patch('connect_ext_ppr.tasks_manager.TASK_PER_TYPE', my_mock)
     mocker.patch('connect_ext_ppr.tasks_manager._get_cbc_service', return_value=CBCService())
-    assert main_process(dr.id, {}, connect_client) == DeploymentRequestStatusChoices.error
+    assert main_process(dr.id, {}, connect_client, logger) == DeploymentRequestStatusChoices.error
 
     assert dbsession.query(Deployment).filter_by(
         status=DeploymentStatusChoices.pending,
