@@ -209,6 +209,9 @@ def apply_ppr_and_delegate_to_marketplaces(
     :rtype bool
     :raises TaskException
     """
+
+    return True
+
     dr_marketplaces = db.query(MarketplaceConfiguration).filter_by(
         active=True,
         deployment_request_id=deployment_request.id,
@@ -437,7 +440,7 @@ def execute_tasks(db, config, tasks, connect_client, logger):
                 was_succesfull = False
                 task.error_message = str(ex)[:4000]
             except Exception as ex:
-                logger.error(f'Task ID: {task.id} - {ex}')
+                logger.exception(f'Task ID: {task.id} - {ex}')
                 was_succesfull = False
                 task.error_message = 'Something went wrong.'
 
@@ -482,7 +485,7 @@ def main_process(deployment_request_id, config, connect_client, logger):
             was_succesfull = execute_tasks(db, config, tasks, connect_client, logger)
         except Exception as ex:
             was_succesfull = False
-            logger.error(f'DeploymentRequest ID: {deployment_request_id} - {ex}')
+            logger.exception(f'DeploymentRequest ID: {deployment_request_id} - {ex}')
 
         db.refresh(deployment_request, with_for_update=True)
 
