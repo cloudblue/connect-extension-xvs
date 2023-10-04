@@ -328,6 +328,7 @@ def apply_pricelist_task(
     connect_client,
     marketplace,
     db,
+    logger,
     **kwargs,
 ):
     """ Applies a price list for a sinle marketplace
@@ -337,6 +338,7 @@ def apply_pricelist_task(
     @param Client connect_client:
     @param MarketplaceConfiguration marketplace:
     @param Session db:
+    @param Logger logger:
 
     @returns bool
     @raises TaskException
@@ -348,6 +350,7 @@ def apply_pricelist_task(
                 cbc_service,
                 connect_client,
                 marketplace,
+                logger,
             )
         except (ClientError, CBCClientError) as e:
             raise TaskException(f'Error while processing pricelist: {e}')

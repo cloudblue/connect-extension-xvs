@@ -304,7 +304,7 @@ def create_ppr(ppr, user_id, deployment, db, client, logger):
         return new_ppr, file_instance, active_configuration
 
     except DBAPIError as ex:
-        logger.error(ex)
+        logger.exception(ex)
         db.rollback()
         raise ExtensionHttpError.EXT_003()
 
@@ -390,7 +390,7 @@ def add_new_deployment_request(db, dr_data, deployment, account_id, logger):
         db.commit()
         return deployment_request
     except DBAPIError as ex:
-        logger.error(ex)
+        logger.exception(ex)
         db.rollback()
         raise ExtensionHttpError.EXT_003()
 
