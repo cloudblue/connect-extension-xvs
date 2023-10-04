@@ -1296,6 +1296,7 @@ def test_abort_deployment_request_not_allow(
 
 
 def test_retry_deployment_request_ok(
+    dbsession,
     mocker,
     deployment_factory,
     deployment_request_factory,
@@ -1326,7 +1327,7 @@ def test_retry_deployment_request_ok(
         started_at=started_at,
         finished_at=finished_at,
     )
-    task_factory(
+    t1 = task_factory(
         deployment_request=dr1,
         status='error',
         error_message='An Error!.',
@@ -1334,7 +1335,7 @@ def test_retry_deployment_request_ok(
         started_at=started_at,
         finished_at=finished_at,
     )
-    task_factory(
+    t2 = task_factory(
         deployment_request=dr1,
         task_index='002',
         status='error',
@@ -1379,6 +1380,11 @@ def test_retry_deployment_request_ok(
     assert list(events.keys()) == ['created']
     assert list(events['created'].keys()) == ['at', 'by']
 
+    dbsession.refresh(t1)
+    dbsession.refresh(t2)
+    assert t1.error_message == ''
+    assert t2.error_message == ''
+
 
 def test_retry_deployment_request_not_allow(
     deployment_factory,
@@ -1417,8 +1423,6 @@ def test_retry_deployment_request_not_allow(
 
 
 def test_retry_deployment_request_w_newer_requests_fails(
-    dbsession,
-    mocker,
     deployment_factory,
     deployment_request_factory,
     installation,
