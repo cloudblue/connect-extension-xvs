@@ -45,5 +45,6 @@ class Task(Model):
 
     @transition('status', target=STATUSES.pending, sources=[STATUSES.error])
     def retry(self):
+        self.error_message = ''
         self.started_at = None
         self.finished_at = None
