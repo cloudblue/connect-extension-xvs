@@ -1,3 +1,4 @@
+import time
 from collections import defaultdict
 from functools import partial
 from io import BytesIO
@@ -18,6 +19,7 @@ import pandas as pd
 from connect_ext_ppr.constants import (
     BASE_SCHEMA,
     CONFIGURATION_SCHEMA_TEMPLATE,
+    DELAY_SECONDS_BETWEEN_TASKS,
     PPR_SCHEMA,
     SUMMARY_TEMPLATE,
 )
@@ -682,6 +684,7 @@ def execute_with_retry(function, exception_class, args=None, kwargs=None, num_re
         except exception_class:
             if num_retries == 0:
                 raise
+            time.sleep(DELAY_SECONDS_BETWEEN_TASKS)
 
 
 def get_mps_to_update_for_apply_ppr_and_delegate_to_marketplaces(

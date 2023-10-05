@@ -6,7 +6,11 @@ from connect.client import ClientError
 from sqlalchemy.orm import joinedload, selectinload
 
 from connect_ext_ppr.client.exception import CBCClientError
-from connect_ext_ppr.constants import PPR_FILE_NAME_DELEGATION_L2, PPR_FILE_NAME_UPDATE_MARKETPLACES
+from connect_ext_ppr.constants import (
+    DELAY_SECONDS_BETWEEN_TASKS,
+    PPR_FILE_NAME_DELEGATION_L2,
+    PPR_FILE_NAME_UPDATE_MARKETPLACES,
+)
 from connect_ext_ppr.db import get_cbc_extension_db, get_cbc_extension_db_engine, get_db_ctx_manager
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.enums import (
@@ -65,7 +69,10 @@ def _execute_with_retries(function, func_kwargs, num_retries=5):
             num_retries=num_retries,
         )
     except CBCClientError as ex:
-        raise TaskException(str(ex))
+        message = ex.message
+        if ex.json:
+            message += f' - {ex.json.get("message")}'
+        raise TaskException(message)
 
 
 def _send_ppr(cbc_service, file: BufferedReader):
@@ -89,11 +96,11 @@ def _check_cbc_task_status(cbc_service, tracking_id):
     task_log = _execute_with_retries(
         cbc_service.search_task_logs_by_name, func_kwargs={'partial_name': tracking_id},
     )
-    # Setting this first default value in case takes time to create it in extenal system.
+    # Setting this first default value in case takes time to create it in external system.
     task_log = task_log[0] if task_log else {'status': CBCTaskLogStatus.not_started}
 
     while task_log['status'] in (CBCTaskLogStatus.not_started, CBCTaskLogStatus.running):
-        time.sleep(10)
+        time.sleep(DELAY_SECONDS_BETWEEN_TASKS)
         task_log = _execute_with_retries(
             cbc_service.search_task_logs_by_name, {'partial_name': tracking_id})[0]
 
@@ -153,8 +160,6 @@ def prepare_ppr_file_for_task(
             file_obj.read(),
             file_size,
         )
-
-        file_obj.seek(0)
         return file_obj
 
     except (FileNotFoundError, ValueError, KeyError) as e:
@@ -191,6 +196,7 @@ def apply_ppr_and_delegate_to_marketplaces(
     cbc_service,
     connect_client,
     db,
+    logger,
     **kwargs,
 ):
     """Task sends PPR to the Commerce and updates marketplaces in DB
@@ -199,6 +205,7 @@ def apply_ppr_and_delegate_to_marketplaces(
     :param cbc_service: CBC service
     :param connect_client: Connect client
     :param db: dbsession
+    :param logger: logger
     :rtype bool
     :raises TaskException
     """
@@ -255,6 +262,10 @@ def apply_ppr_and_delegate_to_marketplaces(
         )
 
         tracking_id = _send_ppr(cbc_service, file)
+        logger.debug(
+            f'apply_ppr_and_delegate_to_marketplaces dr_id: {deployment_request.id},'
+            f' tracking_id: {tracking_id}',
+        )
         file.close()
         _check_cbc_task_status(cbc_service, tracking_id)
 
@@ -343,12 +354,13 @@ def validate_pricelists_task(
     return True
 
 
-def delegate_to_l2(deployment_request, cbc_service, connect_client, **kwargs):
+def delegate_to_l2(deployment_request, cbc_service, connect_client, logger, **kwargs):
     """Task delegates PPR to L2 in Commerce
 
     :param deployment_request: DeploymentRequest model
     :param cbc_service: CBC service
     :param connect_client: Connect client
+    :param logger: logger
     :rtype bool
     :raises TaskException
     """
@@ -377,8 +389,10 @@ def delegate_to_l2(deployment_request, cbc_service, connect_client, **kwargs):
     )
 
     tracking_id = _send_ppr(cbc_service, file)
+    logger.debug(f'delegate_to_l2 dr_id: {deployment_request.id}, tracking_id: {tracking_id}')
     file.close()
-    return _check_cbc_task_status(cbc_service, tracking_id)
+    _check_cbc_task_status(cbc_service, tracking_id)
+    return True
 
 
 TASK_PER_TYPE = {
@@ -414,10 +428,12 @@ def execute_tasks(db, config, tasks, connect_client, logger):
                     connect_client=connect_client,
                     marketplace=task.marketplace,
                     db=db,
+                    logger=logger,
                 )
                 task.status = TasksStatusChoices.done
 
             except TaskException as ex:
+                logger.error(f'Task ID: {task.id} - {ex}')
                 was_succesfull = False
                 task.error_message = str(ex)[:4000]
             except Exception as ex:

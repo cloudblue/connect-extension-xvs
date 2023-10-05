@@ -345,7 +345,7 @@ def add_new_deployment_request(db, dr_data, deployment, account_id, logger):
         ))
         tasks.append(Task(
             deployment_request_id=deployment_request.id,
-            title='Apply PP and delegate to marketplaces',
+            title='Apply PPR and delegate to marketplaces',
             type=Task.TYPES.apply_and_delegate,
             created_by=account_id,
         ))

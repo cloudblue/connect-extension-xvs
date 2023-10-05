@@ -142,6 +142,7 @@ class CBCService:
         )
 
     def parse_ppr(self, file: BufferedReader):
+        file.seek(0)
         base64_content = base64.b64encode(file.read()).decode('ascii')
 
         return self.plm_service.action(
@@ -175,9 +176,9 @@ class CBCService:
 
     def parse_price_file(
         self,
-            account_id: int,
-            vendor_id: str,
-            file: BufferedReader,
+        account_id: int,
+        vendor_id: str,
+        file: BufferedReader,
     ) -> Dict:
         """
 
