@@ -110,6 +110,29 @@ def _check_cbc_task_status(cbc_service, tracking_id):
     raise TaskException(f'Something went wrong with task: {tracking_id}')
 
 
+def check_and_update_product(deployment_request, cbc_service, **kwargs):
+    if not deployment_request.manually:
+
+        product_id = deployment_request.deployment.product_id
+
+        response = _execute_with_retries(
+            cbc_service.get_product_details, func_kwargs={'product_id': product_id},
+        )
+
+        if 'error' in response.keys():
+            raise Exception(response['error'])
+
+        if response.get('isUpdateAvailable'):
+            response = _execute_with_retries(
+                cbc_service.update_product, func_kwargs={'product_id': product_id},
+            )
+
+        if 'error' in response.keys():
+            raise Exception(response['error'])
+
+    return True
+
+
 def prepare_ppr_file_for_task(
     connect_client,
     file_data,
@@ -166,29 +189,6 @@ def prepare_ppr_file_for_task(
         raise TaskException(f'Error while processing PPR file: {e}')
     except ClientError as e:
         raise TaskException(f'Error while connecting to Connect: {e.message}')
-
-
-def check_and_update_product(deployment_request, cbc_service, **kwargs):
-    if not deployment_request.manually:
-
-        product_id = deployment_request.deployment.product_id
-
-        response = _execute_with_retries(
-            cbc_service.get_product_details, func_kwargs={'product_id': product_id},
-        )
-
-        if 'error' in response.keys():
-            raise Exception(response['error'])
-
-        if response.get('isUpdateAvailable'):
-            response = _execute_with_retries(
-                cbc_service.update_product, func_kwargs={'product_id': product_id},
-            )
-
-        if 'error' in response.keys():
-            raise Exception(response['error'])
-
-    return True
 
 
 def apply_ppr_and_delegate_to_marketplaces(
@@ -278,6 +278,47 @@ def apply_ppr_and_delegate_to_marketplaces(
     return True
 
 
+def delegate_to_l2(deployment_request, cbc_service, connect_client, logger, **kwargs):
+    """Task delegates PPR to L2 in Commerce
+
+    :param deployment_request: DeploymentRequest model
+    :param cbc_service: CBC service
+    :param connect_client: Connect client
+    :param logger: logger
+    :rtype bool
+    :raises TaskException
+    """
+    if deployment_request.manually:
+        return True
+
+    ppr_file_id = deployment_request.ppr.file
+    deployment = deployment_request.deployment
+    try:
+        file_data = get_ppr_from_media(
+            connect_client,
+            deployment.account_id,
+            deployment.id,
+            ppr_file_id,
+        )
+    except ClientError as e:
+        raise TaskException(f'Error while connecting to Connect: {e.message}')
+
+    file = prepare_ppr_file_for_task(
+        connect_client=connect_client,
+        file_data=file_data,
+        file_name_template=PPR_FILE_NAME_DELEGATION_L2,
+        deployment_request=deployment_request,
+        deployment=deployment,
+        process_func=process_ppr_file_for_delelegate_l2,
+    )
+
+    tracking_id = _send_ppr(cbc_service, file)
+    logger.debug(f'delegate_to_l2 dr_id: {deployment_request.id}, tracking_id: {tracking_id}')
+    file.close()
+    _check_cbc_task_status(cbc_service, tracking_id)
+    return True
+
+
 def apply_pricelist_task(
     deployment_request,
     cbc_service,
@@ -351,47 +392,6 @@ def validate_pricelists_task(
                 ),
             )
 
-    return True
-
-
-def delegate_to_l2(deployment_request, cbc_service, connect_client, logger, **kwargs):
-    """Task delegates PPR to L2 in Commerce
-
-    :param deployment_request: DeploymentRequest model
-    :param cbc_service: CBC service
-    :param connect_client: Connect client
-    :param logger: logger
-    :rtype bool
-    :raises TaskException
-    """
-    if deployment_request.manually:
-        return True
-
-    ppr_file_id = deployment_request.ppr.file
-    deployment = deployment_request.deployment
-    try:
-        file_data = get_ppr_from_media(
-            connect_client,
-            deployment.account_id,
-            deployment.id,
-            ppr_file_id,
-        )
-    except ClientError as e:
-        raise TaskException(f'Error while connecting to Connect: {e.message}')
-
-    file = prepare_ppr_file_for_task(
-        connect_client=connect_client,
-        file_data=file_data,
-        file_name_template=PPR_FILE_NAME_DELEGATION_L2,
-        deployment_request=deployment_request,
-        deployment=deployment,
-        process_func=process_ppr_file_for_delelegate_l2,
-    )
-
-    tracking_id = _send_ppr(cbc_service, file)
-    logger.debug(f'delegate_to_l2 dr_id: {deployment_request.id}, tracking_id: {tracking_id}')
-    file.close()
-    _check_cbc_task_status(cbc_service, tracking_id)
     return True
 
 
