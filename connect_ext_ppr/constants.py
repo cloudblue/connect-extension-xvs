@@ -572,3 +572,5 @@ CONFIGURATION_SCHEMA_TEMPLATE = """
     "required": ["hierarchical_files_data"]
 }}
 """
+
+DELAY_SECONDS_BETWEEN_TASKS = 10

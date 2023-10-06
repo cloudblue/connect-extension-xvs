@@ -47,6 +47,7 @@ def test_apply_ppr_and_delegate_to_marketplaces(
     configuration_factory,
     connect_client,
     mocker,
+    logger,
 ):
     ppr_file_data = open('./tests/fixtures/test_PPR_apply_to_marketplaces.xlsx', 'rb').read()
     ppr_config_file_data = json.load(open('./tests/fixtures/test_PPR_config_file.json'))
@@ -58,7 +59,9 @@ def test_apply_ppr_and_delegate_to_marketplaces(
 
     def send_ppr_side_effect(*args):
         nonlocal file_sent
-        file_sent = args[1].read()
+        _file = args[1]
+        _file.seek(0)
+        file_sent = _file.read()
 
     send_ppr_mock = mocker.patch(
         'connect_ext_ppr.tasks_manager._send_ppr',
@@ -101,7 +104,13 @@ def test_apply_ppr_and_delegate_to_marketplaces(
     dr_m1 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-123')
     dr_m2 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-124')
 
-    assert apply_ppr_and_delegate_to_marketplaces(dr, cbc_service, connect_client, dbsession)
+    assert apply_ppr_and_delegate_to_marketplaces(
+        dr,
+        cbc_service,
+        connect_client,
+        dbsession,
+        logger,
+    )
 
     dbsession.refresh(dr_m1)
     dbsession.refresh(dr_m2)
@@ -149,6 +158,7 @@ def test_apply_ppr_and_delegate_to_marketplaces_manually(
     ppr_version_factory,
     connect_client,
     mocker,
+    logger,
 ):
 
     get_from_media_mock = mocker.patch('connect_ext_ppr.tasks_manager.get_ppr_from_media')
@@ -171,7 +181,13 @@ def test_apply_ppr_and_delegate_to_marketplaces_manually(
     dr_m1 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-124')
     dr_m2 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-123')
 
-    assert apply_ppr_and_delegate_to_marketplaces(dr, CBCService(), connect_client, dbsession)
+    assert apply_ppr_and_delegate_to_marketplaces(
+        dr,
+        CBCService(),
+        connect_client,
+        dbsession,
+        logger,
+    )
 
     dbsession.refresh(dr_m1)
     dbsession.refresh(dr_m2)
@@ -201,6 +217,7 @@ def test_apply_ppr_and_delegate_to_marketplaces_w_marketplace_not_present_in_map
     configuration_factory,
     connect_client,
     mocker,
+    logger,
 ):
     ppr_file_data = open('./tests/fixtures/test_PPR_apply_to_marketplaces.xlsx', 'rb').read()
     ppr_config_file_data = json.load(open('./tests/fixtures/test_PPR_config_file.json'))
@@ -212,7 +229,9 @@ def test_apply_ppr_and_delegate_to_marketplaces_w_marketplace_not_present_in_map
 
     def send_ppr_side_effect(*args):
         nonlocal file_sent
-        file_sent = args[1].read()
+        _file = args[1]
+        _file.seek(0)
+        file_sent = _file.read()
 
     send_ppr_mock = mocker.patch(
         'connect_ext_ppr.tasks_manager._send_ppr',
@@ -257,7 +276,13 @@ def test_apply_ppr_and_delegate_to_marketplaces_w_marketplace_not_present_in_map
     dr_m2 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-124')
     dr_m3 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-126')
 
-    assert apply_ppr_and_delegate_to_marketplaces(dr, cbc_service, connect_client, dbsession)
+    assert apply_ppr_and_delegate_to_marketplaces(
+        dr,
+        cbc_service,
+        connect_client,
+        dbsession,
+        logger,
+    )
 
     dbsession.refresh(dr_m1)
     dbsession.refresh(dr_m2)
@@ -308,6 +333,7 @@ def test_apply_ppr_and_delegate_to_marketplaces_config_file_not_found(
     configuration_factory,
     connect_client,
     mocker,
+    logger,
 ):
     ppr_file_data = open('./tests/fixtures/test_PPR_apply_to_marketplaces.xlsx', 'rb').read()
 
@@ -342,7 +368,7 @@ def test_apply_ppr_and_delegate_to_marketplaces_config_file_not_found(
     dr_m2 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-124')
 
     with pytest.raises(TaskException):
-        apply_ppr_and_delegate_to_marketplaces(dr, cbc_service, connect_client, dbsession)
+        apply_ppr_and_delegate_to_marketplaces(dr, cbc_service, connect_client, dbsession, logger)
 
     dbsession.refresh(dr_m1)
     dbsession.refresh(dr_m2)
@@ -370,6 +396,7 @@ def test_apply_ppr_and_delegate_to_marketplaces_ppr_file_not_found(
     configuration_factory,
     connect_client,
     mocker,
+    logger,
 ):
     ppr_file_data = open('./tests/fixtures/test_PPR_apply_to_marketplaces.xlsx', 'rb').read()
 
@@ -398,7 +425,7 @@ def test_apply_ppr_and_delegate_to_marketplaces_ppr_file_not_found(
     dr_m2 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-124')
 
     with pytest.raises(TaskException):
-        apply_ppr_and_delegate_to_marketplaces(dr, CBCService(), connect_client, dbsession)
+        apply_ppr_and_delegate_to_marketplaces(dr, CBCService(), connect_client, dbsession, logger)
 
     dbsession.refresh(dr_m1)
     dbsession.refresh(dr_m2)
@@ -426,6 +453,7 @@ def test_apply_ppr_and_delegate_to_marketplaces_error_saving_ppr(
     configuration_factory,
     connect_client,
     mocker,
+    logger,
 ):
     ppr_file_data = open('./tests/fixtures/test_PPR_apply_to_marketplaces.xlsx', 'rb').read()
     ppr_config_file_data = json.load(open('./tests/fixtures/test_PPR_config_file.json'))
@@ -464,7 +492,7 @@ def test_apply_ppr_and_delegate_to_marketplaces_error_saving_ppr(
     dr_m2 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-124')
 
     with pytest.raises(TaskException):
-        apply_ppr_and_delegate_to_marketplaces(dr, CBCService(), connect_client, dbsession)
+        apply_ppr_and_delegate_to_marketplaces(dr, CBCService(), connect_client, dbsession, logger)
 
     dbsession.refresh(dr_m1)
     dbsession.refresh(dr_m2)
@@ -494,6 +522,7 @@ def test_apply_ppr_and_delegate_to_marketplaces_error_sending_ppr(
     configuration_factory,
     connect_client,
     mocker,
+    logger,
 ):
     ppr_file_data = open('./tests/fixtures/test_PPR_apply_to_marketplaces.xlsx', 'rb').read()
     ppr_config_file_data = json.load(open('./tests/fixtures/test_PPR_config_file.json'))
@@ -533,7 +562,7 @@ def test_apply_ppr_and_delegate_to_marketplaces_error_sending_ppr(
     dr_m2 = marketplace_config_factory(deployment_request=dr, marketplace_id='MP-124')
 
     with pytest.raises(TaskException):
-        apply_ppr_and_delegate_to_marketplaces(dr, CBCService(), connect_client, dbsession)
+        apply_ppr_and_delegate_to_marketplaces(dr, CBCService(), connect_client, dbsession, logger)
 
     dbsession.refresh(dr_m1)
     dbsession.refresh(dr_m2)
@@ -709,6 +738,7 @@ def test_delegate_to_l2(
     connect_client,
     deployment_request_factory,
     mocker,
+    logger,
 ):
     mock___init__.return_value = None
     cbc_sevice = CBCService()
@@ -724,7 +754,9 @@ def test_delegate_to_l2(
 
     def send_ppr_side_effect(*args):
         nonlocal file_sent
-        file_sent = args[1].read()
+        _file = args[1]
+        _file.seek(0)
+        file_sent = _file.read()
 
     send_ppr_mock = mocker.patch(
         'connect_ext_ppr.tasks_manager._send_ppr',
@@ -747,6 +779,7 @@ def test_delegate_to_l2(
         deployment_request=deployment_request_factory(),
         cbc_service=cbc_sevice,
         connect_client=connect_client,
+        logger=logger,
     )
 
     assert get_from_media_mock.call_count == 1
@@ -767,6 +800,7 @@ def test_delegate_to_l2_manually(
     connect_client,
     deployment_request_factory,
     mocker,
+    logger,
 ):
     mock___init__.return_value = None
     cbc_sevice = CBCService()
@@ -788,6 +822,7 @@ def test_delegate_to_l2_manually(
         deployment_request=deployment_request_factory(manually=True),
         cbc_service=cbc_sevice,
         connect_client=connect_client,
+        logger=logger,
     )
 
     assert get_from_media_mock.call_count == 0
@@ -802,6 +837,7 @@ def test_delegate_to_l2_processing_error(
     connect_client,
     deployment_request_factory,
     mocker,
+    logger,
 ):
     mock___init__.return_value = None
     cbc_sevice = CBCService()
@@ -831,6 +867,7 @@ def test_delegate_to_l2_processing_error(
             deployment_request=deployment_request_factory(),
             cbc_service=cbc_sevice,
             connect_client=connect_client,
+            logger=logger,
         )
     assert str(e.value) == 'Error while processing PPR file: Wrong value "Cthulhu"'
 
