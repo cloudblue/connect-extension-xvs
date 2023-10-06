@@ -209,9 +209,6 @@ def apply_ppr_and_delegate_to_marketplaces(
     :rtype bool
     :raises TaskException
     """
-
-    return True
-
     dr_marketplaces = db.query(MarketplaceConfiguration).filter_by(
         active=True,
         deployment_request_id=deployment_request.id,

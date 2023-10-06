@@ -1,7 +1,7 @@
 from copy import deepcopy
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 import openpyxl
 import pytest
@@ -185,6 +185,7 @@ def test_validate_pricelist_negative_invalid_effective_date(mock_fetch_file):
 
 def test_apply_pricelist_to_marketplace_positive(
     mocker,
+    logger,
     marketplace,
     cbc_service,
     batch_output_file,
@@ -222,11 +223,16 @@ def test_apply_pricelist_to_marketplace_positive(
         return_value=None,
     )
 
+    create_ppr_to_media_mock = mocker.patch(
+        'connect_ext_ppr.services.pricing.create_ppr_to_media',
+    )
+
     apply_pricelist_to_marketplace(
         dep_req,
         cbc_service,
         connect_client,
         mp_conf,
+        logger,
     )
 
     reseller_id_mock.assert_called_once_with(
@@ -251,9 +257,18 @@ def test_apply_pricelist_to_marketplace_positive(
             'msrp': True,
             'effective_date': '07/26/2023',
         },
+        send_log=ANY,
     )
 
     assert price_excel_file
+
+    create_ppr_to_media_mock.assert_called_once_with(
+        client=ANY,
+        account_id=dep_req.deployment.account_id,
+        instance_id=dep_req.id,
+        filename=f'{dep_req.id}_PriceApply_MP-123_None.xlsx',
+        content=ANY,
+    )
 
 
 def test_identify_marketplaces_positive(
@@ -582,6 +597,7 @@ def test_process_batch_positive(
     hub_credentials,
     no_db_deployment,
     batch_dataset,
+    logger,
 ):
     reseller_id = '10000001'
 
@@ -601,6 +617,7 @@ def test_process_batch_positive(
         reseller_id,
         no_db_deployment,
         batch_dataset,
+        logger,
     )
 
     assert data_id == parse_price_file_response['dataId']
@@ -656,6 +673,8 @@ def test_process_batch_positive(
         '07/26/2023',
         'MFL-0000-0000-0000.xlsx',
     )
+
+    assert logger.call_count == 3
 
 
 def test_determine_dataset_negative_effective_date_column_not_present():

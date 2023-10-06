@@ -527,8 +527,10 @@ BASE_SCHEMA = {
     ],
 }
 PPR_FILE_NAME = "PPR_{product_id}_v{version}_{timestamp}.xlsx"
-PPR_FILE_NAME_DELEGATION_L2 = "{dr_id}-L2Delegation-{ppr_id}-{timestamp}.xlsx"
-PPR_FILE_NAME_UPDATE_MARKETPLACES = "{dr_id}-MkplUpdate-{ppr_id}-{timestamp}.xlsx"
+PPR_FILE_NAME_DELEGATION_L2 = "{dr_id}_L2Delegation_{ppr_id}_{timestamp}.xlsx"
+PPR_FILE_NAME_UPDATE_MARKETPLACES = "{dr_id}_MkplUpdate_{ppr_id}_{timestamp}.xlsx"
+PRICE_APPLY_FILE_NAME = "{dr_id}_PriceApply_{mp_id}_{price_id}.xlsx"
+
 DESCRIPTION_TEMPLATE = """
 **Description**
 {description}

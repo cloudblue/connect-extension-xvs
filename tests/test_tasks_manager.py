@@ -1400,6 +1400,7 @@ def test_apply_pricelist_task_ok(
     marketplace_config_factory,
     mocker,
     dbsession,
+    logger,
 ):
     apply_mock = mocker.patch(
         'connect_ext_ppr.tasks_manager.apply_pricelist_to_marketplace',
@@ -1424,6 +1425,7 @@ def test_apply_pricelist_task_ok(
         connect_client,
         req_mp,
         dbsession,
+        logger=logger,
     )
 
     assert apply_mock.called_once_with(
@@ -1444,6 +1446,7 @@ def test_apply_pricelist_task_ok_manual(
     marketplace_config_factory,
     mocker,
     dbsession,
+    logger,
 ):
     apply_mock = mocker.patch(
         'connect_ext_ppr.tasks_manager.apply_pricelist_to_marketplace',
@@ -1468,6 +1471,7 @@ def test_apply_pricelist_task_ok_manual(
         connect_client,
         req_mp,
         dbsession,
+        logger,
     )
 
     assert apply_mock.call_count == 0
@@ -1480,6 +1484,7 @@ def test_apply_pricelist_task_error(
     marketplace_config_factory,
     mocker,
     dbsession,
+    logger,
 ):
     mocker.patch(
         'connect_ext_ppr.tasks_manager.apply_pricelist_to_marketplace',
@@ -1509,6 +1514,7 @@ def test_apply_pricelist_task_error(
             connect_client,
             req_mp,
             dbsession,
+            logger,
         )
 
     assert str(e.value) == 'Error while processing pricelist: olala'

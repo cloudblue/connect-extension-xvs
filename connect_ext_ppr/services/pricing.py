@@ -8,7 +8,9 @@ from openpyxl import load_workbook
 
 from connect_ext_ppr.errors import PriceUpdateError
 from connect_ext_ppr.client.exception import CBCClientError
-from connect_ext_ppr.utils import execute_with_retry, create_dr_file_to_media
+from connect_ext_ppr.utils import create_ppr_to_media, execute_with_retry
+from connect_ext_ppr.constants import PRICE_APPLY_FILE_NAME
+
 
 PRICELIST_COLUMNS = {
     'MPN': str,
@@ -52,16 +54,20 @@ def apply_pricelist_to_marketplace(
     @param CBCService cbc_service:
     @param Client connect_client:
     @param MarketplaceConfiguration marketplace:
+    @param Logger logger:
 
     @returns None
     @raises ClientError, CBCClientError
     """
-    logger.info(
-        'Pricelist uploading %s_%s_%s: started.',
-        deployment_request.id,
-        marketplace.pricelist_id,
-        marketplace.marketplace,
+    price_filename = PRICE_APPLY_FILE_NAME.format(
+        dr_id=deployment_request.id,
+        mp_id=marketplace.marketplace,
+        price_id=marketplace.pricelist_id,
     )
+
+    send_log = _get_send_log(logger, f'Pricelist uploading {price_filename}')
+
+    send_log('started')
 
     reseller_id = _identify_reseller_id(
         client=connect_client,
@@ -69,51 +75,35 @@ def apply_pricelist_to_marketplace(
         marketplace_id=marketplace.marketplace,
         hub_id=deployment_request.deployment.hub_id,
     )
-    logger.info(
-        'Pricelist uploading %s_%s_%s: reseller id %s.',
-        deployment_request.id,
-        marketplace.pricelist_id,
-        marketplace.marketplace,
-        reseller_id,
-    )
+
+    send_log(f'reseller id "{reseller_id}"')
+
     excel_file, file_name, dataset = _prepare_file(
         client=connect_client,
         batch_id=marketplace.pricelist_id,
     )
-    create_dr_file_to_media(
+    create_ppr_to_media(
         client=connect_client,
         account_id=deployment_request.deployment.account_id,
-        dr_id=deployment_request.id,
-        filename=file_name,
+        instance_id=deployment_request.id,
         content=excel_file,
+        filename=price_filename,
     )
     excel_file.seek(0)
 
-    logger.info(
-        'Pricelist uploading %s_%s_%s: filename "%s", dataset "%s".',
-        deployment_request.id,
-        marketplace.pricelist_id,
-        marketplace.marketplace,
-        file_name,
-        dataset,
-    )
+    send_log(f'filename "{file_name}", dataset "{dataset}".')
+
     try:
-        data_id = _process_batch(
+        _process_batch(
             cbc_service=cbc_service,
             excel_file=excel_file,
             file_name=file_name,
             reseller_id=reseller_id,
             deployment=deployment_request.deployment,
             dataset=dataset,
-            logger=logger,
+            send_log=send_log,
         )
-        logger.info(
-            'Pricelist uploading %s_%s_%s: data_id "%s".',
-            deployment_request.id,
-            marketplace.pricelist_id,
-            marketplace.marketplace,
-            data_id,
-        )
+        send_log('finished')
     finally:
         excel_file.close()
 
@@ -353,7 +343,7 @@ def _process_batch(
     reseller_id,
     deployment,
     dataset,
-    logger,
+    send_log,
 ):
     excel_file.seek(0)
 
@@ -362,7 +352,8 @@ def _process_batch(
         exception_class=CBCClientError,
         args=(reseller_id, deployment.vendor_id, excel_file),
     )
-    logger.info('Parsed price: %s', parsed_price)
+
+    send_log(f'parsed price: "{parsed_price}"')
 
     data_id = parsed_price['dataId']
 
@@ -374,6 +365,8 @@ def _process_batch(
             dataset['price'], dataset['msrp'], dataset['effective_date'],
         ),
     )
+
+    send_log('prise proposal sent')
 
     execute_with_retry(
         function=cbc_service.apply_prices,
@@ -389,4 +382,13 @@ def _process_batch(
         ),
     )
 
+    send_log(f'prise proposal applied, data id "{data_id}"')
+
     return data_id
+
+
+def _get_send_log(logger, prefix):
+    def f(message):
+        logger.info(f'${prefix}: {message}.')
+
+    return f
