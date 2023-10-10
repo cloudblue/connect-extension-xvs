@@ -161,7 +161,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             dr_marketplaces=deployment_request.marketplaces,
             dep_marketplaces=dep_marketplaces,
         )
-        validate_marketplaces_ppr(ppr, deployment_request.marketplaces, dep_marketplaces)
+        validate_marketplaces_ppr(ppr, deployment_request.marketplaces, dep_marketplaces, db)
 
         instance = add_new_deployment_request(
             db, deployment_request, deployment, account_id, logger,

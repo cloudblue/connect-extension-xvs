@@ -2,6 +2,7 @@ from connect.client import R
 from fastapi import status
 
 from connect_ext_ppr.errors import ExtensionValidationError
+from connect_ext_ppr.models.ppr import PPRVersion
 
 
 def validate_deployment(deployment, account_id):
@@ -84,7 +85,7 @@ def validate_pricelist_ids(client, product_id, req_mp_configs, dep_mp_configs):
         })
 
 
-def validate_marketplaces_ppr(ppr, dr_marketplaces, dep_marketplaces):
+def validate_marketplaces_ppr(ppr, dr_marketplaces, dep_marketplaces, db):
     """
     Validates that we can apply the ppr to all marketplaces
     """
@@ -92,8 +93,10 @@ def validate_marketplaces_ppr(ppr, dr_marketplaces, dep_marketplaces):
     mkplcs_w_erros = []
     for mp_data in dr_marketplaces:
         mp_id = mp_data.id
-        if dep_mkplc_map[mp_id].ppr_id and dep_mkplc_map[mp_id].ppr_id > ppr.id:
-            mkplcs_w_erros.append(mp_id)
+        if mp_ppr_id := dep_mkplc_map[mp_id].ppr_id:
+            mp_ppr = db.query(PPRVersion).filter_by(id=mp_ppr_id).first()
+            if mp_ppr.version > ppr.version:
+                mkplcs_w_erros.append(mp_id)
 
     if mkplcs_w_erros:
         raise ExtensionValidationError.VAL_004(
