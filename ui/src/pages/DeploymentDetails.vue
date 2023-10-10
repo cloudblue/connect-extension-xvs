@@ -46,7 +46,6 @@ c-view.deployment-details(
                 :height="16",
               )
 
-
     .info-column
       grid-item(
         :column-width="78",
@@ -67,7 +66,7 @@ c-view.deployment-details(
     :tabs="tabs",
   )
     template(#marketplaces="")
-      .marketplaces-tab Marketplaces
+      deployment-marketplaces-tab(:deployment-id="deployment.id")
 
     template(#ppr="")
       ppr-tab(
@@ -101,6 +100,7 @@ import Pic from '~components/Pic.vue';
 
 import PprTab from '~components/PprTab.vue';
 import DeploymentConfigurationTab from '~components/DeploymentConfigurationTab.vue';
+import DeploymentMarketplacesTab from '~components/DeploymentMarketplacesTab.vue';
 import DeploymentRequestsTab from '~components/DeploymentRequestsTab.vue';
 
 import {
@@ -115,6 +115,7 @@ export default {
     cTabs,
     cView,
     DeploymentConfigurationTab,
+    DeploymentMarketplacesTab,
     DeploymentRequestsTab,
     DetailItem,
     GridItem,
