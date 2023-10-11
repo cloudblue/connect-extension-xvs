@@ -29,7 +29,7 @@ from connect_ext_ppr.services.pricing import (
     validate_pricelist_batch,
 )
 from connect_ext_ppr.utils import (
-    create_dr_file_to_media,
+    create_ppr_to_media,
     execute_with_retry,
     get_base_workbook,
     get_configuration_from_media,
@@ -175,7 +175,7 @@ def prepare_ppr_file_for_task(
             ppr_id=deployment_request.ppr.id,
             timestamp=datetime.utcnow().strftime("%s"),
         )
-        create_dr_file_to_media(
+        create_ppr_to_media(
             connect_client,
             deployment.account_id,
             deployment_request.id,
