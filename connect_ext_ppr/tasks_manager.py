@@ -325,6 +325,7 @@ def apply_pricelist_task(
     connect_client,
     marketplace,
     db,
+    logger,
     **kwargs,
 ):
     """ Applies a price list for a sinle marketplace
@@ -334,6 +335,7 @@ def apply_pricelist_task(
     @param Client connect_client:
     @param MarketplaceConfiguration marketplace:
     @param Session db:
+    @param Logger logger:
 
     @returns bool
     @raises TaskException
@@ -345,6 +347,7 @@ def apply_pricelist_task(
                 cbc_service,
                 connect_client,
                 marketplace,
+                logger,
             )
         except (ClientError, CBCClientError) as e:
             raise TaskException(f'Error while processing pricelist: {e}')
@@ -437,7 +440,7 @@ def execute_tasks(db, config, tasks, connect_client, logger):
                 was_succesfull = False
                 task.error_message = str(ex)[:4000]
             except Exception as ex:
-                logger.error(f'Task ID: {task.id} - {ex}')
+                logger.exception(f'Task ID: {task.id} - {ex}')
                 was_succesfull = False
                 task.error_message = 'Something went wrong.'
 
@@ -482,7 +485,7 @@ def main_process(deployment_request_id, config, connect_client, logger):
             was_succesfull = execute_tasks(db, config, tasks, connect_client, logger)
         except Exception as ex:
             was_succesfull = False
-            logger.error(f'DeploymentRequest ID: {deployment_request_id} - {ex}')
+            logger.exception(f'DeploymentRequest ID: {deployment_request_id} - {ex}')
 
         db.refresh(deployment_request, with_for_update=True)
 
