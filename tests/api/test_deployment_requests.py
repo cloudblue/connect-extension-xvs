@@ -894,12 +894,12 @@ def test_create_deployment_invalid_ppr_for_marketplace(
     mocker.patch('connect_ext_ppr.webapp.get_client_object', side_effect=[hub_data])
 
     dep = deployment_factory(account_id=installation['owner']['id'], hub_id=hub_data['id'])
-    ppr = ppr_version_factory(deployment=dep, version=1, id='PPRFL-123')
-    ppr_file = file_factory(id='FL-123')
+    ppr = ppr_version_factory(deployment=dep, version=1, id='PPRFL-125')
+    ppr_file = file_factory(id='FL-125')
     ppr2 = ppr_version_factory(deployment=dep, version=2, id='PPRFL-124', file=ppr_file.id)
 
     marketplace_config_factory(deployment=dep, marketplace_id='MP-124')
-    marketplace_config_factory(deployment=dep, marketplace_id='MP-123', ppr_id=ppr2.id)
+    marketplace_config_factory(deployment=dep, marketplace_id='MP-125', ppr_id=ppr2.id)
     marketplace_config_factory(deployment=dep, marketplace_id='MP-126', ppr_id=ppr.id)
 
     body = {
@@ -908,7 +908,7 @@ def test_create_deployment_invalid_ppr_for_marketplace(
         'manually': True,
         'delegate_l2': True,
         'marketplaces': [
-            {'id': 'MP-123'},
+            {'id': 'MP-125'},
             {'id': 'MP-126'},
             {'id': 'MP-124'},
         ],
@@ -922,7 +922,7 @@ def test_create_deployment_invalid_ppr_for_marketplace(
     assert response.status_code == 400
     assert response.json()['error_code'] == 'VAL_004', response.json()
     assert response.json()['errors'] == [
-        'Cannot applied PPR to marketplaces [\'MP-123\'].',
+        'Cannot applied PPR to marketplaces [\'MP-125\'].',
     ]
 
 
