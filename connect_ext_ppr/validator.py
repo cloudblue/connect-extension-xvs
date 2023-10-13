@@ -92,7 +92,7 @@ def validate_marketplaces_ppr(ppr, dr_marketplaces, dep_marketplaces):
     mkplcs_w_erros = []
     for mp_data in dr_marketplaces:
         mp_id = mp_data.id
-        if dep_mkplc_map[mp_id].ppr_id and dep_mkplc_map[mp_id].ppr_id > ppr.id:
+        if dep_mkplc_map[mp_id].ppr_id and dep_mkplc_map[mp_id].ppr.version > ppr.version:
             mkplcs_w_erros.append(mp_id)
 
     if mkplcs_w_erros:
