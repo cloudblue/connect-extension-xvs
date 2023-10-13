@@ -78,8 +78,8 @@ def test_apply_ppr_and_delegate_to_marketplaces(
         return_value=ppr_file_data,
     )
 
-    create_dr_file_to_media_mock = mocker.patch(
-        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    create_ppr_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_ppr_to_media',
     )
     check_cbc_task_status_mock = mocker.patch(
         'connect_ext_ppr.tasks_manager._check_cbc_task_status',
@@ -126,7 +126,7 @@ def test_apply_ppr_and_delegate_to_marketplaces(
 
     assert get_config_from_media_mock.call_count == 1
     assert get_ppr_from_media_mock.call_count == 1
-    assert create_dr_file_to_media_mock.call_count == 1
+    assert create_ppr_to_media_mock.call_count == 1
     assert send_ppr_mock.call_count == 1
     assert check_cbc_task_status_mock.call_count == 1
 
@@ -162,8 +162,8 @@ def test_apply_ppr_and_delegate_to_marketplaces_manually(
 ):
 
     get_from_media_mock = mocker.patch('connect_ext_ppr.tasks_manager.get_ppr_from_media')
-    create_dr_file_to_media_mock = mocker.patch(
-        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    create_ppr_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_ppr_to_media',
     )
     check_cbc_task_status_mock = mocker.patch(
         'connect_ext_ppr.tasks_manager._check_cbc_task_status',
@@ -202,7 +202,7 @@ def test_apply_ppr_and_delegate_to_marketplaces_manually(
     assert dep_m3.ppr_id == ppr.id
 
     assert get_from_media_mock.call_count == 0
-    assert create_dr_file_to_media_mock.call_count == 0
+    assert create_ppr_to_media_mock.call_count == 0
     assert check_cbc_task_status_mock.call_count == 0
 
 
@@ -248,8 +248,8 @@ def test_apply_ppr_and_delegate_to_marketplaces_w_marketplace_not_present_in_map
         return_value=ppr_file_data,
     )
 
-    create_dr_file_to_media_mock = mocker.patch(
-        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    create_ppr_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_ppr_to_media',
     )
     check_cbc_task_status_mock = mocker.patch(
         'connect_ext_ppr.tasks_manager._check_cbc_task_status',
@@ -300,7 +300,7 @@ def test_apply_ppr_and_delegate_to_marketplaces_w_marketplace_not_present_in_map
 
     assert get_config_from_media_mock.call_count == 1
     assert get_ppr_from_media_mock.call_count == 1
-    assert create_dr_file_to_media_mock.call_count == 1
+    assert create_ppr_to_media_mock.call_count == 1
     assert send_ppr_mock.call_count == 1
     assert check_cbc_task_status_mock.call_count == 1
 
@@ -473,8 +473,8 @@ def test_apply_ppr_and_delegate_to_marketplaces_error_saving_ppr(
     )
     response = Response()
     response.status_code = 404
-    create_dr_file_to_media_mock = mocker.patch(
-        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    create_ppr_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_ppr_to_media',
         side_effect=ClientError(response=response, message='Error on create DR file'),
     )
 
@@ -508,7 +508,7 @@ def test_apply_ppr_and_delegate_to_marketplaces_error_saving_ppr(
 
     assert get_config_from_media_mock.call_count == 1
     assert get_ppr_from_media_mock.call_count == 1
-    assert create_dr_file_to_media_mock.call_count == 1
+    assert create_ppr_to_media_mock.call_count == 1
 
 
 @patch.object(CBCService, '__init__', return_value=None)
@@ -541,8 +541,8 @@ def test_apply_ppr_and_delegate_to_marketplaces_error_sending_ppr(
         return_value=ppr_file_data,
     )
 
-    create_dr_file_to_media_mock = mocker.patch(
-        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    create_ppr_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_ppr_to_media',
     )
     send_ppr_mock = mocker.patch(
         'connect_ext_ppr.tasks_manager._send_ppr',
@@ -578,7 +578,7 @@ def test_apply_ppr_and_delegate_to_marketplaces_error_sending_ppr(
 
     assert get_config_from_media_mock.call_count == 1
     assert get_ppr_from_media_mock.call_count == 1
-    assert create_dr_file_to_media_mock.call_count == 1
+    assert create_ppr_to_media_mock.call_count == 1
     assert send_ppr_mock.call_count == 1
 
 
@@ -768,8 +768,8 @@ def test_delegate_to_l2(
         'connect_ext_ppr.tasks_manager.get_ppr_from_media',
         return_value=ppr_file_data,
     )
-    create_dr_file_to_media_mock = mocker.patch(
-        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    create_ppr_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_ppr_to_media',
     )
     check_cbc_task_status_mock = mocker.patch(
         'connect_ext_ppr.tasks_manager._check_cbc_task_status',
@@ -783,7 +783,7 @@ def test_delegate_to_l2(
     )
 
     assert get_from_media_mock.call_count == 1
-    assert create_dr_file_to_media_mock.call_count == 1
+    assert create_ppr_to_media_mock.call_count == 1
     assert send_ppr_mock.call_count == 1
     assert check_cbc_task_status_mock.call_count == 1
 
@@ -811,8 +811,8 @@ def test_delegate_to_l2_manually(
     get_from_media_mock = mocker.patch(
         'connect_ext_ppr.tasks_manager.get_ppr_from_media',
     )
-    create_dr_file_to_media_mock = mocker.patch(
-        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    create_ppr_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_ppr_to_media',
     )
     check_cbc_task_status_mock = mocker.patch(
         'connect_ext_ppr.tasks_manager._check_cbc_task_status',
@@ -826,7 +826,7 @@ def test_delegate_to_l2_manually(
     )
 
     assert get_from_media_mock.call_count == 0
-    assert create_dr_file_to_media_mock.call_count == 0
+    assert create_ppr_to_media_mock.call_count == 0
     assert send_ppr_mock.call_count == 0
     assert check_cbc_task_status_mock.call_count == 0
 
@@ -855,8 +855,8 @@ def test_delegate_to_l2_processing_error(
         'connect_ext_ppr.tasks_manager.process_ppr_file_for_delelegate_l2',
         side_effect=ValueError('Wrong value "Cthulhu"'),
     )
-    create_dr_file_to_media_mock = mocker.patch(
-        'connect_ext_ppr.tasks_manager.create_dr_file_to_media',
+    create_ppr_to_media_mock = mocker.patch(
+        'connect_ext_ppr.tasks_manager.create_ppr_to_media',
     )
     check_cbc_task_status_mock = mocker.patch(
         'connect_ext_ppr.tasks_manager._check_cbc_task_status',
@@ -873,7 +873,7 @@ def test_delegate_to_l2_processing_error(
 
     assert get_from_media_mock.call_count == 1
     assert process_ppr_file_for_delelegate_l2_mock.call_count == 1
-    assert create_dr_file_to_media_mock.call_count == 0
+    assert create_ppr_to_media_mock.call_count == 0
     assert send_ppr_mock.call_count == 0
     assert check_cbc_task_status_mock.call_count == 0
 

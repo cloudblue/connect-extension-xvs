@@ -134,21 +134,20 @@ def create_media_file(
     ).create(headers=headers, data=content)
 
 
-def create_ppr_to_media(client, account_id, deployment_id, filename, content, file_size=None):
+def create_ppr_to_media(client, account_id, instance_id, filename, content, file_size=None):
+    """Create PPR file in Media service for Deployment or DeploymentRequest
+    :param client: Connect client
+    :param account_id: id of account
+    :param instance_id: id of Deployment or DeploymentRequest
+    :param filename: name of file
+    :param content: body of file
+    :param file_size: size of file
+    :return: dict with file info
+    """
     file_collection = FileCollection.PPR
     file_type = MimeTypeChoices.application_vnd_ms_xslx
     media_file = create_media_file(
-        client, account_id, deployment_id, file_collection,
-        filename, content, file_type, file_size,
-    )
-    return json.loads(media_file)
-
-
-def create_dr_file_to_media(client, account_id, dr_id, filename, content, file_size=None):
-    file_collection = FileCollection.PPR
-    file_type = MimeTypeChoices.application_vnd_ms_xslx
-    media_file = create_media_file(
-        client, account_id, dr_id, file_collection,
+        client, account_id, instance_id, file_collection,
         filename, content, file_type, file_size,
     )
     return json.loads(media_file)
