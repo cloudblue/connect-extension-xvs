@@ -791,7 +791,7 @@ def test_delegate_to_l2(
     ppr_file_arg = send_ppr_mock.call_args.args[1]
     assert isinstance(ppr_file_arg, BufferedReader)
     assert check_excel_file_column_values(file_sent, 'OpUnitServicePlans', 'Published', [True] * 6)
-    assert check_excel_file_column_values(file_sent, 'ServicePlans', 'Published', [False] * 6)
+    assert check_excel_file_column_values(file_sent, 'ServicePlans', 'Published', [True] * 6)
 
 
 @patch.object(CBCService, '__init__')
@@ -852,7 +852,7 @@ def test_delegate_to_l2_processing_error(
         return_value=ppr_file_data,
     )
     process_ppr_file_for_delelegate_l2_mock = mocker.patch(
-        'connect_ext_ppr.tasks_manager.process_ppr_file_for_delelegate_l2',
+        'connect_ext_ppr.tasks_manager.process_ppr_file_for_delegate_l2',
         side_effect=ValueError('Wrong value "Cthulhu"'),
     )
     create_ppr_to_media_mock = mocker.patch(

@@ -656,11 +656,11 @@ def get_file_size(file_obj):
     return file_size
 
 
-def process_ppr_file_for_delelegate_l2(sheet_name, ws):
-    if sheet_name == 'OpUnitServicePlans':
+def process_ppr_file_for_delegate_l2(sheet_name, ws):
+    if sheet_name == 'ServicePlans':
         ws['Published'] = 'TRUE'
-    elif sheet_name == 'ServicePlans':
-        ws['Published'] = 'FALSE'
+    elif sheet_name == 'OpUnitServicePlans':
+        ws['Published'] = 'TRUE'
 
 
 def execute_with_retry(function, exception_class, args=None, kwargs=None, num_retries=5):
