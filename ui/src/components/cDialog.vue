@@ -373,6 +373,7 @@ export default {
         if (isOpened) {
           this.zIndex = getNextZIndexBySelector('.c-dialog_opened'); // make dialogs stackable
           this.activeTab = this.actualDefaultTab;
+          document.documentElement.scrollIntoView();
 
           this.$emit('open');
         } else {
@@ -482,7 +483,7 @@ export default {
 
     max-height: 90%;
     max-width: "calc(100% - %s)" % ($edge-gap * 2);
-    margin: auto;
+    margin: 50px auto auto;
 
     outline: none;
     box-shadow:
