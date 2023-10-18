@@ -4,7 +4,7 @@
     v-model="tasks",
     :headers="headers",
     :prepare-row="prepareRow",
-    :show-loader="loading",
+    :updating="loading",
     hide-all-pagination-sections,
   )
     template(#items="{ row, visibleHeaders }")

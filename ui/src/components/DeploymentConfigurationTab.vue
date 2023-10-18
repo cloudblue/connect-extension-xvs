@@ -1,11 +1,11 @@
 <template lang="pug">
 .deployment-configuration-tab
   c-data-table(
-    v-if="localValue",
     v-model="localValue",
     :headers="headers",
     hide-go-to-page-section,
     :prepare-row="prepareRow",
+    :updating="loading",
     showManagePanel,
   )
     template(#buttons="")
@@ -157,8 +157,9 @@ export default {
 
   data() {
     return {
-      localValue: null,
+      localValue: [],
       inputFile: null,
+      loading: true,
       icons: {
         googleFileUploadBaseline,
       },
@@ -258,11 +259,14 @@ export default {
     },
 
     async getConfigs() {
+      this.loading = true;
       try {
         this.localValue = await getDeploymentConfigurations(this.deploymentId);
       } catch (e) {
         this.showErrorSnackbar = true;
         this.errorSnackbarText = e.message;
+      } finally {
+        this.loading = false;
       }
     },
 

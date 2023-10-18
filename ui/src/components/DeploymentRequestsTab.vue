@@ -4,7 +4,7 @@
     v-model="requests",
     :headers="headers",
     :prepare-row="prepareRow",
-    :show-loader="loading",
+    :updating="loading",
     hide-all-pagination-sections,
     fix-layout,
     show-manage-panel,

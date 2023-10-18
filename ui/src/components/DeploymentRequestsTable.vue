@@ -1,10 +1,10 @@
 <template lang="pug">
 c-data-table(
-  v-if="localValue",
   v-model="localValue",
   :headers="headers",
   hide-go-to-page-section,
   :prepare-row="prepareRow",
+  :updating="localUpdating",
 )
   template(#items="{ row, visibleHeaders}")
     tr.table__row.hoverable(:id="row.id")
@@ -128,7 +128,7 @@ export default {
   data() {
     return {
       localUpdating: false,
-      localValue: null,
+      localValue: [],
       headers: [
         {
           text: 'request',
@@ -182,8 +182,8 @@ export default {
     },
   },
 
-  async created() {
-    this.localValue = await getDeploymentsRequests();
+  created() {
+    this.localUpdating = true;
   },
 };
 </script>
