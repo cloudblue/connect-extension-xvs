@@ -4,7 +4,7 @@ c-view.deployment-details(
   assistive-title="Deployment Details",
   :back-route="{ name: 'Dashboard', params: { tab: 'deployments' } }",
   :current-tab.sync="currentTab",
-  :loading="loading"
+  :loading="loading",
 )
   template(#actions="")
     c-button(

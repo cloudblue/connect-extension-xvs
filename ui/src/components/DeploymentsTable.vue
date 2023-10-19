@@ -1,10 +1,10 @@
 <template lang="pug">
 c-data-table(
-  v-if="localValue",
   v-model="localValue",
   :headers="headers",
   hide-go-to-page-section,
   :prepare-row="prepareRow",
+  :updating="loading",
 )
   template(#items="{ row, visibleHeaders}")
     tr.table__row.hoverable(:id="row.id")
@@ -118,7 +118,8 @@ export default {
 
   data() {
     return {
-      localValue: null,
+      localValue: [],
+      loading: true,
       headers: [{
         text: 'deployment',
         value: 'deployment',
@@ -157,8 +158,10 @@ export default {
   },
 
   async created() {
+    this.loading = true;
     const allDeployments = await getDeployments();
     this.localValue = allDeployments;
+    this.loading = false;
   },
 };
 </script>
