@@ -243,8 +243,13 @@ export default {
     },
 
     async retryRequest() {
-      this.request = await retryDeploymentRequest(this.requestId);
-      this.areTasksUpdating = true;
+      try {
+        this.request = await retryDeploymentRequest(this.requestId);
+      } catch (e) {
+        this.errorMessages = e.message;
+      } finally {
+        this.areTasksUpdating = true;
+      }
     },
 
     openErrorDetailsDialog() {
