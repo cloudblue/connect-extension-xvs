@@ -6,14 +6,6 @@ c-view.deployment-details(
   :current-tab.sync="currentTab",
   :loading="loading",
 )
-  template(#actions="")
-    c-button(
-      :icon="icons.googleSyncBaseline",
-      label="sync",
-      color="accent",
-      mode="solid",
-    )
-
   .info-container
     .info-column
       grid-item(label="Status")
@@ -86,11 +78,6 @@ c-view.deployment-details(
 </template>
 
 <script>
-import {
-  googleSyncBaseline,
-} from '@cloudblueconnect/material-svg/baseline';
-
-import cButton from '~components/cButton.vue';
 import cStatus from '~components/cStatus.vue';
 import cTabs from '~components/cTabs.vue';
 import cView from '~components/cView.vue';
@@ -110,7 +97,6 @@ import {
 
 export default {
   components: {
-    cButton,
     cStatus,
     cTabs,
     cView,
@@ -130,10 +116,6 @@ export default {
   }),
 
   computed: {
-    icons: () => ({
-      googleSyncBaseline,
-    }),
-
     deploymentId: vm => vm.$route.params.id,
 
     tabs: () => [
