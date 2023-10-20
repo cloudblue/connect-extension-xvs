@@ -37,7 +37,7 @@ from connect_ext_ppr.utils import (
     get_mps_to_update_for_apply_ppr_and_delegate_to_marketplaces,
     get_ppr_from_media,
     process_ppr_file_for_apply_ppr_and_delegate_to_marketplaces,
-    process_ppr_file_for_delelegate_l2,
+    process_ppr_file_for_delegate_l2,
 )
 
 
@@ -309,7 +309,7 @@ def delegate_to_l2(deployment_request, cbc_service, connect_client, logger, **kw
         file_name_template=PPR_FILE_NAME_DELEGATION_L2,
         deployment_request=deployment_request,
         deployment=deployment,
-        process_func=process_ppr_file_for_delelegate_l2,
+        process_func=process_ppr_file_for_delegate_l2,
     )
 
     tracking_id = _send_ppr(cbc_service, file)
