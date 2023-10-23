@@ -35,7 +35,7 @@ c-dialog.ppr-summary-dialog(
       v-if="ppr.description",
       :content="ppr.description",
     )
-    .assistive-text(v-else) —
+    .assistive-color(v-else) —
 
 </template>
 

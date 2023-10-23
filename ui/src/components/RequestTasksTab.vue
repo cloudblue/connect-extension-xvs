@@ -30,7 +30,7 @@
             :key="header.value",
           )
             span(v-if="row.processed") {{ row.processed | utcToLocal }}
-            span.assistive-text(v-else) –
+            span.assistive-color(v-else) —
 
           //- Elapsed column
           td.nowrap-cell(
@@ -38,7 +38,7 @@
             :key="header.value",
           )
             span(v-if="row.elapsed") {{ row.elapsed }}
-            span.assistive-text(v-else) –
+            span.assistive-color(v-else) –
 
           //- Status column
           td.nowrap-cell(

@@ -28,11 +28,11 @@ checkbox-table.marketplaces-tab(
 
   template(#externalId="{ row }")
     span(v-if="row.externalId") {{ row.externalId }}
-    span.assistive-text(v-else) –
+    span.assistive-color(v-else) —
 
   template(#appliedPpr="{ row }")
     span(v-if="row.appliedPprVersion") Version {{ row.appliedPprVersion }}
-    span.assistive-text(v-else) –
+    span.assistive-color(v-else) —
 
 </template>
 

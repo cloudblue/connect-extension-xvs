@@ -18,7 +18,7 @@ radio-table.products-tab(
 
   template(#description="{ row }")
     .truncate-text(v-if="row.description") {{ row.description }}
-    span.assistive-text(v-else) —
+    span.assistive-color(v-else) —
 
 </template>
 

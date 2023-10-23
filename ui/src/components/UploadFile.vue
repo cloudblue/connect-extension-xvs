@@ -29,7 +29,7 @@
     .dz-default.file-upload__message
       .file-upload__message-text(v-html="messageText")
 
-  .assistive-text._mt_4 {{ uploadHintMessageText }}
+  .assistive-color._mt_4 {{ uploadHintMessageText }}
 
   .file-upload__error(v-if="isErrorShown")
     | {{ errorMessages[0] }}

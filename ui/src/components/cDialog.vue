@@ -56,7 +56,10 @@
 
                 .c-vertical-tab__content
                   .truncate-text {{ tab.label }}
-                  .assistive-text(v-if="tab.assistiveText") {{ tab.assistiveText }}
+                  .truncate-text.assistive-text(
+                    v-if="tab.assistiveText",
+                    :title="tab.assistiveText",
+                  ) {{ tab.assistiveText }}
 
       .c-window__right-sidebar.c-window__scroller(
         v-if="$slots['right-sidebar']",

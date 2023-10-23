@@ -50,7 +50,7 @@
             :key="header.value",
           )
             span(v-if="row.created") {{ row.created | utcToLocal }}
-            span.assistive-text(v-else) –
+            span.assistive-color(v-else) —
 
           //- Status column
           td.nowrap-cell(

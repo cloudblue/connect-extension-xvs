@@ -105,9 +105,8 @@ export default {
 }
 
 .c-alert_dense {
-  min-height: 56px;
-  padding-top: 12px;
-  padding-bottom: 12px;
+  min-height: 32px;
+  padding: 6px 24px;
 }
 
 .c-alert_fluid {
