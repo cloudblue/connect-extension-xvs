@@ -1,5 +1,5 @@
 <template lang="pug">
-.c-radio(@click.capture.prevent="toggleValue")
+.c-radio(@click.capture.prevent="select")
   c-icon.c-radio__box(
     :icon="radioIcon",
     :color="localValue ? '#2C98F0' : ''",
@@ -51,8 +51,8 @@ export default {
   },
 
   methods: {
-    toggleValue() {
-      this.localValue = !this.localValue;
+    select() {
+      this.localValue = true;
     },
   },
 };

@@ -101,6 +101,7 @@ export default {
     try {
       this.loading = true;
       this.hubs = await getProductHubs(this.productId);
+      if (this.localValue?.id) this.selectedHubId = this.localValue.id;
     } catch (e) {
       this.hubs = [];
       this.$emit('error', e);

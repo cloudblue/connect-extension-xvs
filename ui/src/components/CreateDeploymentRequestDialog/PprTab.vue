@@ -15,6 +15,13 @@ radio-table.products-tab(
         size="16px",
       )
       span Version {{ row?.version }}
+      c-chip.ppr-tab__chip(
+        v-if="row.isFailed",
+        :icon="icons.googleWarningBaseline",
+        color="orange",
+        text="PPR failed",
+        small,
+      )
 
   template(#description="{ row }")
     .truncate-text(v-if="row.description") {{ row.description }}
@@ -25,10 +32,12 @@ radio-table.products-tab(
 <script>
 import {
   googleDescriptionBaseline,
+  googleWarningBaseline,
 } from '@cloudblueconnect/material-svg';
 
 import removeMarkdown from 'remove-markdown';
 
+import cChip from '~components/cChip.vue';
 import cIcon from '~components/cIcon.vue';
 import RadioTable from '~components/RadioTable.vue';
 
@@ -43,6 +52,7 @@ export default {
   mixins: [sync([{ prop: 'value', local: 'localValue' }])],
 
   components: {
+    cChip,
     cIcon,
     RadioTable,
   },
@@ -74,7 +84,10 @@ export default {
       },
     ],
 
-    icons: { googleDescriptionBaseline },
+    icons: {
+      googleDescriptionBaseline,
+      googleWarningBaseline,
+    },
   }),
 
   methods: {
@@ -82,6 +95,7 @@ export default {
       return {
         id: item.id,
         version: item.version,
+        isFailed: item.status === 'failed',
         description: item.description ? removeMarkdown(item.description) : '',
       };
     },
@@ -97,6 +111,7 @@ export default {
     try {
       this.loading = true;
       this.pprs = await getPPRs(this.deploymentId);
+      if (this.localValue?.id) this.selectedPprVersion = this.localValue.id;
     } catch (e) {
       this.pprs = [];
       this.$emit('error', e);
@@ -109,7 +124,16 @@ export default {
 </script>
 
 <style lang="stylus">
-.products-tab__detail {
-  margin-top: 0;
+.ppr-tab {
+  &__chip {
+    margin-left: 8px;
+  }
+
+  &__version {
+    :first-child {
+      margin-right: 4px;
+    }
+  }
 }
+
 </style>

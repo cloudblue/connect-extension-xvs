@@ -45,6 +45,7 @@
 
 <script>
 import {
+  equals,
   includes,
 } from 'ramda';
 
@@ -132,7 +133,7 @@ export default {
     toggleSelected(value) {
       const currentValue = (this.returnObject) ? value : value[this.valueProp];
 
-      const index = this.localValue.indexOf(currentValue);
+      const index = this.localValue.findIndex(equals(currentValue));
 
       if (index > -1) {
         this.localValue.splice(index, 1);

@@ -93,11 +93,15 @@ export default {
   }),
 
   computed: {
-    filteredMarketplaces: ({ marketplaces, searchValue }) => {
+    filteredMarketplaces: ({ marketplaces, searchValue, prepareRow }) => {
       const lowerCaseSearch = searchValue.toLowerCase();
 
-      return marketplaces.filter(({ id, name }) => name.toLowerCase().includes(lowerCaseSearch)
-        || id.toLowerCase().includes(lowerCaseSearch));
+      const filteredMarketplaces = marketplaces.filter(({ id, name }) => (
+        name.toLowerCase().includes(lowerCaseSearch)
+        || id.toLowerCase().includes(lowerCaseSearch)
+      ));
+
+      return filteredMarketplaces.map(prepareRow);
     },
   },
 
@@ -134,6 +138,8 @@ export default {
     try {
       this.loading = true;
       this.marketplaces = await getDeploymentMarketplaces(this.deploymentId);
+      if (this.value.all) this.isAllSelected = true;
+      else if (this.value.choices.length) this.selectedMarketplaces = this.value.choices;
     } catch (e) {
       this.marketplaces = [];
       this.$emit('error', e);
