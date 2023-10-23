@@ -1994,6 +1994,17 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 
 /***/ }),
 
+/***/ "./node_modules/@cloudblueconnect/material-svg/icons/google/warning/baseline.svg":
+/*!***************************************************************************************!*\
+  !*** ./node_modules/@cloudblueconnect/material-svg/icons/google/warning/baseline.svg ***!
+  \***************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _svg_baker_runtime_browser_symbol_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../../../svg-baker-runtime/browser-symbol.js */ \"./node_modules/svg-baker-runtime/browser-symbol.js\");\n/* harmony import */ var _svg_baker_runtime_browser_symbol_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_svg_baker_runtime_browser_symbol_js__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _svg_sprite_loader_runtime_browser_sprite_build_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../../../svg-sprite-loader/runtime/browser-sprite.build.js */ \"./node_modules/svg-sprite-loader/runtime/browser-sprite.build.js\");\n/* harmony import */ var _svg_sprite_loader_runtime_browser_sprite_build_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_svg_sprite_loader_runtime_browser_sprite_build_js__WEBPACK_IMPORTED_MODULE_1__);\n\n\nvar symbol = new (_svg_baker_runtime_browser_symbol_js__WEBPACK_IMPORTED_MODULE_0___default())({\n  \"id\": \"warning_baseline_62d335\",\n  \"use\": \"warning_baseline_62d335-usage\",\n  \"viewBox\": \"0 0 24 24\",\n  \"content\": \"<symbol xmlns=\\\"http://www.w3.org/2000/svg\\\" viewBox=\\\"0 0 24 24\\\" id=\\\"warning_baseline_62d335\\\"><path d=\\\"M0 0h24v24H0z\\\" fill=\\\"none\\\" /><path d=\\\"M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z\\\" /></symbol>\"\n});\nvar result = _svg_sprite_loader_runtime_browser_sprite_build_js__WEBPACK_IMPORTED_MODULE_1___default().add(symbol);\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (symbol);\n\n//# sourceURL=webpack://connect-extension-xvs/./node_modules/@cloudblueconnect/material-svg/icons/google/warning/baseline.svg?");
+
+/***/ }),
+
 /***/ "./node_modules/svg-sprite-loader/runtime/browser-sprite.build.js":
 /*!************************************************************************!*\
   !*** ./node_modules/svg-sprite-loader/runtime/browser-sprite.build.js ***!
