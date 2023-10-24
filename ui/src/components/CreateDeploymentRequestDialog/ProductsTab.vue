@@ -124,6 +124,7 @@ export default {
     try {
       this.loading = true;
       this.products = await getProducts();
+      if (this.localValue?.id) this.selectedProductId = this.localValue.id;
     } catch (e) {
       this.products = [];
       this.$emit('error', e);

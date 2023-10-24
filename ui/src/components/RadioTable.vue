@@ -79,7 +79,7 @@ export default {
   },
 
   data: () => ({
-    localValue: false,
+    localValue: '',
     localSearch: '',
   }),
 

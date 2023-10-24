@@ -58,7 +58,7 @@
             :key="header.value",
           )
             template(v-if="row.fileSize") {{ row.fileSize }}
-            span.assistive-text(v-else) —
+            span.assistive-color(v-else) —
 
           //- Description column
           td.nowrap-cell(
@@ -66,7 +66,7 @@
             :key="header.value",
           )
             .truncate-text(v-if="row.description") {{ row.description }}
-            span.assistive-text(v-else) —
+            span.assistive-color(v-else) —
 
           //- Status column
           td.nowrap-cell(

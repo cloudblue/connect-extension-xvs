@@ -42,7 +42,7 @@
             :key="header.value",
           )
             span(v-if="row.appliedPprVersion") Version {{ row.appliedPprVersion }}
-            span.assistive-text(v-else) –
+            span.assistive-color(v-else) —
 
           //- Pricing Batch column
           td.nowrap-cell(
