@@ -230,13 +230,10 @@ def test_required_column_not_present(ppr_valid_schema, required_column):
     )]
 
 
-def test_extra_field_not_allowed(ppr_valid_schema):
+def test_extra_field_are_allowed(ppr_valid_schema):
     ppr_valid_schema['Resources'].append('FooBar')
     result = validate_ppr_schema(ppr_valid_schema)
-    assert result == [(
-        "'FooBar' is not one of ['Name_EN', 'Description_EN', "
-        "'ResourceCategory', 'MPN', 'UOM', 'Measurable']"
-    )]
+    assert result is None
 
 
 @pytest.mark.parametrize(
