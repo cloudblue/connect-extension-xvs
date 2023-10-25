@@ -25,10 +25,7 @@
             v-if="header.value === 'file'",
             :key="header.value",
           )
-            a.text-decoration-none(
-              @click="downloadFile(row.fileId)",
-              download,
-            ) {{ row.fileName }}
+            span {{ row.fileName }}
             c-chip._ml_8.color_border-radius(
               v-if="row.configState === 'active'",
               text="Active",
@@ -63,6 +60,11 @@
             v-if="header.value === 'actions'",
             :key="header.value",
           )
+            c-button(
+              :icon="icons.googleDownloadBaseline",
+              size="18px",
+              @click="downloadFile(row)",
+            )
             table-actions-list._ml_4
               c-button.list-item(
                 color="red",
@@ -121,6 +123,7 @@ import {
 } from '~helpers';
 
 import {
+  googleDownloadBaseline,
   googleFileUploadBaseline,
 } from '@cloudblueconnect/material-svg/baseline';
 
@@ -162,6 +165,7 @@ export default {
       loading: true,
       icons: {
         googleFileUploadBaseline,
+        googleDownloadBaseline,
       },
 
       headers: [
@@ -186,10 +190,10 @@ export default {
           align: 'left',
         },
         {
+          notResizable: true,
           text: '',
           value: 'actions',
-          align: 'left',
-          width: 76,
+          width: 80,
         },
       ],
 
@@ -219,10 +223,8 @@ export default {
   methods: {
     prepareRow,
     getFileSize,
-    downloadFile(name) {
-      const downloadUrl = `https://vendor.cnct.info/public/v1/media/folders/accounts/${this.accountId}/${this.deploymentId}/configurations/files/${name}`;
-
-      downloader({ url: downloadUrl });
+    downloadFile(item) {
+      downloader({ url: item.fileLocation });
     },
 
     showUploadConfigurationDialog() {
