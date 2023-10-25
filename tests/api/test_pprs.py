@@ -316,7 +316,7 @@ def test_upload_ppr(
             'size': 87657,
             'mime_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
-        'description': '\n**Description**\nWhat a lovely day\n\nSummary:\n\n',
+        'description': '\n**Description**\nWhat a lovely day\n\n\n',
         'status': 'ready',
     }
     assert id[:6] == 'PPRFL-'
@@ -377,9 +377,9 @@ def test_upload_ppr_invalid(
             'mime_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
         'description': (
-            "\n**Description**\nWhat a lovely day\n\nSummary:\n* Errors\n    * 'Smth else'"
-            " is not one of ['Name_EN', 'Description_EN', 'ResourceCategory', 'MPN', 'UOM',"
-            " 'Measurable']\n\n"
+            "\n**Description**\nWhat a lovely day\n\nSummary:\n* Errors\n    "
+            "* ['Name_EN', 'Description_EN', 'ResourceCategory', 'MPÑ', 'UOM', 'Measurable'] "
+            "does not contain items matching the given schema\n\n"
         ),
         'status': 'failed',
     }
@@ -442,7 +442,7 @@ def test_post_ppr_new_version(
             'size': 87657,
             'mime_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
-        'description': '\n**Description**\nWhat a lovely day\n\nSummary:\n\n',
+        'description': '\n**Description**\nWhat a lovely day\n\n\n',
         'status': 'ready',
     }
     assert id[:6] == 'PPRFL-'

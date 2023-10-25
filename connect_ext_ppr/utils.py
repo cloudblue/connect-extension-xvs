@@ -646,7 +646,7 @@ def _build_summary(summary: dict, indent: int = 0):
 
 
 def build_summary(summary: dict):
-    return SUMMARY_TEMPLATE.format(summary=_build_summary(summary))
+    return SUMMARY_TEMPLATE.format(summary=_build_summary(summary)) if summary else ''
 
 
 def get_file_size(file_obj):

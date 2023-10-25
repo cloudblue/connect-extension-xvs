@@ -29,16 +29,6 @@ POLICIES_SCHEMA = {
     "type": "array",
     "items": {
         "type": "string",
-        "enum": [
-            "ServicePlan",
-            "Period",
-            "PeriodType",
-            "Trial",
-            "Action",
-            "ActionPeriod",
-            "ActionPeriodTimezone",
-            "ApplicableTo",
-        ],
     },
     "allOf": [
         {"contains": {"const": "ServicePlan"}},
@@ -50,7 +40,7 @@ POLICIES_SCHEMA = {
         {"contains": {"const": "ActionPeriodTimezone"}},
         {"contains": {"const": "ApplicableTo"}},
     ],
-    "additionalItems": False,
+    "uniqueItems": True,
 }
 
 # Per Sheet Schema
@@ -59,14 +49,6 @@ RESOURCES_SCHEMA = {
         "type": "array",
         "items": {
             "type": "string",
-            "enum": [
-                "Name_EN",
-                "Description_EN",
-                "ResourceCategory",
-                "MPN",
-                "UOM",
-                "Measurable",
-            ],
         },
         "allOf": [
             {"contains": {"const": "Name_EN"}},
@@ -76,7 +58,7 @@ RESOURCES_SCHEMA = {
             {"contains": {"const": "UOM"}},
             {"contains": {"const": "Measurable"}},
         ],
-        "additionalItems": False,
+        "uniqueItems": True,
     },
 }
 SERVICE_PLANS_SCHEMA = {
@@ -143,17 +125,6 @@ PLAN_SWITCH_PATHS_SCHEMA = {
         "type": "array",
         "items": {
             "type": "string",
-            "enum": [
-                "FromPlan",
-                "ToPlan",
-                "ImmediateSwitchAllowed",
-                "SubsStartDateAfterSwitch",
-                "SubsPeriodChange",
-                "UpsizeAllowed",
-                "DownsizeAllowed",
-                "PartialSwitchAllowed",
-                "RemoveSwitchPath",
-            ],
         },
         "allOf": [
             {"contains": {"const": "FromPlan"}},
@@ -163,7 +134,7 @@ PLAN_SWITCH_PATHS_SCHEMA = {
             {"contains": {"const": "UpsizeAllowed"}},
             {"contains": {"const": "DownsizeAllowed"}},
         ],
-        "additionalItems": False,
+        "uniqueItems": True,
     },
 }
 PLAN_PERIODS_SCHEMA = {
@@ -171,24 +142,13 @@ PLAN_PERIODS_SCHEMA = {
         "type": "array",
         "items": {
             "type": "string",
-            "enum": [
-                "ServicePlan",
-                "Period",
-                "PeriodType",
-                "Trial",
-                "FullRefundPeriod",
-                "AfterRefundPeriod",
-                "CancellationType",
-                "CancellationFeeValue",
-                "MPN",
-            ],
         },
         "allOf": [
             {"contains": {"const": "ServicePlan"}},
             {"contains": {"const": "Period"}},
             {"contains": {"const": "PeriodType"}},
         ],
-        "additionalItems": False,
+        "uniqueItems": True,
     },
 }
 RESOURCES_RATES_SCHEMA = {
@@ -196,22 +156,6 @@ RESOURCES_RATES_SCHEMA = {
         "type": "array",
         "items": {
             "type": "string",
-            "enum": [
-                "ServicePlan",
-                "Resource",
-                "IncUnits",
-                "MinUnits",
-                "MaxUnits",
-                "Measurable",
-                "ShowInCP",
-                "ShowInStore",
-                "ShowZeroRecurringFeeInOrder",
-                "ShowZeroSetupFeeInOrder",
-                "ShowZeroOveruseFeeInOrder",
-                "SetupFeePerUnit",
-                "RecurringFeePerUnit",
-                "MPN",
-            ],
         },
         "allOf": [
             {"contains": {"const": "ServicePlan"}},
@@ -219,7 +163,7 @@ RESOURCES_RATES_SCHEMA = {
             {"contains": {"const": "MinUnits"}},
             {"contains": {"const": "MaxUnits"}},
         ],
-        "additionalItems": False,
+        "uniqueItems": True,
     },
 }
 SALES_CATEGORIES_SCHEMA = {
@@ -239,25 +183,6 @@ NOTIFICATION_TEMPLATES_SCHEMA = {
         "type": "array",
         "items": {
             "type": "string",
-            "enum": [
-                "TemplateName",
-                "Language",
-                "MessageType",
-                "MessageCategory",
-                "Subject",
-                "ToAddr",
-                "ToName",
-                "BccAddr",
-                "FromAddr",
-                "FromName",
-                "PDFFileName",
-                "Active",
-                "Condition",
-                "VisibleToReseller",
-                "Security",
-                "HTML",
-                "PlainText",
-            ],
         },
         "allOf": [
             {"contains": {"const": "TemplateName"}},
@@ -271,7 +196,7 @@ NOTIFICATION_TEMPLATES_SCHEMA = {
             {"contains": {"const": "HTML"}},
             {"contains": {"const": "PlainText"}},
         ],
-        "additionalItems": False,
+        "uniqueItems": True,
     },
 }
 RESOURCE_DEPENDENCIES_SCHEMA = {
@@ -279,20 +204,13 @@ RESOURCE_DEPENDENCIES_SCHEMA = {
         "type": "array",
         "items": {
             "type": "string",
-            "enum": [
-                "ChildResource",
-                "ParentResource",
-                "DependenceKind",
-                "DependenceMultiplier",
-                "MPN",
-            ],
         },
         "allOf": [
             {"contains": {"const": "ChildResource"}},
             {"contains": {"const": "ParentResource"}},
             {"contains": {"const": "DependenceKind"}},
         ],
-        "additionalItems": False,
+        "uniqueItems": True,
     },
 }
 UPGRADE_RESOURCE_MAPPING_SCHEMA = {
@@ -310,18 +228,12 @@ TERMS_CONDITIONS_SCHEMA = {
         "type": "array",
         "items": {
             "type": "string",
-            "enum": [
-                "Name",
-                "Acceptance",
-                "Active",
-                "Content",
-            ],
         },
         "allOf": [
             {"contains": {"const": "Name"}},
             {"contains": {"const": "Content"}},
         ],
-        "additionalItems": False,
+        "uniqueItems": True,
     },
 }
 OP_UNIT_SERVICE_PLANS_SHCEMA = {
