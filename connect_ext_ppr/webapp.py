@@ -202,7 +202,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             DeploymentRequest.deployment, DeploymentRequest.ppr,
         ).filter(
             DeploymentRequest.deployment_id.in_(deployments),
-        )
+        ).order_by(desc(DeploymentRequest.created_at))
         deployment_requests = dr_filter.filter(deployment_requests)
         deployment_requests = dr_filter.sort(deployment_requests)
         deployment_requests = apply_pagination(deployment_requests, db, pagination_params, response)
