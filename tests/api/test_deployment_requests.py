@@ -38,7 +38,7 @@ def test_list_deployments_requests(
     assert response.status_code == 200
     assert len(response.json()) == 2
 
-    for response_item, dr in zip(response.json(), [dr1, dr2]):
+    for response_item, dr in zip(response.json(), [dr2, dr1]):
         events = response_item.pop('events')
         assert response_item == {
             'id': dr.id,
