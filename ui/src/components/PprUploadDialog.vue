@@ -6,6 +6,7 @@ c-dialog.ppr-upload-dialog(
   :error-text="errorText",
 )
   upload-file.ppr-upload-dialog__upload(
+    v-model="inputFile",
     ref="fileUpload",
     message-text="Drag file here or&nbsp;<a>browse</a>",
     accepted-files=".xlsx",
@@ -58,6 +59,7 @@ export default {
 
   data: () => ({
     localValue: false,
+    inputFile: null,
     description: '',
     isUploadingPPR: false,
     errorText: '',
@@ -72,6 +74,7 @@ export default {
       },
       {
         label: 'Upload',
+        disabled: !vm.inputFile,
         handler: vm.uploadPPR,
         closeAfterHandle: false,
         loading: vm.isUploadingPPR,

@@ -213,6 +213,7 @@ export default {
         closeAfterHandle: true,
       }, {
         label: 'Upload',
+        disabled: !vm.inputFile,
         handler: vm.uploadFile,
         closeAfterHandle: false,
         loading: vm.isUploadingFile,
