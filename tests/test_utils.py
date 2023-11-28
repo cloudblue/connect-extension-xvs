@@ -236,36 +236,6 @@ def test_extra_field_are_allowed(ppr_valid_schema):
     assert result is None
 
 
-@pytest.mark.parametrize(
-    'not_allow',
-    ('OpUnit_123', 'ResellerGroupName_US'),
-)
-def test_extra_field_not_matching_pattern_allowed(ppr_valid_schema, not_allow):
-    ppr_valid_schema['ServicePlans'].append(not_allow)
-    result = validate_ppr_schema(ppr_valid_schema)
-
-    assert result == [
-        f"'{not_allow}' is not valid under any of the given schemas",
-        (
-            f"'{not_allow}' does not match '^((Description|Name|OpUnit)_(?:[a-zA-Z]+"
-            f"(?:\\\\s+[a-zA-Z]+)*)|(ResellerGroupName|UpgradePath|SalesCategory)_\\\\d+)$'"
-        ),
-        (
-            f"'{not_allow}' is not one of ['OldName_1', 'Name_EN', 'Description_EN', "
-            f"'PlanCategory', 'ServiceTerms', 'BillingPeriodDuration', 'BillingPeriodType', "
-            f"'AlignBillingOrderWithStatementDay', 'NewDayOfStatement', "
-            f"'AlignSalesOrderWithStatementDay', 'AllowScheduledChanges', 'BillingPeriodAlignment',"
-            f" 'CotermingPossibilities', 'ExpirationDateAlignedWithEndOfMonth', "
-            f"'ExpirationDateAlignedWithSubscription', 'FirstBillingPeriodForFree', 'PricePeriod', "
-            f"'RecurringType', 'AutoRenew', 'RenewOrderInterval', 'AutoRenewPlan', 'AutoRenewPeriod"
-            f"', 'AutoRenewPeriodType', 'BillingAlignmentResellerRedefineAllowed', "
-            f"'WelcomeNotificationTemplate', 'ExpirationNotificationTemplate', "
-            f"'ProcessByRatingEngine', 'SubscriptionStartDateAfterUpgrade', "
-            f"'Published', 'VendorTimezone', 'MPN']"
-        ),
-    ]
-
-
 def test_process_ppr(ppr_workbook, configuration_json, product_factory, item_response):
     product = product_factory()
     ws_list, summary = process_ppr(

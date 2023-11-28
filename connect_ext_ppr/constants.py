@@ -7,20 +7,7 @@ CATEGORIES_SCHEMA = {
         {"contains": {"const": "Description_EN"}},
     ],
     "items": {
-        "anyOf": [
-            {
-                "pattern": "^(Description|Name)_[a-zA-Z]+$",
-            },
-            {
-                "enum": [
-                    "Name_EN",
-                    "Description_EN",
-                    "ExpandCategory",
-                    "DisplayInCCP",
-                    "ParentCategory",
-                ],
-            },
-        ],
+        "type": "string",
     },
     "uniqueItems": True,
 }
@@ -75,47 +62,7 @@ SERVICE_PLANS_SCHEMA = {
             {"contains": {"const": "RecurringType"}},
         ],
         "items": {
-            "anyOf": [
-                {
-                    "pattern": "^((Description|Name|OpUnit)_(?:[a-zA-Z]+(?:\\s+[a-zA-Z]+)*)"
-                    "|(ResellerGroupName|UpgradePath|SalesCategory)_\\d+)$",
-                },
-                {
-                    "enum": [
-                        "OldName_1",
-                        "Name_EN",
-                        "Description_EN",
-                        "PlanCategory",
-                        "ServiceTerms",
-                        "BillingPeriodDuration",
-                        "BillingPeriodType",
-                        "AlignBillingOrderWithStatementDay",
-                        "NewDayOfStatement",
-                        "AlignSalesOrderWithStatementDay",
-                        "AllowScheduledChanges",
-                        "BillingPeriodAlignment",
-                        "CotermingPossibilities",
-                        "ExpirationDateAlignedWithEndOfMonth",
-                        "ExpirationDateAlignedWithSubscription",
-                        "FirstBillingPeriodForFree",
-                        "PricePeriod",
-                        "RecurringType",
-                        "AutoRenew",
-                        "RenewOrderInterval",
-                        "AutoRenewPlan",
-                        "AutoRenewPeriod",
-                        "AutoRenewPeriodType",
-                        "BillingAlignmentResellerRedefineAllowed",
-                        "WelcomeNotificationTemplate",
-                        "ExpirationNotificationTemplate",
-                        "ProcessByRatingEngine",
-                        "SubscriptionStartDateAfterUpgrade",
-                        "Published",
-                        "VendorTimezone",
-                        "MPN",
-                    ],
-                },
-            ],
+            "type": "string",
         },
         "uniqueItems": True,
     },
@@ -218,7 +165,6 @@ UPGRADE_RESOURCE_MAPPING_SCHEMA = {
         "type": "array",
         "items": {
             "type": "string",
-            "pattern": "^(FromResource|ToResource_\\d+)$",
         },
         "uniqueItems": True,
     },
@@ -241,8 +187,6 @@ OP_UNIT_SERVICE_PLANS_SHCEMA = {
         "type": "array",
         "items": {
             "type": "string",
-            "pattern": "^(OpUnit|ServicePlanName|TermsConditions_\\d+"
-            "|Published|ResellerGroupName_\\d+|MPN)$",
         },
         "uniqueItems": True,
     },
