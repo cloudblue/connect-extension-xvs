@@ -26,6 +26,8 @@ export default {
     this.toolkit.listen('containerSize', ({ height }) => {
       this.height = height;
     });
+    window.addEventListener('dragover', e => e.preventDefault(), false);
+    window.addEventListener('drop', e => e.preventDefault(), false);
   },
 };
 </script>
