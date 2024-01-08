@@ -3,6 +3,7 @@ c-data-table(
   v-model="localValue",
   :headers="headers",
   hide-go-to-page-section,
+  :update="load",
   :prepare-row="prepareRow",
   :updating="loading",
 )
@@ -155,13 +156,12 @@ export default {
 
   methods: {
     prepareRow,
-  },
 
-  async created() {
-    this.loading = true;
-    const allDeployments = await getDeployments();
-    this.localValue = allDeployments;
-    this.loading = false;
+    load(params) {
+      return getDeployments({
+        queryParameters: params,
+      });
+    },
   },
 };
 </script>

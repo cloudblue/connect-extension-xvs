@@ -88,6 +88,7 @@ import cTable from '~components/cTable.vue';
 
 
 import {
+  allOption,
   defaultPaginationOptions,
 } from '~components/cTable/cTablePagination.vue';
 
@@ -224,7 +225,7 @@ export default {
       isInitialLoading: true,
       pagination: {
         page: 1,
-        rowsPerPage: head(this.paginationOptions),
+        rowsPerPage: this.showAll ? allOption.value : head(this.paginationOptions),
       },
 
       table: null,
@@ -277,7 +278,7 @@ export default {
     needToUpdateAfterUpdatingChange: ({ localUpdating, updating }) => !localUpdating && updating,
 
     params: vm => ({
-      limit: vm.pagination.rowsPerPage,
+      limit: vm.showAll ? undefined : vm.pagination.rowsPerPage,
       offset: vm.offset,
     }),
 
@@ -385,7 +386,7 @@ export default {
     },
 
     async checkForEmptyCollection() {
-      const result = await this.update({ limit: 0 });
+      const result = await this.update({ limit: 10 });
 
       return result.total === 0;
     },
@@ -462,11 +463,8 @@ export default {
     },
   },
 
-  async mounted() {
-    if (!this.showManagePanel) {
-      await this.$nextTick();
-      this.updateItems();
-    }
+  mounted() {
+    this.updateItems();
   },
 };
 </script>

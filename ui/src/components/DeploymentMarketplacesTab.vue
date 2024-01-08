@@ -5,7 +5,7 @@
     :headers="headers",
     :prepare-row="prepareRow",
     :updating="loading",
-    hide-all-pagination-sections,
+    :update="load",
   )
     template(#items="{ row, visibleHeaders }")
       tr.table__row.hoverable(:id="row.id")
@@ -61,7 +61,6 @@
 
 <script>
 import {
-  getDeploymentBatches,
   getDeploymentMarketplaces,
 } from '@/utils';
 
@@ -69,12 +68,6 @@ import cDataTable from '~components/cDataTable.vue';
 import DetailItem from '~components/DetailItem.vue';
 import Pic from '~components/Pic.vue';
 
-import {
-  enrich,
-} from '~utils';
-
-
-const enrichByBatchInfo = enrich('id', ['pricelist', 'id'], 'pricelist');
 
 export default {
   components: {
@@ -109,15 +102,13 @@ export default {
         priceList: item.pricelist,
       };
     },
+
+    load(params) {
+      return getDeploymentMarketplaces(this.deploymentId, params);
+    },
   },
 
-  async created() {
-    const marketplaces = await getDeploymentMarketplaces(this.deploymentId);
-    const batches = await getDeploymentBatches(this.deploymentId);
 
-    this.marketplaces = enrichByBatchInfo(batches, marketplaces);
-    this.loading = false;
-  },
 };
 
 </script>

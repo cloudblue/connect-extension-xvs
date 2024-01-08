@@ -260,11 +260,12 @@ export default {
 
     async fetchDeployment() {
       if (this.deployment) return;
-
-      [this.localDeployment] = await getDeployments({
+      const deployments = await getDeployments({
         hubId: this.form.hub.id,
         productId: this.form.product.id,
       });
+
+      [this.localDeployment] = deployments.collection;
 
       this.goToNextStep();
     },

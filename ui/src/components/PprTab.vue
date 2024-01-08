@@ -5,9 +5,9 @@
     :headers="headers",
     :prepare-row="prepareRow",
     :updating="loading",
-    hide-all-pagination-sections,
-    fix-layout,
+    :update="load",
     show-manage-panel,
+    hide-go-to-page-section,
   )
     template(#buttons="")
       c-button.ppr-table__upload-btn(
@@ -236,6 +236,7 @@ export default {
 
       showErrorSnackbar: false,
       errorSnackbarText: '',
+      localParams: { limit: 10, offset: 0 },
     };
   },
 
@@ -267,7 +268,8 @@ export default {
     async loadPPRs() {
       try {
         this.loading = true;
-        this.localValue = await getPPRs(this.deploymentId);
+        const pprs = await getPPRs(this.deploymentId, this.localParams);
+        this.localValue = pprs.collection;
       } catch (e) {
         this.showErrorSnackbar = true;
         this.errorSnackbarText = e.message;
@@ -279,10 +281,12 @@ export default {
     openUploadPPRDialog() {
       this.isUploadPPRDialogOpen = true;
     },
-  },
 
-  created() {
-    this.loadPPRs();
+    load(params) {
+      this.localParams = params;
+
+      return getPPRs(this.deploymentId, params);
+    },
   },
 };
 </script>

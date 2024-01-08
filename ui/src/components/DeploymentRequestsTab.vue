@@ -5,9 +5,9 @@
     :headers="headers",
     :prepare-row="prepareRow",
     :updating="loading",
-    hide-all-pagination-sections,
     fix-layout,
     show-manage-panel,
+    :update="load",
   )
     template(#buttons="")
       c-button.ppr-table__upload-btn(
@@ -132,6 +132,8 @@ export default {
         width: 140,
       },
     ],
+
+    localParams: { limit: 10, offset: 0 },
   }),
 
   computed: {
@@ -155,13 +157,16 @@ export default {
 
     async loadRequests() {
       this.loading = true;
-      this.requests = await getDeploymentRequests(this.deploymentId);
+      const rq = await getDeploymentRequests(this.deploymentId, this.localParams);
+      this.requests = rq.collection;
       this.loading = false;
     },
-  },
 
-  created() {
-    this.loadRequests();
+    load(params) {
+      this.localParams = params;
+
+      return getDeploymentRequests(this.deploymentId, params);
+    },
   },
 };
 
