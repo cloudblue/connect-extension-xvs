@@ -18,8 +18,8 @@ class ApiError extends Error {
 }
 
 const rest = {
-  get(url) {
-    return rest.request(url, 'GET');
+  get(url, fullResponse) {
+    return rest.request(url, 'GET', null, null, fullResponse);
   },
 
   post(url, body, headers) {
@@ -34,7 +34,7 @@ const rest = {
     return rest.request(url, 'DELETE');
   },
 
-  async request(url, method, body, headers) {
+  async request(url, method, body, headers, fullResponse = false) {
     const options = { method };
 
     if (headers) options.headers = { ...DEFAULT_HEADERS, ...headers };
@@ -43,6 +43,7 @@ const rest = {
     if (body) options.body = JSON.stringify(body);
 
     let response;
+
     try {
       response = await fetch(url, options);
     } catch (e) {
@@ -59,7 +60,11 @@ const rest = {
       });
     }
 
-    return responseBody;
+    return fullResponse ? {
+      body: responseBody,
+      headers: response.headers,
+      status: response.status,
+    } : responseBody;
   },
 };
 

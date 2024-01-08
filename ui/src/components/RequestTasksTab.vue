@@ -5,7 +5,7 @@
     :headers="headers",
     :prepare-row="prepareRow",
     :updating="loading",
-    hide-all-pagination-sections,
+    :update="load",
   )
     template(#items="{ row, visibleHeaders }")
       tr.table__row.hoverable(:id="row.id")
@@ -156,6 +156,7 @@ export default {
     isInfoDialogOpen: false,
     currentError: '',
     isErrorDialogOpen: false,
+    localParams: { limit: 10, offset: 0 },
   }),
 
   methods: {
@@ -191,11 +192,10 @@ export default {
       this.isErrorDialogOpen = true;
     },
 
-    async loadTasks() {
-      this.loading = true;
-      this.tasks = await getDeploymentRequestTasks(this.requestId);
-      this.loading = false;
-      this.localUpdating = false;
+    load(params) {
+      this.localParams = params;
+
+      return getDeploymentRequestTasks(this.requestId, params);
     },
   },
 
@@ -204,13 +204,11 @@ export default {
       if (!v) this.currentItem = null;
     },
 
-    localUpdating(v) {
-      if (v) this.loadTasks();
+    async localUpdating(v) {
+      if (v) {
+        this.tasks = await getDeploymentRequestTasks(this.requestId, this.localParams);
+      }
     },
-  },
-
-  created() {
-    this.loadTasks();
   },
 };
 

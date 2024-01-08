@@ -5,7 +5,7 @@
     :headers="headers",
     :prepare-row="prepareRow",
     :updating="loading",
-    hide-all-pagination-sections,
+    :update="load",
   )
     template(#items="{ row, visibleHeaders }")
       tr.table__row.hoverable(:id="row.id")
@@ -64,16 +64,8 @@ import DetailItem from '~components/DetailItem.vue';
 import Pic from '~components/Pic.vue';
 
 import {
-  enrich,
-} from '@/tools/utils';
-
-import {
-  getDeploymentBatches,
   getDeploymentRequestMarketplaces,
 } from '@/utils';
-
-
-const enrichByBatchInfo = enrich('id', ['pricelist', 'id'], 'pricelist');
 
 
 export default {
@@ -120,14 +112,10 @@ export default {
         pricelist: item.pricelist,
       };
     },
-  },
 
-  async created() {
-    this.marketplaces = await getDeploymentRequestMarketplaces(this.requestId);
-    const batches = await getDeploymentBatches(this.deploymentId);
-
-    this.marketplacesWithBatchesInfo = enrichByBatchInfo(batches, this.marketplaces);
-    this.loading = false;
+    load(params) {
+      return getDeploymentRequestMarketplaces(this.requestId, this.deploymentId, params);
+    },
   },
 };
 

@@ -137,7 +137,8 @@ export default {
   async created() {
     try {
       this.loading = true;
-      this.marketplaces = await getDeploymentMarketplaces(this.deploymentId);
+      const depMktps = await getDeploymentMarketplaces(this.deploymentId);
+      this.marketplaces = depMktps.collection;
       if (this.value.all) this.isAllSelected = true;
       else if (this.value.choices.length) this.selectedMarketplaces = this.value.choices;
     } catch (e) {

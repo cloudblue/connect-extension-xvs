@@ -110,7 +110,8 @@ export default {
   async created() {
     try {
       this.loading = true;
-      this.pprs = await getPPRs(this.deploymentId);
+      const pprs = await getPPRs(this.deploymentId);
+      this.pprs = pprs.collection;
       if (this.localValue?.id) this.selectedPprVersion = this.localValue.id;
     } catch (e) {
       this.pprs = [];

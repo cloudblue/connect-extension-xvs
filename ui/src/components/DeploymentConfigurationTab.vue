@@ -6,7 +6,8 @@
     hide-go-to-page-section,
     :prepare-row="prepareRow",
     :updating="loading",
-    showManagePanel,
+    show-manage-panel,
+    :update="load",
   )
     template(#buttons="")
       c-button(
@@ -202,6 +203,7 @@ export default {
       uploadErrorText: '',
       showErrorSnackbar: false,
       errorSnackbarText: '',
+      localParams: { limit: 10, offset: 0 },
     };
   },
 
@@ -264,7 +266,8 @@ export default {
     async getConfigs() {
       this.loading = true;
       try {
-        this.localValue = await getDeploymentConfigurations(this.deploymentId);
+        const conf = await getDeploymentConfigurations(this.deploymentId, this.localParams);
+        this.localValue = conf.collection;
       } catch (e) {
         this.showErrorSnackbar = true;
         this.errorSnackbarText = e.message;
@@ -281,6 +284,12 @@ export default {
         this.showErrorSnackbar = true;
         this.errorSnackbarText = e.message;
       }
+    },
+
+    load(params) {
+      this.localParams = params;
+
+      return getDeploymentConfigurations(this.deploymentId, params);
     },
   },
 

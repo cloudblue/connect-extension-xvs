@@ -5,6 +5,7 @@ c-data-table(
   hide-go-to-page-section,
   :prepare-row="prepareRow",
   :updating="localUpdating",
+  :update="load",
 )
   template(#items="{ row, visibleHeaders}")
     tr.table__row.hoverable(:id="row.id")
@@ -166,17 +167,25 @@ export default {
           align: 'left',
         },
       ],
+
+      localParams: { limit: 10, offset: 0 },
     };
   },
 
   methods: {
     prepareRow,
+
+    load(params) {
+      this.localParams = params;
+
+      return getDeploymentsRequests(params);
+    },
   },
 
   watch: {
     async localUpdating(v) {
       if (v) {
-        this.localValue = await getDeploymentsRequests();
+        await getDeploymentsRequests(this.localParams);
         this.localUpdating = false;
       }
     },
