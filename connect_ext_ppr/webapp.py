@@ -37,6 +37,7 @@ from connect_ext_ppr.errors import ExtensionHttpError, ExtensionValidationError
 from connect_ext_ppr.filters import (
     DeploymentFilter, DeploymentRequestExtendedFilter, DeploymentRequestFilter,
     MarketplaceConfigurationFilter, PPRVersionFilter, PricingBatchFilter, TaskFilter,
+    MarketplaceConfigurationExtendedFilter,
 )
 from connect_ext_ppr.models.configuration import Configuration
 from connect_ext_ppr.models.deployment import (
@@ -202,7 +203,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             DeploymentRequest.deployment, DeploymentRequest.ppr,
         ).filter(
             DeploymentRequest.deployment_id.in_(deployments),
-        ).order_by(desc(DeploymentRequest.created_at))
+        )
         deployment_requests = dr_filter.filter(deployment_requests)
         deployment_requests = dr_filter.sort(deployment_requests)
         deployment_requests = apply_pagination(deployment_requests, db, pagination_params, response)
@@ -265,8 +266,9 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         dr = get_deployment_request_by_id(depl_req_id, db, installation)
         if dr:
             task_list = []
-            qs = db.query(Task).filter_by(deployment_request_id=dr.id).order_by(Task.id)
+            qs = db.query(Task).filter_by(deployment_request_id=dr.id)
             qs = task_filter.filter(qs)
+            qs = task_filter.sort(qs)
 
             for task in apply_pagination(qs, db, pagination_params, response):
                 task_list.append(get_task_schema(task))
@@ -404,8 +406,9 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             db
             .query(DeploymentRequest)
             .filter_by(deployment_id=deployment_id)
-            .order_by(desc(DeploymentRequest.id))
-        )
+        ).join(DeploymentRequest.ppr)
+        qs = dr_filter.filter(qs)
+        qs = dr_filter.sort(qs)
 
         for dr in apply_pagination(qs, db, pagination_params, response):
             response_list.append(get_deployment_request_schema(dr, hub))
@@ -426,11 +429,24 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
         installation: dict = Depends(get_installation),
     ):
         deployments = db.query(Deployment).filter_by(account_id=installation['owner']['id'])
-        deployments = deployment_filter.filter(deployments)
-        deployments = apply_pagination(deployments, db, pagination_params, response)
+        deployments = deployment_filter.filter(deployments.join(Deployment.product))
         listings = get_all_listing_info(client)
         vendors = [li['vendor'] for li in listings]
         hubs = [hub['hub'] for li in listings for hub in li['contract']['marketplace']['hubs']]
+
+        if deployment_filter.hub__name:  # custom filter by hub name
+            dep_ids = [dep.id for dep in deployments if filter_object_list_by_id(hubs, dep.hub_id)['name'] == deployment_filter.hub__name]
+            deployments = deployments.filter(Deployment.id.in_(dep_ids))
+
+        if deployment_filter.hub__name__like:  # custom filter by hub name
+            dep_ids = [dep.id for dep in deployments if deployment_filter.hub__name__like in filter_object_list_by_id(hubs, dep.hub_id)['name']]
+            deployments = deployments.filter(Deployment.id.in_(dep_ids))
+
+        deployments = deployment_filter.sort(deployments)
+        if deployment_filter.custom_order_by == 'product__name':  # custom sort by product name
+            deployments = deployments.order_by(Product.name)
+        deployments = apply_pagination(deployments, db, pagination_params, response)
+
         response_list = []
         for dep in deployments:
             vendor = filter_object_list_by_id(vendors, dep.vendor_id)
@@ -438,6 +454,7 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             response_list.append(
                 get_deployment_schema(dep, dep.product, vendor, hub),
             )
+
         return response_list
 
     @router.get(
@@ -610,7 +627,6 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
             .filter_by(deployment=deployment_id)
             .join(File, PPRVersion.file == File.id)
             .outerjoin(Configuration, PPRVersion.configuration == Configuration.id)
-            .order_by(desc(PPRVersion.version))
         )
         ppr_file_conf_qs = ppr_filter.filter(ppr_file_conf_qs)
         ppr_file_conf_qs = ppr_filter.sort(ppr_file_conf_qs)
@@ -674,7 +690,9 @@ class ConnectExtensionXvsWebApplication(WebApplicationBase):
     def get_marketplaces_by_deployment(
         self,
         deployment_id: str,
-        m_filter: MarketplaceConfigurationFilter = FilterDepends(MarketplaceConfigurationFilter),
+        m_filter: MarketplaceConfigurationExtendedFilter = FilterDepends(
+            MarketplaceConfigurationExtendedFilter,
+        ),
         pagination_params: PaginationParams = Depends(),
         response: Response = None,
         client: ConnectClient = Depends(get_installation_client),
