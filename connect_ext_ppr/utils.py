@@ -242,12 +242,10 @@ def get_deployment_reference_schema(deployment, hub):
 
 def get_deployment_request_schema(deployment_request, hub):
     """
-    Returns DeploymentSchema for the deployment
-    :param deployment: Deployment model
-    :param product: Product model from Connect
-    :param vendor: Vendor Account model from Connect
+    Returns DeploymentRequestSchema for the deployment request
+    :param deployment_request: DeploymentRequest model
     :param hub: Hub model from Connect
-    :rtype: DeploymentSchema
+    :rtype: DeploymentRequestSchema
     """
     ppr = deployment_request.ppr
     ppr_schema = PPRVersionReferenceSchema(

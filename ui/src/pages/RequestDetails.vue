@@ -59,7 +59,7 @@ c-view.request-details(
       )
         template(#value="")
           detail-item(
-            :body-text="request.deployment?.product?.name",
+            :body-text="`${request.deployment?.product?.name} (version ${productVersion})`",
             dense,
           )
             template(#image="")
@@ -184,6 +184,7 @@ export default {
     currentTab: null,
     loading: true,
     request: null,
+    productVersion: null,
     isAbortingRequest: false,
     isRetryingRequest: false,
     areTasksUpdating: false,
@@ -231,6 +232,7 @@ export default {
     async getPprFileUrl() {
       const ppr = await getPPR(this.request.deployment.id, this.request.ppr.id);
       this.pprFileUrl = ppr.file.location;
+      this.productVersion = ppr.product_version;
     },
 
     downloadPPR() {

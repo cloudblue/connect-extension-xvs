@@ -185,7 +185,7 @@ def create_ppr(ppr, user_id, deployment, db, client, logger):
     config_json = {}
     status = PPRVersion.STATUS.ready
     active_configuration = None
-    product_version = None
+    product_version = deployment.product.version
     if not file_data:
         active_configuration = (
             db.query(Configuration)
@@ -209,7 +209,6 @@ def create_ppr(ppr, user_id, deployment, db, client, logger):
             .first()
         )
         data = None
-        product_version = deployment.product.version
         product_info = (
             f"(product_id={deployment.product_id}, "
             f"product_version={deployment.product.version})"
