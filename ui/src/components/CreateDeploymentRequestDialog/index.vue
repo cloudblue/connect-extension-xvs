@@ -261,8 +261,8 @@ export default {
     async fetchDeployment() {
       if (this.deployment) return;
       const deployments = await getDeployments({
-        hubId: this.form.hub.id,
-        productId: this.form.product.id,
+        hub_id: this.form.hub.id,
+        product_id: this.form.product.id,
       });
 
       [this.localDeployment] = deployments.collection;

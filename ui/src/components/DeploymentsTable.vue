@@ -158,9 +158,7 @@ export default {
     prepareRow,
 
     load(params) {
-      return getDeployments({
-        queryParameters: params,
-      });
+      return getDeployments(params);
     },
   },
 };

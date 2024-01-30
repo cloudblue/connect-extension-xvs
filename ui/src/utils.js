@@ -53,14 +53,7 @@ const prepareUrl = (baseUrl, params) => {
   return `${baseUrl}?${processedParams}`;
 };
 
-export const getDeployments = ({ hubId, productId } = {}) => {
-  const queryParams = new URLSearchParams();
-
-  if (hubId) queryParams.append('hub_id', hubId);
-  if (productId) queryParams.append('product_id', productId);
-
-  return fullResponseGet(`/api/deployments?${queryParams.toString()}`);
-};
+export const getDeployments = (params) => fullResponseGet(prepareUrl('/api/deployments', params));
 
 export const getDeployment = (id) => rest.get(`/api/deployments/${id}`);
 
