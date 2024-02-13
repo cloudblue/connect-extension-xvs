@@ -318,6 +318,7 @@ def test_upload_ppr(
         },
         'description': '\n**Description**\nWhat a lovely day\n\n\n',
         'status': 'ready',
+        'product_version': 3,
     }
     assert id[:6] == 'PPRFL-'
     assert isinstance(events['created']['at'], str)
@@ -382,6 +383,7 @@ def test_upload_ppr_invalid(
             "does not contain items matching the given schema\n\n"
         ),
         'status': 'failed',
+        'product_version': 3,
     }
     assert id[:6] == 'PPRFL-'
     assert isinstance(events['created']['at'], str)
@@ -444,6 +446,7 @@ def test_post_ppr_new_version(
         },
         'description': '\n**Description**\nWhat a lovely day\n\n\n',
         'status': 'ready',
+        'product_version': 3,
     }
     assert id[:6] == 'PPRFL-'
     assert isinstance(events['created']['at'], str)
