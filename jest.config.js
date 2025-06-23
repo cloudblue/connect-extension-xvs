@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023, Ingram Micro
+Copyright (c) 2025, CloudBlue
 All rights reserved.
 */
 module.exports = {
