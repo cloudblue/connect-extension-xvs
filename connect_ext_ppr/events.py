@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023, Ingram Micro
+# Copyright (c) 2025, CloudBlue
 # All rights reserved.
 #
 from connect.client import ClientError

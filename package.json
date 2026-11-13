@@ -16,7 +16,7 @@
     "lint:fix": "npm run lint -- --fix",
     "test": "NODE_ENV=test jest --no-cache --passWithNoTests"
   },
-  "author": "Ingram Micro",
+  "author": "CloudBlue",
   "license": "Apache Software License 2.0",
   "dependencies": {
     "@cloudblueconnect/connect-ui-toolkit": "^26",
