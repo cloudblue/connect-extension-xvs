@@ -2,7 +2,7 @@
 name = "connect-extension-xvs"
 version = "0.1.0"
 description = "This extension is responsoible for publishing Cloudblue Connect data to CB Commerce"
-authors = ["Ingram Micro"]
+authors = ["CloudBlue"]
 license = "Apache Software License 2.0"
 packages = [
     { include = "connect_ext_ppr" }
